@@ -1,0 +1,1250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Beam On!</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: linac-console top bar, department floor plan on the left, tabbed control desk on the right; stacks on phones.
+   Single committed light look: clinical vinyl floor, bunker concrete, beam-on amber as the one bold accent. */
+:root{
+  --ink:#16212A; --ink-2:#4B5963; --ink-3:#7A8790;
+  --paper:#EDF1F3; --panel:#FFFFFF; --line:#D2DBE0; --sunk:#F5F8F9;
+  --amber:#E8961A; --amber-soft:#FFF1D9; --amber-ink:#7A4A00;
+  --laser:#1E9E5E; --good:#21875A; --good-soft:#E3F4EA;
+  --danger:#C23B3B; --danger-soft:#FBE7E7;
+  --phys:#137F8E; --phys-soft:#E0F2F4;
+  --console:#1D2B35; --console-ink:#E9F1F4;
+  --font-display:"Chakra Petch","Arial Narrow",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--font-body);font-size:15px;line-height:1.45}
+button{font:inherit;color:inherit}
+.app{max-width:1440px;margin:0 auto;padding-block:12px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:12px}
+
+/* top console */
+.top{background:var(--console);color:var(--console-ink);border-radius:12px;padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.lamp{width:30px;height:30px;border-radius:7px;background:var(--amber);display:grid;place-items:center;box-shadow:0 0 0 3px rgba(232,150,26,.25),0 0 18px rgba(232,150,26,.55)}
+.lamp span{width:10px;height:10px;border-radius:50%;background:#FFF6E5}
+.brand h1{font-family:var(--font-display);font-weight:700;font-size:24px;letter-spacing:.02em;margin:0;line-height:1}
+.brand small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9FB3BD;margin-top:3px}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#9FB3BD;font-weight:700}
+.stat span{font-family:var(--font-mono);font-size:16px;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.repbar{width:110px;height:8px;background:#33444F;border-radius:4px;overflow:hidden;margin-top:4px}
+.repbar i{display:block;height:100%;background:var(--amber);border-radius:4px;transition:width .4s}
+.speed{display:flex;gap:4px;background:#14202A;padding:4px;border-radius:9px}
+.speed button{border:0;background:transparent;color:#B8C8D0;padding:6px 10px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:600}
+.speed button[aria-pressed="true"]{background:var(--amber);color:#2A1A00}
+.speed button:focus-visible,.btn:focus-visible,.tab:focus-visible,.opt:focus-visible{outline:2px solid var(--phys);outline-offset:2px}
+
+/* main */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:12px;align-items:start}
+@media (max-width:980px){.main{grid-template-columns:minmax(0,1fr)}}
+.stage{display:grid;gap:10px;min-width:0}
+.floorwrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;position:relative}
+canvas{display:block;width:100%;height:auto;aspect-ratio:960/600;border-radius:7px;cursor:default;touch-action:manipulation}
+.placing-hint{position:absolute;left:18px;top:18px;background:var(--amber);color:#2A1A00;font-weight:700;padding:6px 10px;border-radius:8px;font-size:13px;display:flex;gap:10px;align-items:center}
+.placing-hint button{border:0;background:rgba(0,0,0,.12);border-radius:6px;padding:3px 8px;cursor:pointer;font-weight:700}
+
+.ticker{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:grid;gap:4px;max-height:164px;overflow:auto}
+.ticker h3{margin:0 0 4px;font-family:var(--font-display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.msg{display:flex;gap:10px;font-size:13.5px;align-items:baseline}
+.msg time{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.msg.good span{color:var(--good)} .msg.bad span{color:var(--danger)} .msg.phys span{color:var(--phys)} .msg.warn span{color:var(--amber-ink)}
+
+/* side desk */
+.desk{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.tabs{display:flex;background:var(--sunk);border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{flex:1;border:0;background:transparent;padding:10px 6px;font-family:var(--font-display);font-weight:600;font-size:13.5px;letter-spacing:.04em;cursor:pointer;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--amber);background:var(--panel)}
+.tab .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--danger);margin-left:4px;vertical-align:2px}
+.pane{padding:12px;display:grid;gap:10px;max-height:min(70vh,640px);overflow:auto}
+@media (max-width:980px){.pane{max-height:none}}
+.sec-title{font-family:var(--font-display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:4px 0 0}
+.item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:6px}
+.item.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.row{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.name{font-weight:700}
+.meta{font-size:13px;color:var(--ink-2)}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:13px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 11px;cursor:pointer;font-weight:700;font-size:13px}
+.btn:hover:not(:disabled){border-color:var(--ink-3)}
+.btn.primary{background:var(--console);border-color:var(--console);color:var(--console-ink)}
+.btn.primary:hover:not(:disabled){background:#2A3D4A}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:#2A1A00}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;white-space:normal!important;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--sunk);color:var(--ink-2);white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good)} .chip.bad{background:var(--danger-soft);color:var(--danger)}
+.chip.warn{background:var(--amber-soft);color:var(--amber-ink)} .chip.phys{background:var(--phys-soft);color:var(--phys)}
+.role-dot{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-family:var(--font-display);font-weight:700;font-size:12px;flex:none}
+.counter{display:flex;align-items:center;gap:6px}
+.counter .num{min-width:22px;text-align:center;font-size:15px;font-weight:600}
+.pipe{display:grid;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pipe div{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-top:1px solid var(--line);font-size:14px}
+.pipe div:first-child{border-top:0}
+.pipe div.hot{background:var(--amber-soft)}
+.goal{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.goal i{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;font-style:normal;font-size:13px;font-weight:700;margin-top:1px}
+.goal.done i{background:var(--good);border-color:var(--good);color:#fff}
+.goal.done span{color:var(--ink-3)}
+.tip{background:var(--phys-soft);border-radius:10px;padding:9px 12px;font-size:13.5px;color:#0E525C}
+.tip.warn{background:var(--amber-soft);color:var(--amber-ink)}
+.tip.bad{background:var(--danger-soft);color:#8C2424}
+details.qlog{border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px}
+details.qlog summary{cursor:pointer;font-weight:700;list-style-position:outside}
+details.qlog p{margin:6px 0 0;color:var(--ink-2)}
+.ok{color:var(--good)} .no{color:var(--danger)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(14,22,28,.58);display:grid;place-items:center;z-index:50;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow:auto}
+.card{background:var(--panel);border-radius:14px;max-width:600px;width:100%;padding:22px;display:grid;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.card h2{font-family:var(--font-display);font-size:clamp(20px,4.6vw,25px);line-height:1.1;margin:0;text-wrap:balance}
+.card p{margin:0}
+.eyebrow{font-family:var(--font-display);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--phys);font-weight:700}
+.eyebrow.amber{color:var(--amber-ink)}
+.q{font-size:17px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:1.5px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 13px;cursor:pointer;font-size:15px}
+.opt:hover:not(:disabled){border-color:var(--phys);background:var(--phys-soft)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--danger);background:var(--danger-soft)}
+.why{background:var(--sunk);border-left:4px solid var(--phys);border-radius:0 10px 10px 0;padding:10px 13px;font-size:14.5px}
+.steps{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.steps li{display:flex;gap:10px;align-items:flex-start}
+.steps li b.n{flex:none;width:24px;height:24px;border-radius:50%;background:var(--console);color:var(--console-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.big{padding:10px 18px;font-size:15px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="lamp" aria-hidden="true"><span></span></div>
+      <div><h1>Beam On!</h1><small>Radiotherapy department</small></div>
+    </div>
+    <div class="stat"><b>Bank</b><span id="tCash">RM 15.00M</span></div>
+    <div class="stat"><b>Reputation</b><span id="tRep">50%</span><div class="repbar"><i id="tRepBar" style="width:50%"></i></div></div>
+    <div class="stat"><b>Day</b><span id="tDay">1 · 07:30</span></div>
+    <div class="stat"><b>Physicists busy</b><span id="tPhys">0/1</span></div>
+    <div class="speed" role="group" aria-label="Game speed">
+      <button id="sp0" data-act="speed" data-v="0" aria-pressed="false" title="Pause (space)">❚❚</button>
+      <button id="sp1" data-act="speed" data-v="1" aria-pressed="true">1×</button>
+      <button id="sp2" data-act="speed" data-v="2" aria-pressed="false">2×</button>
+      <button id="sp4" data-act="speed" data-v="4" aria-pressed="false">4×</button>
+    </div>
+    <div class="speed" role="group" aria-label="Audio">
+      <button id="auMus" data-act="music" aria-pressed="true" title="Music on or off">♪ Music</button>
+      <button id="auSfx" data-act="sound" aria-pressed="true" title="Sound effects on or off">Sound</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <section class="stage">
+      <div class="floorwrap">
+        <canvas id="floor" width="960" height="600" aria-label="Department floor plan"></canvas>
+        <div class="placing-hint" id="placeHint" hidden><span id="placeText">Click an empty plot</span><button data-act="cancelBuild">Cancel</button></div>
+      </div>
+      <div class="ticker" id="ticker" aria-live="polite"><h3>Department log</h3></div>
+    </section>
+    <aside class="desk">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="pane" id="pane"></div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" id="modalCard"></div></div>
+
+<script>
+(()=>{
+/* ---------- constants ---------- */
+const W=960,H=600,CY=300,DAY_START=450,DAY_END=1080,SEC_PER_MIN=0.16,WALK=55;
+const SLOTS=[];
+for(let i=0;i<4;i++) SLOTS.push({x:180+i*195,y:10,w:185,h:235,top:true});
+for(let i=0;i<4;i++) SLOTS.push({x:180+i*195,y:355,w:185,h:235,top:false});
+
+const RT={
+  clinic:{name:'Consult Clinic',short:'Clinic',cost:400000,upkeep:0,cap:1,floor:'#ECE7F4',desc:'An oncologist sees each new referral and prescribes the treatment.'},
+  ctsim:{name:'CT Simulator',short:'CT Sim',cost:2500000,upkeep:2000,cap:1,floor:'#E2EDF6',desc:'Planning CT in the treatment position. Run by a radiation therapist.'},
+  planning:{name:'Planning Room',short:'Planning',cost:300000,upkeep:0,cap:2,floor:'#EDF1E2',desc:'Two workstations where medical physicists build treatment plans.'},
+  office:{name:'Physics Office',short:'Physics',cost:300000,upkeep:0,cap:2,floor:'#DFF0F2',desc:'Physicists check every plan here before treatment. Two desks.'},
+  linac:{name:'Linac Bunker',short:'Linac',cost:5000000,upkeep:8000,cap:1,bunker:true,floor:'#E9ECEE',desc:'Megavoltage photon treatments. A physicist must commission it, then run QA every morning.'},
+  brachy:{name:'HDR Brachytherapy Suite',short:'HDR',cost:2500000,upkeep:3000,cap:1,bunker:true,floor:'#F1EBE6',desc:'Ir-192 afterloader for cervix patients. A physicist runs every treatment. The source decays.'}
+};
+const BUILD_ORDER=['clinic','ctsim','planning','office','linac','brachy'];
+const ROLES={
+  onc:{name:'Radiation Oncologist',letter:'O',color:'#7A4FB0',salary:3000,does:'Sees new referrals in the clinic.'},
+  phys:{name:'Medical Physicist',letter:'P',color:'#137F8E',salary:2000,does:'Treatment planning, plan checks, commissioning, daily QA, fault fixing and HDR treatments.'},
+  rtt:{name:'Radiation Therapist',letter:'R',color:'#3A7D44',salary:1000,does:'Runs the CT simulator and delivers linac treatments.'}
+};
+const ROLE_ORDER=['phys','onc','rtt'];
+const PT={
+  bone:{name:'Bone metastasis',rx:'8 Gy in 1 fraction',fx:1,mod:'linac',pay:9000,tx:10,w:25},
+  breast:{name:'Breast',rx:'26 Gy in 5 fractions',fx:5,mod:'linac',pay:27000,tx:12,w:30},
+  prostate:{name:'Prostate SABR',rx:'36.25 Gy in 5 fractions',fx:5,mod:'linac',pay:38000,tx:15,w:20},
+  lung:{name:'Lung SABR',rx:'54 Gy in 3 fractions',fx:3,mod:'linac',pay:42000,tx:20,w:15},
+  cervix:{name:'Cervix HDR',rx:'7 Gy × 4 HDR fractions',fx:4,mod:'brachy',pay:30000,tx:15,w:14}
+};
+const FAULTS=['MLC leaf interlock','Dose rate mismatch (DOSE1/DOSE2)','Beam symmetry interlock','Couch motion fault','Gantry speed interlock'];
+const NAMES=['Aisyah','Wei Ling','Ravi','Farid','Mei Yee','Kumar','Nurul','Daniel','Siti','Jason','Priya','Amir','Li Na','Hana','Arjun','Zara','Kevin','Liyana','Tan','Faiz','Grace','Imran','Sofia','Ming'];
+const JOBLABEL={consult:'Consulting',sim:'CT simulation',plan:'Planning',check:'Plan check',qa:'Daily QA',comm:'Commissioning',fault:'Fixing fault',exchange:'Source exchange',tx:'Treating'};
+const SPOTS={
+  clinic:{staff:[[52,92]],pat:[122,100],home:[60,150]},
+  ctsim:{staff:[[150,188]],pat:[92,110],home:[150,150]},
+  planning:{staff:[[50,86],[138,86]],home:[92,165]},
+  office:{staff:[[50,86],[138,86]],home:[60,195]},
+  linac:{staff:[[150,200]],pat:[80,118],home:[150,200]},
+  brachy:{staff:[[150,200]],pat:[80,112],home:[150,200]}
+};
+
+/* ---------- physics calls ---------- */
+const Q=[
+{id:'qa-out-ok',pool:'qa',head:'Daily QA',q:'Morning output check on {room}: the daily QA device reads +2.1% from baseline.',opts:[
+ {t:'Within tolerance. Treat, and log the reading to watch the trend.',ok:true},
+ {t:'Stop and recalibrate the beam before any patient.',eff:{down:120}},
+ {t:'Scale every patient’s monitor units down by 2%.',eff:{incident:true}}],
+ why:'AAPM TG-142 sets ±3% for daily output constancy, so +2.1% passes. Logging each reading lets you spot a slow drift before it becomes a problem.'},
+{id:'qa-out-bad',pool:'qa',head:'Daily QA',q:'Morning output check on {room}: the daily QA device reads +4.2% from baseline.',opts:[
+ {t:'Hold treatments. Check the device, then measure with a calibrated ion chamber in a phantom.',ok:true,eff:{down:60}},
+ {t:'Treat as normal. 4% is close enough.',eff:{incident:true}},
+ {t:'Treat, but cut each plan’s MU by 4%.',eff:{incident:true}}],
+ why:'+4.2% is outside the ±3% daily tolerance in TG-142. Rule out a faulty QA device or setup, then confirm the output with a calibrated chamber before treating. Editing patient plans to compensate is never an acceptable fix.'},
+{id:'qa-laser',pool:'qa',head:'Daily QA',q:'On {room}, the room lasers sit 3 mm away from the isocentre marker on the cube phantom.',opts:[
+ {t:'Realign the lasers before the first patient.',ok:true,eff:{down:30}},
+ {t:'Carry on. Daily imaging will correct the setup anyway.',eff:{rep:-3}},
+ {t:'Note it and fix it at monthly QA.',eff:{incident:true}}],
+ why:'TG-142 gives 2 mm for daily laser localisation (1 mm for SRS/SBRT). Lasers guide every setup, so fix them first rather than relying on image guidance to clean up after them.'},
+{id:'qa-door',pool:'qa',head:'Daily QA',q:'Safety check on {room}: opening the bunker door does not stop the beam.',opts:[
+ {t:'Take the linac out of service until the door interlock is repaired.',ok:true,eff:{down:120}},
+ {t:'Treat, with a staff member guarding the door.',eff:{incident:true}},
+ {t:'Treat only short fractions until the engineer visits.',eff:{incident:true}}],
+ why:'The door interlock is a core radiation safety control. If it fails, no patient is treated until it is repaired and retested, whatever the workaround.'},
+{id:'qa-kvmv',pool:'qa',head:'Daily QA',q:'IGRT check on {room}: the kV imaging isocentre and the MV treatment isocentre differ by 1.6 mm. This linac treats non-SRS patients only.',opts:[
+ {t:'Within tolerance. Treat and record it.',ok:true},
+ {t:'Out of tolerance. Stop treatments.',eff:{down:90}},
+ {t:'Apply a 1.6 mm shift to every patient by hand.',eff:{incident:true}}],
+ why:'TG-142 allows 2 mm between the imaging and treatment isocentres for non-SRS work (1 mm for SRS/SBRT). 1.6 mm passes. Blanket manual shifts would add errors, not remove them.'},
+{id:'pc-gamma-ok',pool:'plan',head:'Plan check',q:'Patient-specific QA for {patient}: gamma pass rate 97.8% at 3%/2 mm with a 10% dose threshold.',opts:[
+ {t:'Approve the plan.',ok:true},
+ {t:'Re-measure to be sure.',eff:{rep:-1}},
+ {t:'Replan with less modulation.',eff:{rep:-2}}],
+ why:'AAPM TG-218 recommends a 95% tolerance limit and a 90% action limit for 3%/2 mm gamma with a 10% threshold. 97.8% passes comfortably.'},
+{id:'pc-gamma-mid',pool:'plan',head:'Plan check',q:'Patient-specific QA for {patient}: gamma pass rate 92.4% at 3%/2 mm.',opts:[
+ {t:'Investigate the cause before deciding: setup, detector, plan complexity.',ok:true},
+ {t:'Approve without comment. It is above 90%.',eff:{rep:-3}},
+ {t:'Reject it and replan from scratch.',eff:{rep:-2}}],
+ why:'Under TG-218, a result between the 95% tolerance limit and the 90% action limit should be investigated. The plan can go ahead once the cause is understood and judged acceptable.'},
+{id:'pc-gamma-bad',pool:'plan',head:'Plan check',q:'Patient-specific QA for {patient}: gamma pass rate 84% at 3%/2 mm.',opts:[
+ {t:'Do not treat. Find the cause, re-measure, and replan if needed.',ok:true},
+ {t:'Loosen the criteria to 5%/5 mm so it passes.',eff:{incident:true}},
+ {t:'Approve it. The patient is waiting.',eff:{incident:true}}],
+ why:'84% is below the TG-218 action limit of 90%. The plan must not be treated until the failure is explained and fixed. Relaxing the criteria only hides the problem.'},
+{id:'pc-mu',pool:'plan',head:'Plan check',q:'The independent MU check for {patient}’s simple two-field plan differs from the planning system by 7%. Your department action level is 5%.',opts:[
+ {t:'Hold the plan and find the discrepancy.',ok:true},
+ {t:'Trust the planning system. It is more accurate.',eff:{incident:true}},
+ {t:'Average the two numbers.',eff:{incident:true}}],
+ why:'An independent calculation exists to catch errors such as a wrong depth, field size or data entry. A difference above the action level must be explained before treatment. AAPM TG-114 discusses typical action levels of a few percent for simple fields.'},
+{id:'pc-rx',pool:'plan',head:'Plan check',q:'{patient}’s plan delivers 20 Gy in 5 fractions, but the signed prescription says 8 Gy in 1 fraction.',opts:[
+ {t:'Stop and query the oncologist before anything is treated.',ok:true},
+ {t:'Treat as planned. The planner must have had a reason.',eff:{incident:true}},
+ {t:'Edit the prescription to match the plan.',eff:{incident:true}}],
+ why:'Checking the plan against the signed prescription is one of the most important parts of a physics plan check. Transcription errors like this are a known cause of serious radiotherapy incidents.'},
+{id:'cm-detector',pool:'comm',head:'Commissioning',q:'You are measuring output factors for a 1 × 1 cm field on {room}. Which detector should you NOT use?',opts:[
+ {t:'A 0.6 cm³ Farmer ion chamber',ok:true},
+ {t:'A small-field diode',eff:{rep:-2}},
+ {t:'A synthetic diamond detector',eff:{rep:-2}}],
+ why:'A Farmer chamber is far larger than a 1 cm field, so volume averaging makes it read too low. IAEA TRS-483 covers small-field dosimetry and recommends small detectors with correction factors.'},
+{id:'cm-protocol',pool:'comm',head:'Commissioning',q:'Which code of practice covers absolute dose calibration of {room}’s megavoltage photon beams with an ion chamber in water?',opts:[
+ {t:'IAEA TRS-398',ok:true},
+ {t:'AAPM TG-43',eff:{rep:-2}},
+ {t:'AAPM TG-142',eff:{rep:-2}}],
+ why:'IAEA TRS-398 (and AAPM TG-51) cover absorbed dose to water calibration for external beams. TG-43 is the brachytherapy dose calculation formalism, and TG-142 covers linac QA.'},
+{id:'cm-tvl',pool:'comm',head:'Shielding',q:'The primary barrier of {room} must cut the beam to 1/10,000 of its unshielded value. How many tenth-value layers (TVLs) of concrete do you need?',opts:[
+ {t:'4',ok:true},{t:'10',eff:{cash:-500000}},{t:'2',eff:{incident:true}}],
+ why:'Each TVL cuts transmission by a factor of 10, so 10⁻⁴ needs 4 TVLs. In practice the first TVL is slightly thicker than the rest, which NCRP Report 151 accounts for.'},
+{id:'cm-public',pool:'comm',head:'Shielding',q:'The corridor beside {room} is a public waiting area. What annual effective dose limit applies to members of the public?',opts:[
+ {t:'1 mSv per year',ok:true},{t:'6 mSv per year',eff:{rep:-3}},{t:'20 mSv per year',eff:{incident:true}}],
+ why:'ICRP Publication 103 and most national regulations set 1 mSv per year for the public. 20 mSv per year, averaged over 5 years, is the occupational limit.'},
+{id:'cm-e2e',pool:'comm',head:'Commissioning',q:'Beam data for {room} is measured and the planning system is modelled. What should you do before the first patient?',opts:[
+ {t:'Run an end-to-end test: CT a phantom, plan it, and treat it while measuring dose.',ok:true},
+ {t:'Start treating. The vendor’s acceptance tests passed.',eff:{incident:true}},
+ {t:'Treat the first patient at half dose to be safe.',eff:{incident:true}}],
+ why:'An end-to-end test runs a phantom through the whole chain from imaging to delivery and catches errors that step-by-step checks miss. Acceptance tests show the machine meets its spec, not that your clinical pathway is right.'},
+{id:'br-decay',pool:'brachy',head:'HDR source',q:'The Ir-192 source in {room} is 148 days old. Its half-life is 73.8 days. How do treatment times compare with a fresh source?',opts:[
+ {t:'About 4 times longer',ok:true},{t:'About 2 times longer',eff:{rep:-2}},{t:'The same. The afterloader corrects for decay.',eff:{rep:-2}}],
+ why:'148 days is two half-lives, so the activity falls to a quarter and times are four times longer. The afterloader corrects dwell times for decay, but the treatment still takes longer, which is why sources are usually exchanged about every 3 months.'},
+{id:'br-stuck',pool:'brachy',head:'HDR emergency',q:'At the end of a treatment in {room}, the console shows the source has not retracted. What is your first action?',opts:[
+ {t:'Press the emergency stop / retract at the console and watch the room monitor.',ok:true},
+ {t:'Run in and pull the applicator out by hand.',eff:{incident:true}},
+ {t:'Phone the vendor and wait for advice.',eff:{incident:true}}],
+ why:'The emergency procedure escalates step by step: console retract first, then entering with a survey meter to use the manual retraction crank, then moving the applicator into the emergency container. This is why a physicist is present for every HDR treatment.'},
+{id:'br-cal',pool:'brcal',head:'HDR source',q:'A new Ir-192 source has been installed in {room}. What must happen before clinical use?',opts:[
+ {t:'Measure its air-kerma strength with a calibrated well-type chamber and compare it with the certificate.',ok:true},
+ {t:'Use the value on the manufacturer’s certificate.',eff:{incident:true}},
+ {t:'Measure it with a Farmer chamber in a water tank.',eff:{rep:-2}}],
+ why:'Every new source is measured independently, usually with a calibrated well-type chamber, and checked against the certificate before use. Large differences are investigated before any treatment.'},
+{id:'rp-preg',pool:'rp',head:'Radiation protection',q:'One of your radiation therapists tells you she is pregnant.',opts:[
+ {t:'Review her duties so the dose to the fetus stays below 1 mSv for the rest of the pregnancy.',ok:true},
+ {t:'She must stop all work with radiation immediately.',eff:{rep:-3}},
+ {t:'No change is needed.',eff:{rep:-3}}],
+ why:'ICRP 103 recommends keeping the embryo/fetal dose below about 1 mSv for the rest of the pregnancy once it is declared. Most radiotherapy staff can keep working after a review of their duties.'},
+{id:'rp-badge',pool:'rp',head:'Radiation protection',q:'A therapist’s personal dosimeter reads 0.3 mSv for the quarter.',opts:[
+ {t:'Routine. Record it; it is far below the occupational limit.',ok:true},
+ {t:'Stop her working near the bunkers.',eff:{rep:-2}},
+ {t:'Report it to the regulator as an overexposure.',eff:{rep:-2}}],
+ why:'The occupational limit is 20 mSv per year averaged over 5 years (ICRP 103). 0.3 mSv in a quarter is typical and needs nothing beyond routine review.'},
+{id:'rp-nearmiss',pool:'rp',head:'Incident learning',q:'A therapist nearly set up the wrong patient on {room}. It was caught at the identity check.',opts:[
+ {t:'Report it in the incident learning system and review the process with the team.',ok:true},
+ {t:'Nothing happened, so no report is needed.',eff:{rep:-4}},
+ {t:'Give the therapist a written warning.',eff:{rep:-4}}],
+ why:'Near misses are the cheapest lessons. Reporting them without blame, in systems such as IAEA SAFRON or RO-ILS, lets you fix the process before a real error happens.'},
+{id:'au-pass',pool:'audit',head:'Dosimetry audit',q:'Your external postal dosimetry audit for {room} reports a measured/stated dose ratio of 0.969 (−3.1%).',opts:[
+ {t:'A pass. It is within the ±5% acceptance limit.',ok:true},
+ {t:'A fail. Recalibrate the linac.',eff:{down:120}},
+ {t:'Repeat the audit to be safe.',eff:{cash:-20000}}],
+ why:'The IAEA/WHO postal dose audit uses a ±5% acceptance limit, so −3.1% passes. Some departments still review anything beyond about 3%.'},
+{id:'au-fail',pool:'audit',head:'Dosimetry audit',q:'Your external postal dosimetry audit for {room} reports +7.2%.',opts:[
+ {t:'Investigate now: recheck the calibration chain and repeat the audit.',ok:true,eff:{down:120}},
+ {t:'Ignore it. Postal audits are often off.',eff:{incident:true}},
+ {t:'Turn the linac output down by 7.2% straight away.',eff:{incident:true}}],
+ why:'+7.2% is outside the ±5% limit. Investigate before changing anything: the chamber, its calibration factor, the measurement setup, then the beam itself. Adjusting output without knowing the cause can make things worse.'}
+];
+
+const GOALS=[
+  {t:'Build the pathway: clinic, CT sim, planning room, physics office and a linac',ok:()=>['clinic','ctsim','planning','office','linac'].every(hasRoom)},
+  {t:'Commission your first linac',ok:()=>S.rooms.some(r=>r.type==='linac'&&r.commissioned)},
+  {t:'Complete 30 treatment courses',prog:()=>`${Math.min(S.completed,30)}/30`,ok:()=>S.completed>=30},
+  {t:'Answer 10 physics calls correctly',prog:()=>`${Math.min(S.correct,10)}/10`,ok:()=>S.correct>=10},
+  {t:'Reach 75% reputation',prog:()=>`${Math.round(S.rep)}%`,ok:()=>S.rep>=75},
+  {t:'Hold RM 8M in the bank',prog:()=>fmtRM(S.cash),ok:()=>S.cash>=8e6}
+];
+
+/* ---------- state ---------- */
+let S=null, modalOpen=false, curQ=null, banner=null, lastPanel='', lastTicker='';
+const GEO=new Map();
+const rnd=Math.random;
+function nid(){return S.nextId++}
+function newState(){
+  const s={day:1,t:DAY_START,cash:15000000,rep:50,speed:1,paused:false,started:true,
+    rooms:[],staff:[],patients:[],jobs:[],events:[],nextId:1,pcount:0,
+    completed:0,lost:0,gaps:0,incidents:0,correct:0,answered:0,fractions:0,
+    seen:{},qlog:[],log:[],qQueue:[],lastAudit:0,won:false,ttSum:0,ttN:0,incToday:0,
+    placing:null,selected:null,tab:'build',nameIdx:0,typeCount:{}};
+  return s;
+}
+function room(id){return S.rooms.find(r=>r.id===id)}
+function hasRoom(t){return S.rooms.some(r=>r.type===t)}
+function commissioned(t){return S.rooms.some(r=>r.type===t&&r.commissioned)}
+function staffById(id){return S.staff.find(s=>s.id===id)}
+function patById(id){return S.patients.find(p=>p.id===id)}
+function fmtRM(n){const a=Math.abs(n),sg=n<0?'−':'';return a>=1e6?`${sg}RM ${(a/1e6).toFixed(2)}M`:`${sg}RM ${Math.round(a/1000)}k`}
+function clock(t){t=Math.floor(t);const h=Math.floor(t/60),m=t%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`}
+function log(m,k=''){S.log.unshift({d:S.day,t:S.t,m,k});if(S.log.length>60)S.log.length=60}
+function clampRep(){S.rep=Math.max(0,Math.min(100,S.rep))}
+function pname(p){return `Patient ${p.n} (${PT[p.type].name})`}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ---------- geometry ---------- */
+function slotAt(x,y){return SLOTS.findIndex(s=>x>=s.x&&x<=s.x+s.w&&y>=s.y&&y<=s.y+s.h)}
+function roomAtSlot(i){return S.rooms.find(r=>r.slot===i)}
+function geo(r){
+  let g=GEO.get(r.id); if(g&&g.slot===r.slot) return g;
+  const s=SLOTS[r.slot],b=RT[r.type].bunker;
+  const L=(lx,ly)=>({x:s.x+lx,y:s.top?s.y+ly:s.y+s.h-ly});
+  const dx=b?153:s.w/2;
+  const inside=L(dx,s.h-18);
+  const insideIn=b?[inside,L(150,140)]:[inside];
+  g={slot:r.slot,s,L,door:L(dx,s.h),insideIn,insideOut:[...insideIn].reverse()};
+  GEO.set(r.id,g); return g;
+}
+function regionAt(x,y){
+  if(x<175) return 'lobby';
+  const i=slotAt(x,y); if(i>=0){const r=roomAtSlot(i); if(r) return r.id;}
+  return 'corridor';
+}
+function seatPos(i){
+  if(i<16){const c=i%4,r=Math.floor(i/4);return {x:28+c*36,y:44+r*38}}
+  if(i<32){const k=i-16,c=k%4,r=Math.floor(k/4);return {x:28+c*36,y:404+r*38}}
+  const k=i-32;return {x:200+(k%30)*24,y:338-(Math.floor(k/30)*12)};
+}
+function takeSeat(p){
+  const used=new Set(S.patients.filter(q=>q!==p&&q.seat!=null).map(q=>q.seat));
+  let i=0;while(used.has(i))i++;p.seat=i;return seatPos(i);
+}
+function freeSeat(p){p.seat=null}
+
+/* ---------- movement ---------- */
+function routeTo(a,dest,spot){
+  const from=a.area==='out'?'out':regionAt(a.x,a.y);
+  const jy=CY+a.lane,pts=[];
+  if(from===dest&&dest!=='exit'){pts.push(spot)}
+  else{
+    if(from==='out'){a.x=-12;a.y=CY+a.lane;pts.push({x:30,y:jy})}
+    else if(from==='lobby'){ if(dest!=='exit'&&dest!=='lobby') pts.push({x:178,y:jy}); }
+    else if(from==='corridor'){pts.push({x:a.x,y:jy})}
+    else {const r=room(from); if(r){const g=geo(r);pts.push(...g.insideOut,g.door,{x:g.door.x,y:jy})}}
+    if(dest==='lobby'){pts.push({x:150,y:jy},spot)}
+    else if(dest==='exit'){pts.push({x:-14,y:jy})}
+    else {const g=geo(room(dest));pts.push({x:g.door.x,y:jy},g.door,...g.insideIn,spot)}
+  }
+  a.path=pts;a.dest=dest;a.area=a.area==='out'?'moving':a.area;
+}
+function moveAgent(a,dt){
+  let step=WALK*dt;
+  while(step>0&&a.path.length){
+    const p=a.path[0],dx=p.x-a.x,dy=p.y-a.y,d=Math.hypot(dx,dy);
+    if(d<=step){a.x=p.x;a.y=p.y;a.path.shift();step-=d}
+    else{a.x+=dx/d*step;a.y+=dy/d*step;step=0}
+  }
+  if(!a.path.length&&a.dest){const d=a.dest;a.dest=null;a.area=d;onArrive(a)}
+}
+function arrived(a,area){return a&&a.area===area&&!a.path.length&&!a.dest}
+
+function onArrive(a){
+  if(a.area==='exit'){
+    a.area='out';
+    if(a.kind==='p'){ if(a.done||a.lost) a.gone=true; else a.state='away'; }
+    return;
+  }
+  if(a.kind==='p'&&a.area==='lobby'&&a.state==='coming'){a.state='waiting';a.waitStart=S.t}
+}
+
+/* ---------- staff ---------- */
+function homeFor(s){
+  const pref={onc:['clinic'],phys:['office','planning'],rtt:['linac','ctsim']}[s.role];
+  for(const t of pref){const r=S.rooms.find(r=>r.type===t);if(r)return r}
+  return null;
+}
+function goHome(s){
+  const r=homeFor(s);
+  if(r){const g=geo(r),h=SPOTS[r.type].home;const p=g.L(h[0]+(rnd()*24-12),h[1]+(rnd()*16-8));routeTo(s,r.id,p)}
+  else routeTo(s,'lobby',{x:120+rnd()*40,y:228+rnd()*30});
+}
+function hire(role,silent){
+  const s={id:nid(),kind:'s',role,name:NAMES[S.nameIdx++%NAMES.length],area:'out',x:-12,y:CY,path:[],dest:null,busy:null,lane:Math.round(rnd()*50-25)};
+  S.staff.push(s);
+  if(!silent){sfx('hire');log(`Hired ${s.name}, ${ROLES[role].name.toLowerCase()}.`);if(S.t<DAY_END-30)goHome(s)}
+  return s;
+}
+function nearestIdle(role,r){
+  const g=geo(r);let best=null,bd=1e9;
+  for(const s of S.staff){
+    if(s.role!==role||s.busy||s.area==='out')continue;
+    const d=Math.hypot(s.x-g.door.x,s.y-g.door.y);if(d<bd){bd=d;best=s}
+  }
+  return best;
+}
+
+/* ---------- jobs ---------- */
+function firstWaiting(step,mod){
+  let best=null;
+  for(const p of S.patients){
+    if(p.state!=='waiting'||p.step!==step||p.job||p.area!=='lobby')continue;
+    if(mod&&PT[p.type].mod!==mod)continue;
+    if(!best||p.waitStart<best.waitStart)best=p;
+  }
+  return best;
+}
+function txMinutes(r,p){
+  const base=PT[p.type].tx;
+  return r.type==='brachy'?base*Math.pow(2,r.srcAge/73.8):base;
+}
+function schedule(){
+  const tasks=[];
+  for(const r of S.rooms){
+    const T=r.type,free=RT[T].cap-r.active;if(free<=0)continue;
+    if(RT[T].bunker){
+      if(!r.commissioned){tasks.push({pr:6,role:'phys',room:r,kind:'comm'});continue}
+      if(r.fault){if(!r.vendorFixAt)tasks.push({pr:1,role:'phys',room:r,kind:'fault'});continue}
+      if(r.exchange){tasks.push({pr:2,role:'phys',room:r,kind:'exchange'});continue}
+      if(r.needQA){tasks.push({pr:2,role:'phys',room:r,kind:'qa'});continue}
+      if(r.downUntil>S.t)continue;
+      const p=firstWaiting('tx',T);
+      if(p)tasks.push({pr:3,role:T==='linac'?'rtt':'phys',room:r,kind:'tx',p});
+    }else if(T==='clinic'){const p=firstWaiting('consult');if(p)tasks.push({pr:4,role:'onc',room:r,kind:'consult',p})}
+    else if(T==='ctsim'){const p=firstWaiting('sim');if(p)tasks.push({pr:4,role:'rtt',room:r,kind:'sim',p})}
+    else if(T==='planning'){S.patients.filter(p=>p.step==='plan'&&!p.job&&!p.gone).sort((a,b)=>a.n-b.n).slice(0,free).forEach(p=>tasks.push({pr:7,role:'phys',room:r,kind:'plan',p}))}
+    else if(T==='office'){S.patients.filter(p=>p.step==='check'&&!p.job&&!p.gone).sort((a,b)=>a.n-b.n).slice(0,free).forEach(p=>tasks.push({pr:5,role:'phys',room:r,kind:'check',p}))}
+  }
+  tasks.sort((a,b)=>a.pr-b.pr);
+  for(const tk of tasks){
+    if(tk.p&&tk.p.job)continue;
+    if(tk.room.active>=RT[tk.room.type].cap)continue;
+    let s=nearestIdle(tk.role,tk.room);
+    if(!s&&tk.alt)s=nearestIdle(tk.alt,tk.room);
+    if(!s)continue;
+    startJob(tk,s);
+  }
+}
+function startJob(tk,s){
+  const r=tk.room;if(!r.spots)r.spots=[];
+  let si=0;while(r.spots[si])si++;
+  let dur;
+  switch(tk.kind){
+    case 'consult':dur=40;break;case 'sim':dur=30;break;case 'plan':dur=120;break;
+    case 'check':dur=30;break;case 'qa':dur=20;break;case 'comm':dur=Math.min(60,r.commLeft);break;
+    case 'fault':dur=60;break;case 'exchange':dur=120;break;case 'tx':dur=txMinutes(r,tk.p);break;
+  }
+  const present=['consult','sim','tx'].includes(tk.kind);
+  const j={id:nid(),kind:tk.kind,roomId:r.id,staffId:s.id,pid:tk.p?tk.p.id:null,dur,left:dur,spot:si,present,working:false};
+  S.jobs.push(j);r.active++;r.spots[si]=j.id;s.busy=j.id;
+  const g=geo(r),sp=SPOTS[r.type].staff[si]||SPOTS[r.type].staff[0];
+  routeTo(s,r.id,g.L(sp[0],sp[1]));
+  if(tk.p){tk.p.job=j.id;if(present){freeSeat(tk.p);tk.p.state='called';const pp=SPOTS[r.type].pat;routeTo(tk.p,r.id,g.L(pp[0],pp[1]))}}
+}
+function releaseJob(j){
+  const r=room(j.roomId),s=staffById(j.staffId),p=j.pid?patById(j.pid):null;
+  if(r){r.active=Math.max(0,r.active-1);if(r.spots)r.spots[j.spot]=null}
+  if(s)s.busy=null;
+  if(p)p.job=null;
+  S.jobs=S.jobs.filter(x=>x!==j);
+  return {r,s,p};
+}
+function updateJobs(dt){
+  for(const j of [...S.jobs]){
+    const r=room(j.roomId),s=staffById(j.staffId),p=j.pid?patById(j.pid):null;
+    if(!r||!s){releaseJob(j);continue}
+    const ready=arrived(s,r.id)&&(!j.present||arrived(p,r.id));
+    j.working=ready;
+    if(ready)j.left-=dt;
+    if(j.left<=0)completeJob(j);
+  }
+}
+function completeJob(j){
+  const {r,s,p}=releaseJob(j);
+  switch(j.kind){
+    case 'consult':
+      p.step='sim';p.state='coming';routeTo(p,'lobby',takeSeat(p));break;
+    case 'sim':
+      p.step='plan';sendOut(p);break;
+    case 'plan':
+      p.step='check';break;
+    case 'check':
+      p.step='tx';p.nextDay=S.day+1;
+      log(`${pname(p)}: plan approved. Starts treatment tomorrow.`,'phys');
+      if(rnd()<0.3)askPool('plan',{room:null,patient:p});
+      break;
+    case 'qa':
+      r.needQA=false;log(`${r.name}: daily QA passed by ${s.name}.`,'phys');
+      if(rnd()<0.35)askPool('qa',{room:r});
+      break;
+    case 'comm':
+      r.commLeft-=j.dur;
+      if(r.commLeft<=0){r.commissioned=true;r.needQA=false;sfx('fanfare');log(`${r.name} is commissioned and ready to treat.`,'good');askPool('comm',{room:r})}
+      else if(rnd()<0.25)askPool('comm',{room:r});
+      break;
+    case 'fault':
+      r.fault=null;sfx('fix');log(`${s.name} fixed the fault on ${r.name}.`,'phys');break;
+    case 'exchange':
+      r.exchange=false;r.srcAge=0;log(`${r.name}: new Ir-192 source installed and calibrated.`,'phys');askPool('brcal',{room:r});break;
+    case 'tx':{
+      p.fxLeft--;S.fractions++;
+      if(p.fxLeft===PT[p.type].fx-1){S.ttSum+=S.day-p.refDay;S.ttN++}
+      if(p.fxLeft<=0){
+        p.done=true;sfx('cash');S.completed++;S.cash+=PT[p.type].pay;S.incToday+=PT[p.type].pay;S.rep+=1.2;clampRep();
+        log(`${pname(p)} finished ${PT[p.type].rx}. +${fmtRM(PT[p.type].pay)}`,'good');
+      }else p.nextDay=S.day+1;
+      if(r.type==='brachy'&&rnd()<0.2)askPool('brachy',{room:r});
+      sendOut(p);break;}
+  }
+  if(s&&!s.busy)goHome(s);
+}
+function sendOut(p){freeSeat(p);p.state='leaving';routeTo(p,'exit')}
+
+/* ---------- questions ---------- */
+function askPool(pool,ctx){
+  const qs=Q.filter(q=>q.pool===pool);if(!qs.length)return;
+  const fresh=qs.filter(q=>!S.seen[q.id]);
+  const q=(fresh.length?fresh:qs)[Math.floor(rnd()*(fresh.length?fresh.length:qs.length))];
+  S.qQueue.push({id:q.id,room:ctx.room?ctx.room.id:null,pid:ctx.patient?ctx.patient.id:null});
+}
+function fillQ(text,item){
+  const r=item.room?room(item.room):null,p=item.pid?patById(item.pid):null;
+  const rn=r?r.name:(S.rooms.find(x=>x.type==='linac')||{name:'the linac'}).name;
+  return text.replace(/\{room\}/g,rn).replace(/\{patient\}/g,p?`Patient ${p.n}`:'a patient');
+}
+function openQuestion(item){
+  const q=Q.find(x=>x.id===item.id);
+  const order=q.opts.map((o,i)=>i).sort(()=>rnd()-.5);
+  curQ={item,q,order,answered:false};sfx('pager');
+  renderQuestion();
+}
+function renderQuestion(choice){
+  const {item,q,order}=curQ;
+  let html=`<p class="eyebrow">Physics call · ${esc(q.head)}</p><h2>${esc(fillQ(q.q,item))}</h2><div class="opts">`;
+  order.forEach((oi,k)=>{
+    const o=q.opts[oi];let cls='';
+    if(choice!=null){if(o.ok)cls='right';else if(oi===choice)cls='wrong'}
+    html+=`<button class="opt ${cls}" data-act="answer" data-i="${oi}" ${choice!=null?'disabled':''} id="opt${k}">${String.fromCharCode(65+k)}. ${esc(o.t)}</button>`;
+  });
+  html+='</div>';
+  if(choice!=null){
+    const o=q.opts[choice];
+    html+=`<p class="${o.ok?'ok':'no'}"><b>${o.ok?'Correct.':'Not the right call.'}</b> ${esc(effectText(o))}</p><div class="why">${esc(q.why)}</div><div class="btnrow"><button class="btn primary big" data-act="qcontinue" id="qcont">Back to the department</button></div>`;
+  }
+  showModal(html);
+  if(choice!=null){const b=document.getElementById('qcont');b&&b.focus()}
+}
+function effectText(o){
+  const e=o.eff||{},parts=[];
+  parts.push(o.ok?'Reputation +2.':'Reputation −2.');
+  if(e.rep)parts.push(`Reputation ${e.rep}.`);
+  if(e.down)parts.push(`The machine is down for ${e.down} minutes.`);
+  if(e.cash)parts.push(`Cost ${fmtRM(-e.cash)}.`);
+  if(e.incident)parts.push('A radiation incident is reported: reputation −10 and a RM 250k penalty.');
+  return parts.join(' ');
+}
+function answer(choice){
+  if(!curQ||curQ.answered)return;
+  curQ.answered=true;
+  const {q,item}=curQ,o=q.opts[choice],e=o.eff||{};
+  S.answered++;
+  if(o.ok){S.correct++;S.rep+=2}else S.rep-=2;
+  sfx(o.ok?'right':(e.incident?'incident':'wrong'));
+  if(e.rep)S.rep+=e.rep;
+  if(e.cash){S.cash+=e.cash}
+  if(e.down){const r=item.room?room(item.room):S.rooms.find(x=>x.type==='linac'&&x.commissioned);if(r)r.downUntil=Math.max(r.downUntil||0,S.t+e.down)}
+  if(e.incident){S.incidents++;S.rep-=10;S.cash-=250000;log('Radiation incident reported to the regulator. Reputation −10, RM 250k penalty.','bad')}
+  clampRep();
+  S.seen[q.id]=(S.seen[q.id]||0)+1;
+  S.qlog.unshift({id:q.id,ok:!!o.ok,d:S.day,text:fillQ(q.q,item),pick:o.t});
+  log(`Physics call (${q.head}): ${o.ok?'correct':'wrong'} answer.`,o.ok?'phys':'bad');
+  renderQuestion(choice);
+}
+
+/* ---------- day cycle ---------- */
+function pickType(){
+  const types=Object.keys(PT).filter(k=>PT[k].mod==='linac'||hasRoom('brachy'));
+  const tot=types.reduce((a,k)=>a+PT[k].w,0);let x=rnd()*tot;
+  for(const k of types){x-=PT[k].w;if(x<=0)return k}
+  return types[0];
+}
+function startDay(){
+  S.t=DAY_START;S.incToday=0;S.events=[];
+  for(const p of S.patients)if(p.state==='scheduled')p.state='away';
+  for(const r of S.rooms){
+    if(RT[r.type].bunker&&r.commissioned){r.needQA=true}
+    r.downUntil=0;
+    if(r.vendorFixAt){r.fault=null;r.vendorFixAt=0}
+  }
+  S.staff.forEach((s,i)=>{s.area='out';s.path=[];s.dest=null;s.busy=null;S.events.push({t:DAY_START+i*2,type:'staff',id:s.id})});
+  const clinics=S.rooms.filter(r=>r.type==='clinic').length;
+  if(clinics){
+    const n=Math.max(1,Math.round(2+S.rep/100*5+(clinics-1)*1.5+rnd()*1.5));
+    for(let i=0;i<n;i++)S.events.push({t:480+rnd()*420,type:'arrive'});
+  }
+  for(const p of S.patients){
+    if(p.state!=='away'||p.gone)continue;
+    if(!['consult','sim','tx'].includes(p.step)||p.nextDay>S.day)continue;
+    const need=p.step==='consult'?hasRoom('clinic'):p.step==='sim'?hasRoom('ctsim'):commissioned(PT[p.type].mod);
+    if(!need){p.nextDay=S.day+1;continue}
+    p.state='scheduled';
+    S.events.push({t:p.step==='tx'?470+rnd()*400:480+rnd()*120,type:'visit',id:p.id});
+  }
+  for(const r of S.rooms){
+    if(r.type==='linac'&&r.commissioned&&rnd()<0.12)S.events.push({t:540+rnd()*360,type:'fault',id:r.id});
+  }
+  const anyComm=S.rooms.some(r=>RT[r.type].bunker&&r.commissioned);
+  if(anyComm&&rnd()<0.14)S.events.push({t:600+rnd()*300,type:'rp'});
+  if(anyComm&&S.day-S.lastAudit>=16){S.events.push({t:620,type:'audit'});S.lastAudit=S.day}
+  for(const r of S.rooms)if(r.type==='brachy'&&r.commissioned&&r.srcAge>=90&&!r.exchange)log(`${r.name}: source is ${r.srcAge} days old. Treatments now take ${Math.pow(2,r.srcAge/73.8).toFixed(1)}× longer. Consider a source exchange.`,'warn');
+  S.events.sort((a,b)=>a.t-b.t);
+  banner={text:`Day ${S.day}`,until:performance.now()+1500};sfx('day');
+  save();
+}
+function endDay(){
+  for(const j of [...S.jobs]){
+    const {r}=releaseJob(j);
+    if(j.kind==='comm'&&r)r.commLeft=Math.max(0,r.commLeft-(j.dur-j.left));
+  }
+  let gaps=0,returned=0;
+  for(const p of S.patients){
+    if(p.gone)continue;
+    if(p.area!=='out'||p.state==='scheduled'||p.state==='coming'||p.state==='waiting'||p.state==='called'){
+      if(p.state==='leaving'){if(p.done||p.lost)p.gone=true}
+      else if(['consult','sim','tx'].includes(p.step)){
+        p.nextDay=S.day+1;
+        if(p.step==='tx'){gaps++;S.rep-=0.5}else{returned++;S.rep-=0.5}
+      }
+    }
+    p.area='out';p.path=[];p.dest=null;p.seat=null;p.job=null;
+    if(!p.gone)p.state='away';
+  }
+  S.gaps+=gaps;clampRep();
+  S.patients=S.patients.filter(p=>!p.gone);
+  for(const s of S.staff){s.area='out';s.path=[];s.dest=null;s.busy=null}
+  const sal=S.staff.reduce((a,s)=>a+ROLES[s.role].salary,0);
+  const up=S.rooms.reduce((a,r)=>a+(RT[r.type].upkeep||0),0);
+  S.cash-=sal+up;
+  for(const r of S.rooms)if(r.type==='brachy'&&r.commissioned)r.srcAge++;
+  log(`Day ${S.day} closed. Income ${fmtRM(S.incToday)}, salaries and upkeep ${fmtRM(sal+up)}.${gaps?` ${gaps} patient(s) missed a fraction: a treatment gap.`:''}${returned?` ${returned} patient(s) asked to come back tomorrow.`:''}`,gaps?'warn':'');
+  if(S.cash<-2000000){gameOver();return}
+  S.day++;startDay();
+}
+function runEvent(e){
+  if(e.type==='staff'){const s=staffById(e.id);if(s)goHome(s)}
+  else if(e.type==='arrive'){
+    const type=pickType();
+    const p={id:nid(),n:++S.pcount,kind:'p',type,fxLeft:PT[type].fx,step:'consult',area:'out',x:-12,y:CY,path:[],dest:null,state:'coming',seat:null,job:null,refDay:S.day,nextDay:S.day,lane:Math.round(rnd()*50-25)};
+    S.patients.push(p);routeTo(p,'lobby',takeSeat(p));sfx('arrive');
+  }
+  else if(e.type==='visit'){
+    const p=patById(e.id);if(!p||p.gone)return;
+    p.state='coming';routeTo(p,'lobby',takeSeat(p));
+  }
+  else if(e.type==='fault'){
+    const r=room(e.id);if(!r||!r.commissioned||r.fault)return;
+    r.fault=FAULTS[Math.floor(rnd()*FAULTS.length)];
+    sfx('fault');log(`${r.name} fault: ${r.fault}. Treatments stop until a physicist fixes it.`,'bad');
+  }
+  else if(e.type==='rp'){askPool('rp',{room:S.rooms.find(r=>r.type==='linac'&&r.commissioned)})}
+  else if(e.type==='audit'){askPool('audit',{room:S.rooms.find(r=>r.type==='linac'&&r.commissioned)})}
+}
+function patience(){
+  for(const p of S.patients){
+    if(p.state!=='waiting'||p.area!=='lobby')continue;
+    if(S.t-p.waitStart>180){
+      if(p.step==='tx'){p.nextDay=S.day+1;S.gaps++;S.rep-=1;log(`${pname(p)} waited 3 hours and went home. That is a treatment gap.`,'bad')}
+      else{p.lost=true;S.lost++;S.rep-=3;log(`${pname(p)} left without being seen.`,'bad')}
+      clampRep();sfx('grumble');sendOut(p);
+    }
+  }
+}
+function tick(dt){
+  S.t+=dt;
+  while(S.events.length&&S.events[0].t<=S.t)runEvent(S.events.shift());
+  for(const r of S.rooms)if(r.vendorFixAt&&S.t>=r.vendorFixAt){r.fault=null;r.vendorFixAt=0;log(`Vendor engineer fixed ${r.name}.`,'good')}
+  for(const s of S.staff)if(s.area!=='out'||s.path.length)moveAgent(s,dt);
+  for(const p of S.patients)if(p.path.length)moveAgent(p,dt);
+  updateJobs(dt);
+  schedule();
+  patience();
+  checkWin();
+  if(S.t>=DAY_END)endDay();
+}
+
+
+/* ---------- audio: all synthesised with Web Audio, no files ---------- */
+const AU={ctx:null,musicOn:true,sfxOn:true,beamSet:new Set(),beat:0,nextT:0,timer:null};
+try{const pr=JSON.parse(localStorage.getItem('beam-on-audio')||'{}');if(pr.m===false)AU.musicOn=false;if(pr.s===false)AU.sfxOn=false}catch(e){}
+function audioPrefs(){try{localStorage.setItem('beam-on-audio',JSON.stringify({m:AU.musicOn,s:AU.sfxOn}))}catch(e){}}
+function audioInit(){
+  if(AU.ctx){if(AU.ctx.state==='suspended')AU.ctx.resume().catch(()=>{});return}
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  try{AU.ctx=new AC()}catch(e){return}
+  const c=AU.ctx;
+  AU.master=c.createGain();AU.master.gain.value=0.8;AU.master.connect(c.destination);
+  AU.mus=c.createGain();AU.mus.gain.value=AU.musicOn?0.16:0;AU.mus.connect(AU.master);
+  AU.fx=c.createGain();AU.fx.gain.value=0.55;AU.fx.connect(AU.master);
+  const len=c.sampleRate;AU.noise=c.createBuffer(1,len,c.sampleRate);const d=AU.noise.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  // linac hum: low buzz that fades in while any beam is on
+  AU.hum=c.createGain();AU.hum.gain.value=0;
+  const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=520;
+  [[98,'sawtooth',0.6],[196,'sine',0.5],[147,'triangle',0.3]].forEach(([f,t,v])=>{const o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(lp);o.start()});
+  lp.connect(AU.hum);AU.hum.connect(AU.fx);
+  AU.nextT=c.currentTime+0.1;
+  AU.timer=setInterval(musicTick,90);
+}
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+function tone(f,d,o={}){
+  const c=AU.ctx,t=c.currentTime+(o.at||0),os=c.createOscillator(),g=c.createGain();
+  os.type=o.type||'sine';os.frequency.setValueAtTime(f,t);if(o.slide)os.frequency.exponentialRampToValueAtTime(o.slide,t+d);
+  g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(o.v||0.2,t+(o.attack||0.006));g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  os.connect(g);g.connect(o.bus||AU.fx);os.start(t);os.stop(t+d+0.05);
+}
+function noise(d,o={}){
+  const c=AU.ctx,t=c.currentTime+(o.at||0),src=c.createBufferSource(),hp=c.createBiquadFilter(),lp=c.createBiquadFilter(),g=c.createGain();
+  src.buffer=AU.noise;hp.type='highpass';hp.frequency.value=o.hp||1000;lp.type='lowpass';lp.frequency.value=o.lp||9000;
+  g.gain.setValueAtTime(o.v||0.2,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(o.bus||AU.fx);src.start(t,Math.random()*0.5);src.stop(t+d+0.05);
+}
+const SFX={
+  click:()=>tone(1400,0.035,{type:'square',v:0.035}),
+  build:()=>{noise(0.3,{v:0.35,hp:60,lp:500});tone(120,0.35,{v:0.35,slide:55});tone(660,0.14,{type:'triangle',v:0.1,at:0.2});tone(990,0.22,{type:'triangle',v:0.1,at:0.3})},
+  hire:()=>{tone(784,0.14,{type:'triangle',v:0.15});tone(1047,0.24,{type:'triangle',v:0.15,at:0.09})},
+  arrive:()=>{tone(1568,0.6,{v:0.05});tone(3136,0.3,{v:0.015})},
+  beam:()=>{tone(880,0.08,{type:'square',v:0.04});tone(880,0.08,{type:'square',v:0.04,at:0.13})},
+  cash:()=>{[1319,1568,2093,2637].forEach((f,i)=>tone(f,0.28,{type:'triangle',v:0.1,at:i*0.055}));noise(0.12,{v:0.05,hp:5000,at:0.05})},
+  fault:()=>{for(let i=0;i<3;i++){tone(740,0.17,{type:'sawtooth',v:0.07,at:i*0.36});tone(554,0.17,{type:'sawtooth',v:0.07,at:i*0.36+0.18})}},
+  pager:()=>{for(let i=0;i<3;i++)tone(2350,0.07,{type:'square',v:0.05,at:i*0.11})},
+  right:()=>[523,659,784,1047].forEach((f,i)=>tone(f,0.32,{type:'triangle',v:0.13,at:i*0.07})),
+  wrong:()=>{tone(233,0.4,{type:'sawtooth',v:0.09,slide:155});tone(220,0.4,{type:'sawtooth',v:0.06})},
+  incident:()=>{for(let i=0;i<4;i++)tone(i%2?600:900,0.2,{type:'square',v:0.06,at:i*0.22})},
+  fanfare:()=>[[523,0],[659,.12],[784,.24],[1047,.36],[784,.54],[1047,.66]].forEach(([f,a])=>tone(f,0.4,{type:'triangle',v:0.13,at:a})),
+  day:()=>[659,880,1109,1319].forEach((f,i)=>tone(f,0.7,{v:0.07,at:i*0.13})),
+  grumble:()=>tone(170,0.32,{type:'triangle',v:0.09,slide:105}),
+  fix:()=>{noise(0.07,{v:0.12,hp:2500});noise(0.07,{v:0.12,hp:2500,at:0.12});tone(1175,0.16,{type:'triangle',v:0.08,at:0.22})},
+  demolish:()=>{noise(0.5,{v:0.3,hp:40,lp:900});tone(90,0.5,{v:0.25,slide:40})}
+};
+let lastSfx={};
+function sfx(n){
+  if(!AU.ctx||!AU.sfxOn)return;
+  const now=performance.now();if(lastSfx[n]&&now-lastSfx[n]<90)return;lastSfx[n]=now;
+  try{SFX[n]()}catch(e){}
+}
+// Music: an original, mellow loop. Fmaj7 – Dm7 – Bbmaj7 – C7sus, 88 bpm, eighth-note grid.
+const PROG=[[53,57,60,64],[50,53,57,60],[46,50,53,57],[48,53,55,58]];
+const ARP=[[0,2,1,3,2,1,3,2],[0,1,2,3,2,3,1,2],[3,2,1,0,1,2,3,1],[0,2,3,2,1,2,0,3]];
+const MEL=[[76,null,74,72,null,69,72,null],[74,null,72,69,null,65,69,null],[70,null,72,74,null,77,74,null],[72,null,70,67,null,65,67,null]];
+function musicTick(){
+  const c=AU.ctx;if(!c)return;
+  const step8=60/88/2;
+  if(c.currentTime>AU.nextT+1)AU.nextT=c.currentTime+0.05;
+  while(AU.nextT<c.currentTime+0.3){if(AU.musicOn)scheduleStep(AU.beat,AU.nextT);AU.nextT+=step8;AU.beat++}
+}
+function scheduleStep(i,t){
+  const c=AU.ctx,bar=Math.floor(i/8),step=i%8,ch=PROG[bar%4],section=Math.floor(bar/8)%4,busy=S&&S.jobs.some(j=>j.kind==='tx'&&j.working);
+  const at=t-c.currentTime,bus=AU.mus;
+  if(step===0){
+    ch.forEach(m=>{const o=c.createOscillator(),g=c.createGain(),f=c.createBiquadFilter();o.type='triangle';o.frequency.value=mtof(m);f.type='lowpass';f.frequency.value=1100;
+      g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.07,t+0.35);g.gain.setValueAtTime(0.07,t+2.2);g.gain.exponentialRampToValueAtTime(0.0001,t+2.8);
+      o.connect(f);f.connect(g);g.connect(bus);o.start(t);o.stop(t+2.9)});
+  }
+  if(step===0||step===3||step===6){const root=ch[0]-12+(step===3?7:0);tone(mtof(root),0.5,{v:0.22,at,bus})}
+  if(section!==0||bar%8>=4){
+    const arp=ARP[(bar+section)%4];if(Math.random()>0.18)tone(mtof(ch[arp[step]]+12),0.22,{type:'triangle',v:0.06,at,bus});
+  }
+  if(section>=2){const m=MEL[bar%4][step];if(m!=null)tone(mtof(m),0.45,{type:'sine',v:0.07,at,bus,attack:0.02})}
+  if(step%2===1)noise(0.04,{v:busy?0.05:0.03,hp:7000,at,bus});
+  if(step===4&&section%2===1)noise(0.09,{v:0.06,hp:1500,lp:5000,at,bus});
+}
+function audioFrame(){
+  if(!AU.ctx||!S)return;
+  const live=S.started&&!S.paused&&!modalOpen;
+  const on=live?S.rooms.filter(r=>RT[r.type].bunker&&beamOn(r)):[];
+  for(const r of on)if(!AU.beamSet.has(r.id))sfx('beam');
+  AU.beamSet=new Set(on.map(r=>r.id));
+  AU.hum.gain.setTargetAtTime(AU.sfxOn&&on.length?0.035+0.015*(on.length-1):0,AU.ctx.currentTime,0.12);
+}
+
+/* ---------- actions ---------- */
+function build(type,slot){
+  const c=RT[type].cost;if(S.cash<c){log(`Not enough money for a ${RT[type].name}.`,'bad');return}
+  S.cash-=c;S.typeCount[type]=(S.typeCount[type]||0)+1;
+  const r={id:nid(),type,slot,name:`${RT[type].short} ${S.typeCount[type]}`,active:0,spots:[],commissioned:!RT[type].bunker,commLeft:type==='linac'?360:type==='brachy'?180:0,needQA:false,fault:null,downUntil:0,vendorFixAt:0,srcAge:0,exchange:false};
+  S.rooms.push(r);S.placing=null;S.selected=r.id;sfx('build');
+  log(`Built ${r.name} for ${fmtRM(c)}.${RT[type].bunker?' A physicist will start commissioning it.':''}`);
+  for(const s of S.staff)if(!s.busy&&s.area!=='out'&&homeFor(s)===r)goHome(s);
+}
+function demolish(r){
+  if(r.active){log(`${r.name} is in use. Wait until it is free.`,'warn');return}
+  const ref=Math.round(RT[r.type].cost*0.4);S.cash+=ref;
+  S.rooms=S.rooms.filter(x=>x!==r);GEO.delete(r.id);sfx('demolish');S.selected=null;
+  for(const a of [...S.staff,...S.patients]){if(a.dest===r.id){a.path=[];a.dest=null;a.area='corridor';a.y=CY+a.lane}}
+  for(const s of S.staff)if(!s.busy&&s.area!=='out')goHome(s);
+  log(`Demolished ${r.name}. Refund ${fmtRM(ref)}.`);
+}
+function fire(role){
+  const cands=S.staff.filter(s=>s.role===role&&!s.busy);
+  if(!cands.length){log(`Every ${ROLES[role].name.toLowerCase()} is busy right now. Try again when one is free.`,'warn');return}
+  if(S.staff.filter(s=>s.role===role).length<=1&&role==='phys'){log('You need at least one medical physicist. Nobody else can do QA or plan checks.','warn');return}
+  const s=cands[cands.length-1];S.staff=S.staff.filter(x=>x!==s);log(`${s.name} has left the department.`);
+}
+function checkWin(){
+  if(S.won)return;
+  if(GOALS.every(g=>g.ok())){S.won=true;S.qQueue.unshift({win:true})}
+}
+function gameOver(){
+  S.started=false;
+  showModal(`<p class="eyebrow amber">Department closed</p><h2>The hospital board has shut the department</h2><p>The bank fell below −RM 2M on day ${S.day}. You completed ${S.completed} treatment courses and answered ${S.correct} of ${S.answered} physics calls correctly.</p><div class="btnrow"><button class="btn primary big" data-act="newgame">Start again</button></div>`);
+  try{localStorage.removeItem(SAVE_KEY)}catch(e){}
+}
+
+/* ---------- save ---------- */
+const SAVE_KEY='beam-on-save-v1';
+function save(){try{const c={...S,placing:null,selected:null};localStorage.setItem(SAVE_KEY,JSON.stringify(c))}catch(e){}}
+function loadSave(){try{const t=localStorage.getItem(SAVE_KEY);return t?JSON.parse(t):null}catch(e){return null}}
+
+/* ---------- modal ---------- */
+const modal=document.getElementById('modal'),card=document.getElementById('modalCard');
+function showModal(html){card.innerHTML=html;modal.hidden=false;modalOpen=true}
+function hideModal(){modal.hidden=true;modalOpen=false;curQ=null}
+function intro(){
+  const sv=loadSave();
+  showModal(`<p class="eyebrow amber">New contract</p><h2>Run a radiotherapy department where physics keeps everyone safe</h2>
+  <p>Build the patient pathway, hire your team and keep the beams on. Your medical physicists plan every treatment, check every plan, commission the linacs, run morning QA, fix faults and handle radiation safety. When something comes up, you make the physics call.</p>
+  <ol class="steps">
+   <li><b class="n">1</b><span>Build a <b>Consult Clinic</b>, <b>CT Simulator</b>, <b>Planning Room</b>, <b>Physics Office</b> and a <b>Linac Bunker</b> on the empty plots.</span></li>
+   <li><b class="n">2</b><span>A physicist commissions the linac (6 hours of work, often over two days). Each morning it needs QA before the first patient.</span></li>
+   <li><b class="n">3</b><span>Patients go: consult → CT sim → plan → physics check → treatment fractions on following days.</span></li>
+   <li><b class="n">4</b><span>Watch the queues. Hire staff where the work piles up. Patients who wait over 3 hours go home.</span></li>
+  </ol>
+  <div class="legend"><span><i class="role-dot" style="background:${ROLES.phys.color}">P</i>Physicist</span><span><i class="role-dot" style="background:${ROLES.onc.color}">O</i>Oncologist</span><span><i class="role-dot" style="background:${ROLES.rtt.color}">R</i>Therapist</span></div>
+  <div class="btnrow">${sv?`<button class="btn big" data-act="continue">Continue day ${sv.day}</button>`:''}<button class="btn primary big" data-act="newgame">${sv?'New game':'Open the department'}</button></div>`);
+}
+function startNew(){
+  S=newState();GEO.clear();
+  ['onc','phys','phys','rtt','rtt'].forEach(r=>hire(r,true));
+  log('Welcome. Start by building a Consult Clinic on an empty plot.');
+  hideModal();S.tab='build';startDay();lastPanel='';
+}
+
+/* ---------- drawing ---------- */
+const C=document.getElementById('floor'),ctx=C.getContext('2d');
+function resize(){const d=Math.min(2,window.devicePixelRatio||1);C.width=W*d;C.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
+resize();window.addEventListener('resize',resize);
+const COL={outer:'#C3CDD3',lobby:'#EEF2F3',corr:'#DCE4E8',wall:'#4E5A63',conc:'#A3ACB2',concD:'#8E989F',empty:'#D5DEE2',ink:'#16212A',amber:'#E8961A',laser:'#1E9E5E',danger:'#C23B3B',phys:'#137F8E'};
+let concPat=null;
+function concretePattern(){
+  if(concPat)return concPat;
+  const c=document.createElement('canvas');c.width=c.height=12;const x=c.getContext('2d');
+  x.fillStyle=COL.conc;x.fillRect(0,0,12,12);x.strokeStyle=COL.concD;x.lineWidth=1;
+  x.beginPath();x.moveTo(0,12);x.lineTo(12,0);x.stroke();
+  x.fillStyle='rgba(255,255,255,.25)';x.fillRect(3,3,1.5,1.5);x.fillRect(8,7,1.5,1.5);
+  return concPat=ctx.createPattern(c,'repeat');
+}
+function rrect(x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):ctx.rect(x,y,w,h)}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=COL.outer;ctx.fillRect(0,0,W,H);
+  // lobby
+  ctx.fillStyle=COL.lobby;ctx.fillRect(0,0,172,H);
+  ctx.strokeStyle='rgba(78,90,99,.08)';ctx.lineWidth=1;
+  for(let x=0;x<172;x+=24){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=24){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(172,y);ctx.stroke()}
+  // corridor
+  ctx.fillStyle=COL.corr;ctx.fillRect(172,250,W-172,100);
+  ctx.strokeStyle='rgba(78,90,99,.10)';for(let x=172;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,250);ctx.lineTo(x,350);ctx.stroke()}
+  ctx.strokeStyle='rgba(232,150,26,.35)';ctx.setLineDash([10,8]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(172,300);ctx.lineTo(W-6,300);ctx.stroke();ctx.setLineDash([]);
+  // seats
+  for(let i=0;i<32;i++){const p=seatPos(i);ctx.fillStyle='#C9D4DA';rrect(p.x-11,p.y-9,22,20,4);ctx.fill()}
+  // reception
+  ctx.fillStyle='#5E6E79';rrect(22,206,96,20,5);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='700 10px "Chakra Petch",sans-serif';ctx.textAlign='center';ctx.fillText('RECEPTION',70,220);
+  // outer walls
+  ctx.strokeStyle=COL.wall;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,268);ctx.moveTo(0,332);ctx.lineTo(0,H);ctx.stroke();
+  ctx.fillStyle=COL.amber;ctx.font='700 11px "Chakra Petch",sans-serif';ctx.textAlign='left';
+  ctx.save();ctx.translate(14,300);ctx.fillText('IN / OUT',0,4);ctx.restore();
+  // slots
+  SLOTS.forEach((s,i)=>{
+    const r=S?roomAtSlot(i):null;
+    if(r)drawRoom(r);
+    else{
+      ctx.fillStyle=S&&S.placing?'#F7E7CB':COL.empty;ctx.fillRect(s.x,s.y,s.w,s.h);
+      ctx.strokeStyle=S&&S.placing?COL.amber:'#A9B6BD';ctx.setLineDash([7,6]);ctx.lineWidth=2;ctx.strokeRect(s.x+4,s.y+4,s.w-8,s.h-8);ctx.setLineDash([]);
+      ctx.fillStyle=S&&S.placing?'#7A4A00':'#7F8D95';ctx.font='600 13px "Chakra Petch",sans-serif';ctx.textAlign='center';
+      ctx.fillText(S&&S.placing?`Build ${RT[S.placing].short} here`:'Empty plot',s.x+s.w/2,s.y+s.h/2+4);
+    }
+  });
+  if(!S)return;
+  // agents
+  const agents=[...S.staff.filter(a=>a.area!=='out'||a.path.length),...S.patients.filter(p=>p.area!=='out'||p.path.length)].sort((a,b)=>a.y-b.y);
+  for(const a of agents)drawAgent(a);
+  // job progress
+  for(const j of S.jobs){
+    if(!j.working)continue;const s=staffById(j.staffId);if(!s)continue;
+    const f=1-j.left/j.dur;ctx.fillStyle='rgba(22,33,42,.75)';rrect(s.x-14,s.y-22,28,5,2);ctx.fill();
+    ctx.fillStyle=j.kind==='tx'?COL.amber:COL.phys;if(s.role!=='phys'&&j.kind!=='tx')ctx.fillStyle='#8FD3A8';
+    rrect(s.x-14,s.y-22,28*f,5,2);ctx.fill();
+  }
+  if(banner&&performance.now()<banner.until){
+    const a=Math.min(1,(banner.until-performance.now())/500);
+    ctx.globalAlpha=a;ctx.fillStyle='rgba(29,43,53,.85)';rrect(W/2-90,262,180,76,12);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='700 30px "Chakra Petch",sans-serif';ctx.textAlign='center';ctx.fillText(banner.text,W/2,308);
+    ctx.globalAlpha=1;
+  }
+}
+function beamOn(r){return S.jobs.some(j=>j.roomId===r.id&&j.kind==='tx'&&j.working)}
+function drawRoom(r){
+  const g=geo(r),s=g.s,T=r.type,b=RT[T].bunker,w=s.w,h=s.h;
+  ctx.save();
+  if(s.top)ctx.translate(s.x,s.y);else{ctx.translate(s.x,s.y+s.h);ctx.scale(1,-1)}
+  ctx.fillStyle=RT[T].floor;ctx.fillRect(0,0,w,h);
+  if(b){
+    const t=14;ctx.fillStyle=concretePattern();
+    ctx.fillRect(0,0,w,t);ctx.fillRect(0,0,t,h);ctx.fillRect(w-t,0,t,h);
+    ctx.fillRect(0,h-72,126,72);ctx.fillRect(126,h-t,10,t);
+    ctx.strokeStyle=COL.wall;ctx.lineWidth=1.5;ctx.strokeRect(0.75,0.75,w-1.5,h-1.5);
+  }else{
+    ctx.strokeStyle=COL.wall;ctx.lineWidth=5;ctx.beginPath();
+    ctx.moveTo(w/2-18,h-2.5);ctx.lineTo(2.5,h-2.5);ctx.lineTo(2.5,2.5);ctx.lineTo(w-2.5,2.5);ctx.lineTo(w-2.5,h-2.5);ctx.lineTo(w/2+18,h-2.5);ctx.stroke();
+  }
+  const on=b&&beamOn(r);
+  switch(T){
+    case 'clinic':
+      ctx.fillStyle='#A88763';rrect(22,52,64,24,4);ctx.fill();ctx.fillStyle='#2B3A44';rrect(40,56,22,10,2);ctx.fill();
+      ctx.fillStyle='#fff';rrect(106,40,52,96,8);ctx.fill();ctx.strokeStyle='#B9C3C9';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='#5E9E6E';ctx.beginPath();ctx.arc(162,200,12,0,7);ctx.fill();break;
+    case 'ctsim':
+      ctx.fillStyle='#fff';rrect(80,30,24,150,6);ctx.fill();ctx.strokeStyle='#B9C3C9';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.lineWidth=16;ctx.strokeStyle='#CBD5DB';ctx.beginPath();ctx.arc(92,70,30,0,7);ctx.stroke();
+      ctx.lineWidth=2;ctx.strokeStyle='#8696A0';ctx.beginPath();ctx.arc(92,70,39,0,7);ctx.stroke();
+      ctx.fillStyle='#2B3A44';rrect(140,200,30,16,3);ctx.fill();break;
+    case 'planning': case 'office':
+      [[20,40],[110,40]].forEach(([x,y])=>{ctx.fillStyle='#A88763';rrect(x,y,58,26,4);ctx.fill();ctx.fillStyle='#22313B';rrect(x+12,y+4,34,12,2);ctx.fill();ctx.fillStyle=T==='office'?'#5FC3CF':'#9CC7F0';ctx.fillRect(x+14,y+6,30,8)});
+      if(T==='office'){ctx.fillStyle='#BFE3F5';rrect(112,140,52,52,4);ctx.fill();ctx.strokeStyle='#5C8FA8';ctx.lineWidth=2;ctx.stroke();ctx.strokeStyle='rgba(92,143,168,.6)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(138,140);ctx.lineTo(138,192);ctx.moveTo(112,166);ctx.lineTo(164,166);ctx.stroke()}
+      else{ctx.fillStyle='#CFD8DD';rrect(20,140,58,40,4);ctx.fill()}
+      break;
+    case 'linac':
+      ctx.fillStyle='#fff';rrect(66,88,28,72,5);ctx.fill();ctx.strokeStyle='#B9C3C9';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='#7C8C96';rrect(36,20,88,34,8);ctx.fill();
+      ctx.fillStyle='#5A6A74';ctx.beginPath();ctx.arc(80,68,15,0,7);ctx.fill();
+      ctx.fillStyle='#3B4A54';ctx.fillRect(74,62,12,12);
+      if(r.commissioned&&!on){ctx.strokeStyle='rgba(30,158,94,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(14,118);ctx.lineTo(w-14,118);ctx.moveTo(80,14);ctx.lineTo(80,h-72);ctx.stroke()}
+      ctx.fillStyle='#22313B';rrect(140,212,26,10,2);ctx.fill();
+      break;
+    case 'brachy':
+      ctx.fillStyle='#fff';rrect(58,70,44,90,6);ctx.fill();ctx.strokeStyle='#B9C3C9';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='#7C8C96';rrect(124,60,30,40,5);ctx.fill();ctx.fillStyle='#E8961A';ctx.beginPath();ctx.arc(139,72,4,0,7);ctx.fill();
+      ctx.strokeStyle='#7C8C96';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(124,88);ctx.quadraticCurveTo(105,110,84,112);ctx.stroke();
+      ctx.fillStyle='#22313B';rrect(140,212,26,10,2);ctx.fill();
+      break;
+  }
+  if(on){
+    const pp=SPOTS[T].pat,gr=ctx.createRadialGradient(pp[0],pp[1],2,pp[0],pp[1],60);
+    gr.addColorStop(0,'rgba(232,150,26,.75)');gr.addColorStop(1,'rgba(232,150,26,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(pp[0],pp[1],60,0,7);ctx.fill();
+  }
+  ctx.restore();
+  // labels in world space
+  const ly=s.top?s.y+22:s.y+s.h-12;
+  ctx.textAlign='left';ctx.font='700 12.5px "Chakra Petch",sans-serif';
+  const tx=b?s.x+20:s.x+10;
+  ctx.fillStyle=b?'rgba(255,255,255,.92)':'rgba(255,255,255,.0)';
+  if(b){const tw=ctx.measureText(r.name).width;rrect(tx-5,ly-13,tw+10,18,4);ctx.fill()}
+  ctx.fillStyle=COL.ink;ctx.fillText(r.name,tx,ly);
+  const st=roomStatus(r);
+  if(st){
+    ctx.font='700 10px "Chakra Petch",sans-serif';const tw=ctx.measureText(st.t).width;
+    const bx=s.x+s.w-tw-22,by=s.top?s.y+(b?20:10):s.y+s.h-(b?38:28);
+    ctx.fillStyle=st.bg;rrect(bx,by,tw+12,17,8);ctx.fill();ctx.fillStyle=st.fg;ctx.fillText(st.t,bx+6,by+12);
+  }
+  if(on){
+    const d=g.door,y=s.top?d.y+12:d.y-12;
+    ctx.fillStyle=COL.amber;rrect(d.x-30,y-8,60,16,3);ctx.fill();
+    ctx.shadowColor='rgba(232,150,26,.9)';ctx.shadowBlur=10;ctx.fillStyle='#2A1A00';ctx.font='700 10px "Chakra Petch",sans-serif';ctx.textAlign='center';ctx.fillText('BEAM ON',d.x,y+4);ctx.shadowBlur=0;
+  }
+  if(S.selected===r.id){ctx.strokeStyle=COL.amber;ctx.lineWidth=3;ctx.strokeRect(s.x-2,s.y-2,s.w+4,s.h+4)}
+}
+function roomStatus(r){
+  const T=r.type;
+  if(RT[T].bunker){
+    if(!r.commissioned)return {t:`COMMISSIONING ${Math.round(100*(1-r.commLeft/(T==='linac'?360:180)))}%`,bg:'#DFF0F2',fg:'#0E5E69'};
+    if(r.fault)return {t:r.vendorFixAt?'VENDOR CALLED':'FAULT',bg:'#FBE1E1',fg:'#9B2525'};
+    if(r.exchange)return {t:'SOURCE EXCHANGE',bg:'#DFF0F2',fg:'#0E5E69'};
+    if(r.needQA)return {t:'QA DUE',bg:'#FFEBC7',fg:'#7A4A00'};
+    if(r.downUntil>S.t)return {t:'OUT OF SERVICE',bg:'#FBE1E1',fg:'#9B2525'};
+    if(beamOn(r))return null;
+    return {t:T==='brachy'?`READY · SRC ${r.srcAge} D`:'READY',bg:'#E1F3E8',fg:'#1C6E48'};
+  }
+  const n=T==='clinic'?countWait('consult'):T==='ctsim'?countWait('sim'):T==='planning'?S.patients.filter(p=>p.step==='plan'&&!p.gone).length:S.patients.filter(p=>p.step==='check'&&!p.gone).length;
+  if(T==='planning'||T==='office')return n?{t:`${n} IN QUEUE`,bg:n>3?'#FFEBC7':'#EEF2F3',fg:n>3?'#7A4A00':'#4B5963'}:null;
+  return null;
+}
+function countWait(step,mod){return S.patients.filter(p=>p.step===step&&(p.state==='waiting'||p.state==='coming')&&!p.gone&&(!mod||PT[p.type].mod===mod)).length}
+function drawAgent(a){
+  ctx.fillStyle='rgba(0,0,0,.14)';ctx.beginPath();ctx.ellipse(a.x+1,a.y+6,8,4,0,0,7);ctx.fill();
+  if(a.kind==='s'){
+    const R=ROLES[a.role];
+    ctx.fillStyle=R.color;ctx.beginPath();ctx.arc(a.x,a.y,8.5,0,7);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='700 10px "Chakra Petch",sans-serif';ctx.textAlign='center';ctx.fillText(R.letter,a.x,a.y+3.5);
+  }else{
+    ctx.fillStyle=a.done?'#B6E2C6':'#A9C9E6';ctx.beginPath();ctx.arc(a.x,a.y,7.5,0,7);ctx.fill();
+    ctx.strokeStyle='#5E86A8';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='#E2B993';ctx.beginPath();ctx.arc(a.x,a.y-2,3.6,0,7);ctx.fill();
+    if(a.state==='waiting'&&S.t-a.waitStart>110){
+      ctx.fillStyle=S.t-a.waitStart>150?COL.danger:COL.amber;ctx.beginPath();ctx.arc(a.x+8,a.y-10,6,0,7);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='700 9px "Chakra Petch",sans-serif';ctx.textAlign='center';ctx.fillText('!',a.x+8,a.y-7)}
+  }
+}
+
+/* ---------- panel UI ---------- */
+const TABS=[['build','Build'],['staff','Staff'],['patients','Patients'],['physics','Physics'],['goals','Goals']];
+function tabsHTML(){
+  const alert=S.rooms.some(r=>r.fault&&!r.vendorFixAt);
+  return TABS.map(([k,l])=>`<button class="tab" role="tab" id="tab-${k}" aria-selected="${S.tab===k}" data-act="tab" data-v="${k}">${l}${k==='physics'&&alert?'<span class="dot" aria-label="fault"></span>':''}</button>`).join('');
+}
+function selectedHTML(){
+  const r=room(S.selected);if(!r)return '';
+  const T=r.type;let st='',acts='';
+  if(RT[T].bunker){
+    if(!r.commissioned)st=`<span class="chip phys">Commissioning: ${Math.round(r.commLeft)} min of physics work left</span>`;
+    else if(r.fault)st=`<span class="chip bad">${esc(r.fault)}</span>`;
+    else if(r.needQA)st=`<span class="chip warn">Daily QA due</span>`;
+    else if(r.downUntil>S.t)st=`<span class="chip bad">Out of service until ${clock(r.downUntil)}</span>`;
+    else st=`<span class="chip good">Ready</span>`;
+    if(r.fault&&!r.vendorFixAt)acts+=`<button class="btn" data-act="vendor" data-id="${r.id}" ${S.cash<60000?'disabled':''}>Call vendor engineer · RM 60k</button>`;
+    if(T==='brachy'&&r.commissioned){
+      const act=370*Math.pow(2,-r.srcAge/73.8);
+      st+=` <span class="chip">Ir-192 · ${r.srcAge} d · ${act.toFixed(0)} GBq</span>`;
+      if(!r.exchange)acts+=`<button class="btn" data-act="exchange" data-id="${r.id}" ${S.cash<80000?'disabled':''}>Exchange source · RM 80k</button>`;
+    }
+  }
+  acts+=`<button class="btn" data-act="demolish" data-id="${r.id}">Demolish · refund ${fmtRM(RT[T].cost*0.4)}</button>`;
+  return `<div class="item sel"><div class="row"><span class="name">${esc(r.name)}</span><button class="btn" data-act="closeSel" aria-label="Close">Close</button></div><div class="meta">${esc(RT[T].desc)}</div><div>${st}</div><div class="row" style="justify-content:flex-start">${acts}</div></div>`;
+}
+function paneHTML(){
+  let h=selectedHTML();
+  if(S.tab==='build'){
+    h+=`<p class="sec-title">Rooms</p>`;
+    for(const t of BUILD_ORDER){
+      const R=RT[t],n=S.rooms.filter(r=>r.type===t).length;
+      h+=`<div class="item"><div class="row"><span class="name">${R.name}${n?` <span class="chip">${n} built</span>`:''}</span><span class="num">${fmtRM(R.cost)}</span></div><div class="meta">${R.desc}${R.upkeep?` Upkeep ${fmtRM(R.upkeep)}/day.`:''}</div><div class="row" style="justify-content:flex-start"><button class="btn ${S.placing===t?'amber':'primary'}" data-act="build" data-v="${t}" ${S.cash<R.cost||S.rooms.length>=8?'disabled':''}>${S.placing===t?'Pick a plot…':'Build'}</button></div></div>`;
+    }
+  }else if(S.tab==='staff'){
+    const sal=S.staff.reduce((a,s)=>a+ROLES[s.role].salary,0);
+    h+=`<div class="row"><p class="sec-title">Team</p><span class="meta">Salaries ${fmtRM(sal)}/day</span></div>`;
+    for(const k of ROLE_ORDER){
+      const R=ROLES[k],list=S.staff.filter(s=>s.role===k),busy=list.filter(s=>s.busy).length;
+      h+=`<div class="item"><div class="row"><span class="row" style="gap:8px"><i class="role-dot" style="background:${R.color}">${R.letter}</i><span class="name">${R.name}</span></span><span class="counter"><button class="btn" data-act="fire" data-v="${k}" aria-label="Let one go">−</button><span class="num">${list.length}</span><button class="btn primary" data-act="hire" data-v="${k}" aria-label="Hire one">+</button></span></div><div class="meta">${R.does} ${fmtRM(R.salary)}/day each. ${busy}/${list.length} busy.</div>`;
+      h+=list.map(s=>{const j=s.busy?S.jobs.find(x=>x.id===s.busy):null;const rr=j?room(j.roomId):null;return `<div class="row meta"><span>${esc(s.name)}</span><span>${j?`${JOBLABEL[j.kind]}${rr?' · '+esc(rr.name):''}`:(s.area==='out'?'Off site':'Idle')}</span></div>`}).join('');
+      h+='</div>';
+    }
+  }else if(S.tab==='patients'){
+    const live=S.patients.filter(p=>!p.gone&&!p.done&&!p.lost);
+    const c=st=>live.filter(p=>p.step===st).length;
+    const onTx=live.filter(p=>p.step==='tx');
+    const rows=[['Waiting for consult',c('consult'),4],['Waiting for CT sim',c('sim'),4],['Plans waiting to be made',c('plan'),3],['Plans waiting for physics check',c('check'),3],['On treatment',onTx.length,99]];
+    h+=`<p class="sec-title">Pathway</p><div class="pipe">${rows.map(([l,n,lim])=>`<div class="${n>lim?'hot':''}"><span>${l}</span><span class="num">${n}</span></div>`).join('')}</div>`;
+    h+=`<div class="pipe"><div><span>Courses completed</span><span class="num">${S.completed}</span></div><div><span>Fractions delivered</span><span class="num">${S.fractions}</span></div><div><span>Average days, referral to first fraction</span><span class="num">${S.ttN?(S.ttSum/S.ttN).toFixed(1):'–'}</span></div><div><span>Left without being seen</span><span class="num">${S.lost}</span></div><div><span>Treatment gaps</span><span class="num">${S.gaps}</span></div></div>`;
+    h+=`<p class="sec-title">Prescriptions you treat</p>`;
+    h+=Object.values(PT).map(t=>`<div class="row meta"><span>${t.name}${t.mod==='brachy'?' (needs HDR suite)':''}</span><span>${t.rx}</span></div>`).join('');
+  }else if(S.tab==='physics'){
+    const ph=S.staff.filter(s=>s.role==='phys');
+    h+=`<p class="sec-title">Machines</p>`;
+    const mach=S.rooms.filter(r=>RT[r.type].bunker);
+    if(!mach.length)h+=`<div class="meta">No treatment machines yet. Build a Linac Bunker.</div>`;
+    for(const r of mach){const st=roomStatus(r)||{t:'TREATING',bg:'#FFEBC7',fg:'#7A4A00'};h+=`<div class="item"><div class="row"><span class="name">${esc(r.name)}</span><span class="chip" style="background:${st.bg};color:${st.fg}">${st.t}</span></div>${r.fault?`<div class="meta">${esc(r.fault)}</div><div class="row" style="justify-content:flex-start">${r.vendorFixAt?'<span class="meta">Engineer on the way.</span>':`<button class="btn" data-act="vendor" data-id="${r.id}" ${S.cash<60000?'disabled':''}>Call vendor engineer · RM 60k</button>`}</div>`:''}${r.type==='brachy'&&r.commissioned?`<div class="meta">Ir-192 source ${r.srcAge} days old · ${(370*Math.pow(2,-r.srcAge/73.8)).toFixed(0)} GBq · treatments ${Math.pow(2,r.srcAge/73.8).toFixed(2)}× fresh-source time</div>`:''}</div>`}
+    const qa=S.rooms.filter(r=>r.needQA).length,ft=S.rooms.filter(r=>r.fault&&!r.vendorFixAt).length,ck=S.patients.filter(p=>p.step==='check'&&!p.gone).length,cm=S.rooms.filter(r=>RT[r.type].bunker&&!r.commissioned).reduce((a,r)=>a+r.commLeft,0);
+    h+=`<p class="sec-title">Physics workload · ${ph.length} physicist${ph.length===1?'':'s'}</p><div class="pipe"><div class="${ft?'hot':''}"><span>Faults to fix</span><span class="num">${ft}</span></div><div class="${qa?'hot':''}"><span>Machines waiting for daily QA</span><span class="num">${qa}</span></div><div class="${S.patients.filter(p=>p.step==='plan'&&!p.gone).length>3?'hot':''}"><span>Plans to make</span><span class="num">${S.patients.filter(p=>p.step==='plan'&&!p.gone).length}</span></div><div class="${ck>3?'hot':''}"><span>Plans to check</span><span class="num">${ck}</span></div><div><span>Commissioning work left</span><span class="num">${Math.round(cm)} min</span></div></div>`;
+    h+=`<p class="sec-title">Physics calls · ${S.correct}/${S.answered} correct</p>`;
+    if(!S.qlog.length)h+=`<div class="meta">Calls appear during QA, plan checks, commissioning, audits and safety events. Your answers and the reasoning are kept here.</div>`;
+    h+=S.qlog.slice(0,25).map(l=>{const q=Q.find(x=>x.id===l.id);return `<details class="qlog"><summary><span class="${l.ok?'ok':'no'}">${l.ok?'✓':'✗'}</span> Day ${l.d} · ${esc(q.head)}</summary><p>${esc(l.text)}</p><p><b>You chose:</b> ${esc(l.pick)}</p><p><b>Best answer:</b> ${esc(q.opts.find(o=>o.ok).t)}</p><p>${esc(q.why)}</p></details>`}).join('');
+  }else if(S.tab==='goals'){
+    h+=`<p class="sec-title">Contract goals</p>`;
+    h+=GOALS.map(g=>{const d=g.ok();return `<div class="goal ${d?'done':''}"><i>${d?'✓':''}</i><span>${g.t}${g.prog&&!d?` <span class="num meta">· ${g.prog()}</span>`:''}</span></div>`}).join('');
+    if(S.won)h+=`<div class="tip">All goals met. The department is accredited. Keep playing as long as you like.</div>`;
+    h+=`<p class="sec-title">Advice from your head of physics</p>`+tips().map(t=>`<div class="tip ${t[1]||''}">${t[0]}</div>`).join('');
+  }
+  return h;
+}
+function tips(){
+  const T=[];
+  const need=[['clinic','Build a Consult Clinic so referrals start arriving.'],['ctsim','Build a CT Simulator. Every plan starts from a planning CT.'],['planning','Build a Planning Room so plans can be made.'],['office','Build a Physics Office. No plan is treated without a physics check.'],['linac','Build a Linac Bunker to start treating.']];
+  for(const [t,m] of need)if(!hasRoom(t)){T.push([m]);break}
+  for(const r of S.rooms){
+    if(RT[r.type].bunker&&!r.commissioned)T.push([`${r.name} is being commissioned: ${Math.round(r.commLeft)} minutes of physics work left. More physicists finish it sooner.`]);
+    if(r.fault&&!r.vendorFixAt)T.push([`${r.name} has a fault. Free up a physicist or call the vendor engineer.`,'bad']);
+    if(r.type==='brachy'&&r.srcAge>=90)T.push([`${r.name}’s source is ${r.srcAge} days old. Exchange it to bring treatment times back down.`,'warn']);
+  }
+  const live=S.patients.filter(p=>!p.gone&&!p.done&&!p.lost);
+  const plan=live.filter(p=>p.step==='plan').length,chk=live.filter(p=>p.step==='check').length;
+  if(plan>3)T.push([`${plan} plans are waiting. Hire another physicist, or build a second planning room.`,'warn']);
+  if(chk>3)T.push([`${chk} plans are waiting for a physics check. Hire another physicist.`,'warn']);
+  if(countWait('consult')>4)T.push(['The clinic queue is long. Hire an oncologist and build a second clinic.','warn']);
+  if(countWait('tx')>4)T.push(['Patients are queuing for treatment. Hire more therapists or build another linac.','warn']);
+  if(S.cash<1000000)T.push(['Money is tight. Salaries and upkeep are paid every night.','bad']);
+  if(!T.length)T.push(['Everything is running smoothly. Use 2× or 4× speed to move faster.']);
+  return T;
+}
+function renderPanel(){
+  if(!S)return;
+  const tabs=tabsHTML();const tabsEl=document.getElementById('tabs');
+  if(tabsEl._h!==tabs){tabsEl.innerHTML=tabs;tabsEl._h=tabs}
+  const h=paneHTML();if(h!==lastPanel){const pane=document.getElementById('pane');const st=pane.scrollTop;const open=[...pane.querySelectorAll('details[open] summary')].map(s=>s.textContent);pane.innerHTML=h;pane.scrollTop=st;pane.querySelectorAll('details summary').forEach(s=>{if(open.includes(s.textContent))s.parentElement.open=true});lastPanel=h}
+  const tk='<h3>Department log</h3>'+S.log.slice(0,14).map(l=>`<div class="msg ${l.k}"><time>D${l.d} ${clock(l.t)}</time><span>${esc(l.m)}</span></div>`).join('');
+  if(tk!==lastTicker){document.getElementById('ticker').innerHTML=tk;lastTicker=tk}
+  const hint=document.getElementById('placeHint');hint.hidden=!S.placing;if(S.placing)document.getElementById('placeText').textContent=`Click an empty plot for the ${RT[S.placing].name}`;
+}
+function updateTop(){
+  if(!S)return;
+  document.getElementById('tCash').textContent=fmtRM(S.cash);
+  document.getElementById('tCash').style.color=S.cash<0?'#FF8A8A':'';
+  document.getElementById('tRep').textContent=`${Math.round(S.rep)}%`;
+  document.getElementById('tRepBar').style.width=`${S.rep}%`;
+  document.getElementById('tDay').textContent=`${S.day} · ${clock(S.t)}`;
+  const ph=S.staff.filter(s=>s.role==='phys');document.getElementById('tPhys').textContent=`${ph.filter(s=>s.busy).length}/${ph.length}`;
+  const sp=S.paused?0:S.speed;[0,1,2,4].forEach(v=>document.getElementById('sp'+v).setAttribute('aria-pressed',String(v===sp)));
+}
+
+/* ---------- input ---------- */
+document.addEventListener('click',e=>{
+  audioInit();
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,v=b.dataset.v,id=b.dataset.id?+b.dataset.id:null;
+  if(['tab','speed','closeSel','cancelBuild','qcontinue','keep'].includes(a))sfx('click');
+  switch(a){
+    case 'newgame':startNew();break;
+    case 'continue':{const sv=loadSave();if(sv){sv.staff.forEach(s=>{if(s.role==='dos')s.role='phys'});S=sv;S.started=true;GEO.clear();S.qQueue=[];hideModal();startDay();lastPanel=''}break}
+    case 'tab':S.tab=v;break;
+    case 'build':S.placing=S.placing===v?null:v;break;
+    case 'cancelBuild':S.placing=null;break;
+    case 'hire':hire(v);break;
+    case 'fire':fire(v);break;
+    case 'closeSel':S.selected=null;break;
+    case 'vendor':{const r=room(id);if(r&&r.fault&&!r.vendorFixAt&&S.cash>=60000){sfx('hire');S.cash-=60000;r.vendorFixAt=S.t+180;log(`Vendor engineer called for ${r.name}. Arriving within 3 hours.`)}break}
+    case 'exchange':{const r=room(id);if(r&&!r.exchange&&S.cash>=80000){S.cash-=80000;r.exchange=true;log(`New Ir-192 source ordered for ${r.name}. A physicist will install and calibrate it.`)}break}
+    case 'demolish':{const r=room(id);if(r)demolish(r);break}
+    case 'speed':{const n=+v;if(n===0)S.paused=!S.paused;else{S.paused=false;S.speed=n}break}
+    case 'answer':answer(+b.dataset.i);break;
+    case 'qcontinue':hideModal();break;
+    case 'keep':hideModal();break;
+    case 'music':AU.musicOn=!AU.musicOn;if(AU.mus)AU.mus.gain.setTargetAtTime(AU.musicOn?0.16:0,AU.ctx.currentTime,0.2);audioPrefs();break;
+    case 'sound':AU.sfxOn=!AU.sfxOn;audioPrefs();if(AU.sfxOn)sfx('click');break;
+  }
+  renderPanel();updateTop();updateAudioBtns();
+});
+C.addEventListener('click',e=>{
+  audioInit();
+  if(!S||modalOpen)return;
+  const rc=C.getBoundingClientRect(),x=(e.clientX-rc.left)/rc.width*W,y=(e.clientY-rc.top)/rc.height*H;
+  const i=slotAt(x,y);
+  if(S.placing){if(i>=0&&!roomAtSlot(i))build(S.placing,i);else if(i<0)S.placing=null}
+  else{const r=i>=0?roomAtSlot(i):null;S.selected=r?r.id:null}
+  renderPanel();
+});
+C.addEventListener('mousemove',e=>{
+  if(!S)return;const rc=C.getBoundingClientRect(),x=(e.clientX-rc.left)/rc.width*W,y=(e.clientY-rc.top)/rc.height*H;
+  const i=slotAt(x,y);C.style.cursor=i>=0&&(S.placing?!roomAtSlot(i):roomAtSlot(i))?'pointer':'default';
+});
+document.addEventListener('keydown',e=>{
+  audioInit();
+  if(e.code==='Space'&&S&&!modalOpen&&!/INPUT|TEXTAREA|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();S.paused=!S.paused;updateTop()}
+  if(e.key==='Escape'&&S){S.placing=null;renderPanel()}
+});
+
+/* ---------- loop ---------- */
+let last=performance.now(),uiAcc=0;
+function frame(now){
+  const dtR=Math.min(0.1,(now-last)/1000);last=now;
+  if(S&&S.started&&!modalOpen){
+    if(S.qQueue.length){
+      const it=S.qQueue.shift();
+      if(it.win){sfx('fanfare');showModal(`<p class="eyebrow amber">Contract complete</p><h2>Your department is accredited</h2><p>Day ${S.day}: ${S.completed} courses completed, ${S.fractions} fractions delivered, ${S.correct} of ${S.answered} physics calls correct, ${S.incidents} incident${S.incidents===1?'':'s'}.</p><div class="btnrow"><button class="btn primary big" data-act="keep">Keep playing</button></div>`)}
+      else openQuestion(it);
+    }else if(!S.paused){
+      let g=dtR/SEC_PER_MIN*S.speed;
+      while(g>0&&!modalOpen&&S.started){const d=Math.min(g,0.5);tick(d);g-=d;if(S.qQueue.length)break}
+    }
+  }
+  draw();audioFrame();uiAcc+=dtR;
+  if(uiAcc>0.25){uiAcc=0;renderPanel();updateTop()}
+  requestAnimationFrame(frame);
+}
+function updateAudioBtns(){document.getElementById('auMus').setAttribute('aria-pressed',String(AU.musicOn));document.getElementById('auSfx').setAttribute('aria-pressed',String(AU.sfxOn))}
+updateAudioBtns();
+window.__beam={get S(){return S},tick:d=>tick(d),build,startNew,answer,hideModal};
+intro();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
