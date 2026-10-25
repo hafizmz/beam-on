@@ -165,8 +165,8 @@ footer { font-size: 12px; color: var(--muted); max-width: 75ch; }
 
     <aside class="panel">
       <div class="card mentor">
-        <div class="avatar" aria-hidden="true">DL</div>
-        <div><b>Dr. Lim, Head of Physics</b><p id="mentor"></p></div>
+        <div class="avatar" aria-hidden="true">DF</div>
+        <div><b>Dr Fiso, Head of Medical Physics, Radiotherapy</b><p id="mentor"></p></div>
       </div>
 
       <div class="card">
@@ -764,7 +764,7 @@ document.addEventListener('keydown', e => {
 });
 $('heat').onclick = () => { S.heat = !S.heat; $('heat').setAttribute('aria-pressed', S.heat); drawFloor(); };
 $('reset').onclick = () => { AudioFX.remove(); S.grid = freshGrid(S.level); saveGrid(); $('result').hidden = true; $('mentor').textContent = LEVELS[S.level].intro; if (V.ok) { V.blocks.clear(); V.meshes.fill(null); V.pops.length = 0; } update(true); };
-const SOL_A = ["____CCCCCC____","_CCCCCCCCCCCC_","_CCCCCCCCCCCCC","__C........CCC","_CC........CCC","_CC........CCC","_CC........CCC","_CC........CCC","___........CCC","C_LLLLLLLLLLCC","C_____________","______________"];
+const SOL_A = ["____CCCCCC____","_CCCCCCCCCCCC_","_CCCCCCCCCCCCC","__C........CCC","_CC........CCC","_CC........CCC","_CC........CCC","_CC........CCC","___........CCC","C_LLLLLLLCLCCC","C___________C_","__________CC__"];
 const SOL_B = ["____CCCCCC____","__CCCCCCCCCCC_","_LCCCCCCCCCCC_","__C........L__","_CL........LCC","_CL........LCC","_CL........LCC","_CL........LCC","___........L__","L_CCCCCCCCCCC_","C_CCCCCCCCCCC_","____CCCCCC____"];
 const SOLUTIONS = {
   1: { rows: SOL_A, tip: 'Here is one answer. The doorway now bends left and down, so there is always a wall between the linac and the corridor. A row of lead protects the corridor in a small space, and the far corners are trimmed because distance already cuts the dose there.' },

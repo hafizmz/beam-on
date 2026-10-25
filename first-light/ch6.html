@@ -65,8 +65,8 @@ a.primary { display: block; text-align: center; text-decoration: none; }
 
     <aside class="panel">
       <div class="card mentor">
-        <div class="avatar" id="avatar" aria-hidden="true">DL</div>
-        <div><b id="speaker">Dr. Lim, Head of Physics</b><p id="mentor"></p><button class="more" id="more" hidden>Next ›</button></div>
+        <div class="avatar" id="avatar" aria-hidden="true">DF</div>
+        <div><b id="speaker">Dr Fiso, Head of Medical Physics, Radiotherapy</b><p id="mentor"></p><button class="more" id="more" hidden>Next ›</button></div>
       </div>
 
       <div class="card">
@@ -200,9 +200,9 @@ const LEVELS = [
     start: [{ E: 85, w: 100 }],
     solution: [{ E: 98.5, w: 100 }],
     intro: [
-      { who: 'AI', text: 'Dr. Lim, my friend says radiation goes right through you. Will it hurt the rest of my brain?' },
-      { who: 'DL', text: 'Good question, Aisyah. X-rays do pass right through. Protons are different: they stop. It is my last day before I retire, so let me show my successor, {name}, how it works.' },
-      { who: 'DL', text: 'Pick one energy. Faster protons travel further, and they release most of their energy just before they stop, in the Bragg peak. Put the peak inside the tumour and keep it out of the brainstem just behind.' }
+      { who: 'AI', text: 'Dr Fiso, my friend says radiation goes right through you. Will it hurt the rest of my brain?' },
+      { who: 'DF', text: 'Good question, Aisyah. X-rays do pass right through. Protons are different: they stop. It is my last day before I retire, so let me show my successor, {name}, how it works.' },
+      { who: 'DF', text: 'Pick one energy. Faster protons travel further, and they release most of their energy just before they stop, in the Bragg peak. Put the peak inside the tumour and keep it out of the brainstem just behind.' }
     ],
     physics: ['Range depends on energy: in water, R ≈ 0.0022 × E<sup>1.77</sup> cm. Doubling the energy more than triples the range.', 'Protons lose energy faster as they slow down, so most of the dose lands in the Bragg peak, just before they stop.'],
     card: { role: 'Proton therapy physicist', text: 'Proton physicists choose the energies and check the range of every beam, so the Bragg peak lands exactly where the doctor drew the tumour.' } },
@@ -210,9 +210,9 @@ const LEVELS = [
     start: [{ E: 107, w: 100 }],
     solution: [{ E: 107, w: 92 }, { E: 100.5, w: 30 }, { E: 94, w: 20 }, { E: 87, w: 18 }],
     intro: [
-      { who: 'FA', text: 'Dr. Lim, the full tumour is 3 cm deep. One Bragg peak is only a few millimetres wide.' },
-      { who: 'DL', text: 'So we stack peaks. The deepest layer is already set at the far edge. Add lower energies, each with a smaller weight, until the dose is flat from 95% to 105% across the whole tumour.' },
-      { who: 'DL', text: 'Watch the dose behind the tumour. The brainstem is only 6 mm away, so the deepest layer must not reach too far.' }
+      { who: 'FA', text: 'Dr Fiso, the full tumour is 3 cm deep. One Bragg peak is only a few millimetres wide.' },
+      { who: 'DF', text: 'So we stack peaks. The deepest layer is already set at the far edge. Add lower energies, each with a smaller weight, until the dose is flat from 95% to 105% across the whole tumour.' },
+      { who: 'DF', text: 'Watch the dose behind the tumour. The brainstem is only 6 mm away, so the deepest layer must not reach too far.' }
     ],
     physics: ['Stacking peaks of different energies makes a flat dose region called a spread-out Bragg peak.', 'The deepest layer needs the highest weight, because each shallower layer adds its entrance dose on top of the deeper ones.'],
     card: { role: 'Research physicist', text: 'Research physicists design new ways to shape and deliver proton beams, such as spot scanning and FLASH therapy, and test them in the lab long before they reach patients.' } },
@@ -221,15 +221,15 @@ const LEVELS = [
     solution: [{ E: 101, w: 100 }, { E: 96.5, w: 16 }, { E: 93, w: 13 }, { E: 89.5, w: 18 }, { E: 84.5, w: 20 }],
     intro: [
       { who: 'FA', text: 'I drafted Aisyah\'s real plan as if her head were all water. On my ruler it looks perfect!' },
-      { who: 'DL', text: 'Look again. This beam crosses bone and an air-filled sinus. Bone slows protons faster than water, and air hardly slows them at all. Turn on the CT stopping-power view.' },
-      { who: 'DL', text: 'CT numbers are never perfect, so ranges can be off by about 3.5% plus 1 mm. Cover the tumour even if the protons stop short, and keep the brainstem below 50%, the limit Dr. Arjun set.' }
+      { who: 'DF', text: 'Look again. This beam crosses bone and an air-filled sinus. Bone slows protons faster than water, and air hardly slows them at all. Turn on the CT stopping-power view.' },
+      { who: 'DF', text: 'CT numbers are never perfect, so ranges can be off by about 3.5% plus 1 mm. Cover the tumour even if the protons stop short, and keep the brainstem below 50%, the limit Dr. Arjun set.' }
     ],
     physics: ['Bone has about 1.6 times the stopping power of water; air has almost none. The same energy reaches a different depth in each patient.', 'Range uncertainty of about 3.5% + 1 mm is why planners add a margin at the far edge, and avoid stopping a beam right in front of a critical organ.'],
     card: { role: 'Medical physics researcher (PhD)', text: 'Many physicists do a PhD to solve problems like range uncertainty, building tools such as 3D gel dosimeters and prompt-gamma cameras that show where protons really stop.' } }
 ];
 LEVELS.forEach(L => { if (L.robust) { const end = PH.wet(L.target[1], L.segs); L.unc = (0.035 * end + 0.1) / end; } });
 const SPEAKERS = {
-  DL: { name: 'Dr. Lim, Head of Physics', init: 'DL', alt: false },
+  DF: { name: 'Dr Fiso, Head of Medical Physics, Radiotherapy', init: 'DF', alt: false },
   FA: { name: 'Farah, MSc student on placement', init: 'FA', alt: false },
   AI: { name: 'Aisyah, 14', init: 'AI', alt: true },
   MA: { name: 'Puan Rohana, Aisyah\'s mother', init: 'PR', alt: true }
@@ -287,7 +287,7 @@ function renderLevelsNav() { FL.renderLevels($('levels'), LEVELS, S.level, FL.ge
 
 /* ---------- Dialogue ---------- */
 let queue = [];
-function say(lines) { queue = Array.isArray(lines) ? lines.slice() : [{ who: 'DL', text: lines }]; showLine(); }
+function say(lines) { queue = Array.isArray(lines) ? lines.slice() : [{ who: 'DF', text: lines }]; showLine(); }
 function showLine() {
   const ln = queue.shift(); if (!ln) return;
   const sp = SPEAKERS[ln.who] || SPEAKERS.DL;
@@ -575,9 +575,9 @@ cv.addEventListener('keydown', e => {
 
 /* ---------- Toggles ---------- */
 $('ctBtn').onclick = () => { S.ct = !S.ct; if (S.ct) S.usedCT = true; $('ctBtn').setAttribute('aria-pressed', S.ct); $('ctNote').hidden = !S.ct; FL.audio.blip(S.ct ? 4 : 0); compute();
-  if (S.ct && LEVELS[S.level].robust) say([{ who: 'DL', text: 'See the orange ruler? Through the air sinus the water-equivalent depth barely grows, so every layer reaches almost 1 cm deeper than it would in water. Lower the energies to bring the far edge back to the tumour.' }]); };
+  if (S.ct && LEVELS[S.level].robust) say([{ who: 'DF', text: 'See the orange ruler? Through the air sinus the water-equivalent depth barely grows, so every layer reaches almost 1 cm deeper than it would in water. Lower the energies to bring the far edge back to the tumour.' }]); };
 $('xrBtn').onclick = () => { S.xr = !S.xr; $('xrBtn').setAttribute('aria-pressed', S.xr); FL.audio.blip(S.xr ? 2 : 0); compute();
-  if (S.xr) { const r = S.res; say([{ who: 'DL', text: `This is one X-ray beam aimed at the same tumour. It does not stop: the brainstem would get ${r.phStem.toFixed(0)}% and the dose still leaving the back of the head is ${r.phExit.toFixed(0)}%. Real X-ray plans use many beams to share this out, but protons avoid it.` }]); } };
+  if (S.xr) { const r = S.res; say([{ who: 'DF', text: `This is one X-ray beam aimed at the same tumour. It does not stop: the brainstem would get ${r.phStem.toFixed(0)}% and the dose still leaving the back of the head is ${r.phExit.toFixed(0)}%. Real X-ray plans use many beams to share this out, but protons avoid it.` }]); } };
 
 /* ---------- Delivery ---------- */
 function setBusy(b) {
@@ -620,7 +620,7 @@ function finish() {
   const box = $('result');
   if (!j.win) {
     FL.showFail(box, { title: 'Not ready for Aisyah yet', issues: j.fails.length ? j.fails : ['Adjust the plan and try again.'] });
-    say([{ who: L.id === 3 && !S.usedCT && r.bmax > 90 ? 'FA' : 'DL', text: j.fails[0] || 'Close. Keep adjusting.' }]);
+    say([{ who: L.id === 3 && !S.usedCT && r.bmax > 90 ? 'FA' : 'DF', text: j.fails[0] || 'Close. Keep adjusting.' }]);
     return;
   }
   FL.setStars(6, L.id, j.stars); renderLevelsNav();
@@ -632,9 +632,9 @@ function finish() {
     nextLabel: last ? 'Measure it in a 3D gel dosimeter' : `Next: Level ${L.id + 1}, ${LEVELS[S.level + 1].name}`,
     onNext: () => last ? runLab() : loadLevel(S.level + 1) });
   const lines = {
-    1: [{ who: 'AI', text: 'So the protons just… stop? Before the brainstem?' }, { who: 'DL', text: 'Exactly. That sharp fall-off is why we came all the way to a proton centre.' }],
-    2: [{ who: 'MA', text: 'Will she be able to go back to school after this?' }, { who: 'DL', text: 'That is the hope. With protons, her healthy brain gets a fraction of the dose, and that matters most while it is still growing.' }],
-    3: [{ who: 'DL', text: 'A robust plan. Before any patient is treated, we measure the plan in a phantom. Let me show you one last thing.' }]
+    1: [{ who: 'AI', text: 'So the protons just… stop? Before the brainstem?' }, { who: 'DF', text: 'Exactly. That sharp fall-off is why we came all the way to a proton centre.' }],
+    2: [{ who: 'MA', text: 'Will she be able to go back to school after this?' }, { who: 'DF', text: 'That is the hope. With protons, her healthy brain gets a fraction of the dose, and that matters most while it is still growing.' }],
+    3: [{ who: 'DF', text: 'A robust plan. Before any patient is treated, we measure the plan in a phantom. Let me show you one last thing.' }]
   };
   say(lines[L.id]);
 }
@@ -656,7 +656,7 @@ function runLab() {
     if (ph !== S.lab.phase) {
       S.lab.phase = ph;
       if (ph === 1) { FL.audio.hum(3); say([{ who: 'FA', text: 'Now the optical CT scanner. It shines light through the gel, slice by slice. Where the gel darkened, less light gets through, and the computer rebuilds the dose in 3D.' }]); }
-      if (ph === 2) { FL.audio.win(); say([{ who: 'DL', text: 'The measured peak lands where we planned it, within a millimetre. Aisyah\'s treatment can begin. And my work here is done.' }]); }
+      if (ph === 2) { FL.audio.win(); say([{ who: 'DF', text: 'The measured peak lands where we planned it, within a millimetre. Aisyah\'s treatment can begin. And my work here is done.' }]); }
     }
     S.lab.p = p; draw();
     if (p < 1) requestAnimationFrame(tick); else { setBusy(false); showFinale(); }
@@ -722,7 +722,7 @@ function showFinale() {
   const box = $('result');
   box.hidden = false; box.className = 'card result win';
   box.innerHTML = `<h3>Chapter 6 complete</h3>
-    <p>Aisyah finished her treatment and went back to school. Dr. Lim hung up his lab coat and handed you the keys to the department.</p>
+    <p>Aisyah finished her treatment and went back to school. Dr Fiso hung up the lab coat and handed you the keys to the department.</p>
     <div class="career"><span class="eyebrow">Years later</span><p>A new MSc student knocks on your office door for her hospital placement. "Do you remember me? I'm Aisyah. I wanted to know how the protons knew where to stop."</p></div>
     <h2 style="margin-top:14px">How to become a medical physicist</h2>
     <ol class="pathway">
@@ -735,7 +735,7 @@ function showFinale() {
     <p class="yourturn">Your turn, {name}.</p>
     <button class="primary" type="button" onclick="FL.showFeedback()">Tell us how it went</button>
     <a class="primary" href="index.html" style="background:transparent;color:var(--ink);border:1px solid var(--line);display:block;text-align:center;text-decoration:none">Back to all chapters</a>`;
-  say([{ who: 'DL', text: 'Look after the patients and the physics. And when a student asks how it all works, take the time to show them. That is how Aisyah found her way here.' }]);
+  say([{ who: 'DF', text: 'Look after the patients and the physics. And when a student asks how it all works, take the time to show them. That is how Aisyah found her way here.' }]);
   S.lab.p = 1; draw();
   box.scrollIntoView({ behavior: FL.reduced ? 'auto' : 'smooth', block: 'nearest' });
 }
@@ -747,7 +747,7 @@ FL.setupLock(() => {
   $('result').hidden = true;
   S.layers = []; renderLayers();
   if (L.robust && !S.ct) { S.ct = true; S.usedCT = true; $('ctBtn').setAttribute('aria-pressed', 'true'); $('ctNote').hidden = false; }
-  say([{ who: 'DL', text: L.id === 1 ? 'Here is one answer: 98.5 MeV puts the peak just inside the far half of the tumour, with almost nothing reaching the brainstem.'
+  say([{ who: 'DF', text: L.id === 1 ? 'Here is one answer: 98.5 MeV puts the peak just inside the far half of the tumour, with almost nothing reaching the brainstem.'
     : L.id === 2 ? 'Here is one answer: four layers, deepest first with the biggest weight. Each shallower layer fills in the near side of the tumour.'
     : 'Here is one answer: the CT view shows the sinus adds range, so all energies drop. The deepest layer reaches about 3 mm past the tumour, so the far edge stays covered even if the protons stop short.' }]);
   let k = 0;

@@ -235,8 +235,8 @@ const SERVICE = {
 };
 const TEXT = {
   1: { intro: ['KR', 'Selamat pagi, {name}! The morning check on Linac 1 reads low, outside our ±2% tolerance. Mei Ling arrives at 08:30 for her first breast treatment. Can you find out why before then?'] },
-  2: { intro: ['KR', 'Morning again! Today the electrometer reads a little high. Dr. Lim wants it checked properly before we treat. Mei Ling is in the waiting room early, reading the newspaper.'] },
-  3: { intro: ['DL', 'Week three of Mei Ling\'s treatment. Today\'s reading looks fine at first glance, but something in the logbook has been bothering me. Can you check it properly?'] }
+  2: { intro: ['KR', 'Morning again! Today the electrometer reads a little high. Dr Fiso wants it checked properly before we treat. Mei Ling is in the waiting room early, reading the newspaper.'] },
+  3: { intro: ['DF', 'Week three of Mei Ling\'s treatment. Today\'s reading looks fine at first glance, but something in the logbook has been bothering me. Can you check it properly?'] }
 };
 const PHYSICS = {
   1: ['An ionisation chamber measures the charge made in a small pocket of air.', 'Low pressure and warm air mean fewer air molecules, so the raw reading falls. The k<sub>TP</sub> correction puts it back on the same footing every day.'],
@@ -249,12 +249,12 @@ const CARDS = {
   3: { role: 'Linac physicist', text: 'Physicists look after each linac for its whole life: commissioning it, calibrating it, and watching the trends after every repair.' }
 };
 const WIN_LINES = {
-  1: ['DL', 'Spot on. The machine was fine; the storm was not. Mei Ling\'s first treatment starts on time.'],
-  2: ['DL', 'Well caught. If you had recalibrated, every patient today would have been under-dosed by almost 3%. Mei Ling is on the couch now.'],
-  3: ['DL', 'That is exactly why we keep a logbook. I\'ll let the engineers know about the magnetron. Mei Ling only has two weeks to go.']
+  1: ['DF', 'Spot on. The machine was fine; the storm was not. Mei Ling\'s first treatment starts on time.'],
+  2: ['DF', 'Well caught. If you had recalibrated, every patient today would have been under-dosed by almost 3%. Mei Ling is on the couch now.'],
+  3: ['DF', 'That is exactly why we keep a logbook. I\'ll let the engineers know about the magnetron. Mei Ling only has two weeks to go.']
 };
 const PEOPLE = {
-  DL: { name: 'Dr. Lim, Head of Physics', cls: '' },
+  DF: { name: 'Dr Fiso, Head of Medical Physics, Radiotherapy', cls: '' },
   KR: { name: 'Kak Ros, radiation therapist', cls: 'alt' },
   FA: { name: 'Farah, MSc student on placement', cls: 'fa' }
 };
@@ -265,7 +265,7 @@ const FARAH = {
   depth: 'Ten centimetres, same as the protocol. That one looks right to me.',
   log: 'The logbook only records corrected readings. Is there a pattern?',
   weather: 'Does the weather really matter inside a concrete bunker?',
-  service: 'Dr. Lim always says: after any repair, check twice.',
+  service: 'Dr Fiso always says: after any repair, check twice.',
   elec: 'The raw reading is only the starting point. It still needs correcting.'
 };
 
@@ -610,8 +610,8 @@ function signOff() {
     renderLevelsNav();
   } else {
     if (!j.noPenalty) { st.time -= WRONG; st.wrong++; }
-    FL.showFail(box, { title: j.noPenalty ? 'Not ready to sign off' : 'Dr. Lim will not sign that (−10 min)', issues: j.issues });
-    if (j.hint) say(st.wrong > 1 ? 'DL' : 'FA', j.hint);
+    FL.showFail(box, { title: j.noPenalty ? 'Not ready to sign off' : 'Dr Fiso will not sign that (−10 min)', issues: j.issues });
+    if (j.hint) say(st.wrong > 1 ? 'DF' : 'FA', j.hint);
     checkTime();
   }
   update();
@@ -637,7 +637,7 @@ async function solve() {
   if (S.busy) return;
   loadLevel(S.level);
   const L = lv(), st = S.st;
-  say('DL', 'Watch closely. Check the air first, then the setup, then the machine.');
+  say('DF', 'Watch closely. Check the air first, then the setup, then the machine.');
   const key = { 1: ['thermo', 'baro'], 2: ['thermo', 'baro', 'odi'], 3: ['thermo', 'baro', 'log'] }[L.id];
   for (const id of key) { openClue(id); await sleep(650); }
   st.Tin = L.T; st.Pin = L.P; FL.audio.tick(); update(); await sleep(500);

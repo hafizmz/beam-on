@@ -86,8 +86,8 @@
 
     <aside class="panel">
       <div class="card mentor">
-        <div class="avatar" id="avatar" aria-hidden="true">DL</div>
-        <div><b id="speaker">Dr. Lim, Head of Physics</b><p id="mentor" aria-live="polite"></p></div>
+        <div class="avatar" id="avatar" aria-hidden="true">MM</div>
+        <div><b id="speaker">Mr Mohd, Head of Medical Physics, Radiology</b><p id="mentor" aria-live="polite"></p></div>
       </div>
 
       <div id="levelPanel" class="panel"></div>
@@ -251,7 +251,7 @@ const LEVELS = [
   { id: 3, name: 'The 5-gauss line', go: 'Check the layout' }
 ];
 const SPEAKERS = {
-  DL: { name: 'Dr. Lim, Head of Physics', alt: false },
+  MM: { name: 'Mr Mohd, Head of Medical Physics, Radiology', alt: false },
   EZ: { name: 'Encik Zul, MRI radiographer', alt: true },
   DA: { name: 'Dr. Arjun, radiation oncologist', alt: true }
 };
@@ -261,9 +261,9 @@ function say(who, text) {
   $('speaker').textContent = s.name; $('mentor').textContent = text;
 }
 const INTRO = {
-  1: ['DL', '{name}, this is our new MR simulator. The magnet is always on, even at night and during a power cut. Before Encik Ravi\'s planning scan, people have brought in a pile of things. Sort each one into MR Safe, MR Conditional or MR Unsafe. Curious? Drag something steel towards the magnet and watch the pull meter.'],
+  1: ['MM', '{name}, this is our new MR simulator. The magnet is always on, even at night and during a power cut. Before Encik Ravi\'s planning scan, people have brought in a pile of things. Sort each one into MR Safe, MR Conditional or MR Unsafe. Curious? Drag something steel towards the magnet and watch the pull meter.'],
   2: ['EZ', 'Every patient fills in a safety form in Zone II before they pass the Zone III door. I\'ll read out their answers. For each one, decide: proceed, check first with the radiologist and physicist, or not today.'],
-  3: ['DL', 'Big news: we are upgrading to a 3 T magnet. Its fringe field reaches further, so the old layout no longer works. Drag each item, and slide the magnet room door, until every check turns green. Then answer one last question about the quench button.']
+  3: ['MM', 'Big news: we are upgrading to a 3 T magnet. Its fringe field reaches further, so the old layout no longer works. Drag each item, and slide the magnet room door, until every check turns green. Then answer one last question about the quench button.']
 };
 
 const S = {
@@ -736,7 +736,7 @@ function setB0(b) {
   S.B0 = b; $('b15').setAttribute('aria-pressed', b === 1.5); $('b30').setAttribute('aria-pressed', b === 3);
   $('freq').textContent = (42.58 * b).toFixed(1);
   FL.audio.hum(0.8); draw(); drawRF(); updatePull();
-  if (LEVELS[S.level].id === 1) say('DL', b === 3 ? 'At 3 T the field lines spread further and the spin frequency doubles to 128 MHz. Steel gets yanked from further away too: try the pull meter again.' : 'Back at 1.5 T. The spin frequency is about 64 MHz, and the fringe field shrinks.');
+  if (LEVELS[S.level].id === 1) say('MM', b === 3 ? 'At 3 T the field lines spread further and the spin frequency doubles to 128 MHz. Steel gets yanked from further away too: try the pull meter again.' : 'Back at 1.5 T. The spin frequency is about 64 MHz, and the fringe field shrinks.');
 }
 $('b15').onclick = () => setB0(1.5); $('b30').onclick = () => setB0(3);
 $('rfgo').onclick = () => {
@@ -808,7 +808,7 @@ function check() {
   if (issues.length) {
     S.mistakes++;
     FL.showFail($('result'), { title: 'The inspector found problems', issues });
-    say('DL', bad.length ? 'Watch the number under each item: it is the field at that spot. Steel and pacemakers both need to be on the right side of the lines.' : 'The layout is perfect. Think again about the quench button: it is only for one kind of emergency.');
+    say('MM', bad.length ? 'Watch the number under each item: it is the field at that spot. Steel and pacemakers both need to be on the right side of the lines.' : 'The layout is perfect. Think again about the quench button: it is only for one kind of emergency.');
     return;
   }
   win(lv, 'Every item sits on the right side of the field lines, the door is clear of the strong field, and you know when, and when not, to quench.');
@@ -832,7 +832,7 @@ function win(lv, summary) {
       pathway: 'Chapter 5, Tracer Time: in nuclear medicine, radioactive tracers decay while you work. Schedule the patients before the tracer fades away.'
     }) : loadLevel(S.level + 1)
   });
-  if (lv !== 2) say('DL', stars === 3 ? 'Spotless. That is exactly how an MR safety expert works.' : 'Well done. The magnet is unforgiving, so the best teams get it right the first time.');
+  if (lv !== 2) say('MM', stars === 3 ? 'Spotless. That is exactly how an MR safety expert works.' : 'Well done. The magnet is unforgiving, so the best teams get it right the first time.');
   FL.renderLevels($('levels'), LEVELS, S.level, S.stars, loadLevel);
 }
 
@@ -851,7 +851,7 @@ function solve() {
     PATIENTS.forEach((p, i) => setTimeout(() => { S.dec[p.id] = p.decision; S.cur = i; FL.audio.paper(); draw(); renderPanel(); }, i * gap * 2));
     setTimeout(() => { S.busy = false; check(); }, PATIENTS.length * gap * 2 + 300);
   } else {
-    say('DL', 'Pacemaker patients and steel go out to Zones I and II. The desk sits in a quiet corner of Zone III, and the door moves off the bore axis, where the field is weaker.');
+    say('MM', 'Pacemaker patients and steel go out to Zones I and II. The desk sits in a quiet corner of Zone III, and the door moves off the bore axis, where the field is weaker.');
     const from = JSON.parse(JSON.stringify(S.pos)), t0 = performance.now(), dur = FL.reduced ? 1 : 900;
     S.quench = 'pinned';
     const stepS = t => {
