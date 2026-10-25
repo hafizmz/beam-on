@@ -214,6 +214,8 @@ table.recent td.n,table.recent th.n{text-align:right}
 .ageopt{position:relative;cursor:pointer}
 .ageopt input{position:absolute;opacity:0;pointer-events:none}
 .ageopt span{display:grid;place-items:center;width:52px;height:52px;border:3px solid var(--ink);border-radius:14px;background:var(--card);font:700 22px var(--display);font-variant-numeric:tabular-nums}
+.ageopt span.wide{width:auto;padding:0 12px;grid-auto-flow:column;gap:6px;font-size:20px}
+.ageopt span.wide small{font:600 14px var(--display);color:var(--ink-soft)}
 .ageopt input:checked+span{background:var(--sun);box-shadow:0 0 0 3px var(--coral)}
 .ageopt input:focus-visible+span{outline:4px solid var(--sky);outline-offset:3px}
 .agehint{margin:0;font-size:15px;color:var(--ink-soft);min-height:1.3em}
@@ -313,6 +315,7 @@ function save(){try{localStorage.setItem('bojr',JSON.stringify(state))}catch(e){
 
 /* ---------- words ---------- */
 const S={
+ tester:{en:'Tester',ms:'Penguji'},
  privacy:{en:'Privacy: to improve the game we count anonymous play data on this site: age, mode, language, room, marks, time taken and device type. Names and pictures stay on this device and are never sent.',ms:'Privasi: untuk menambah baik permainan ini, kami mengira data main tanpa nama: umur, mod, bahasa, bilik, markah, masa dan jenis peranti. Nama dan gambar kekal dalam peranti ini dan tidak pernah dihantar.'},
  sub:{en:'Meet the machines in the hospital',ms:'Jom kenali mesin di hospital'},
  voiceT:{en:'Reading voice',ms:'Suara bacaan'},voiceAuto:{en:'Automatic (best match)',ms:'Automatik (paling sesuai)'},
@@ -630,7 +633,7 @@ function chartSVG(bst,label){
   svg+=`<text x="${x+bw/2}" y="${v?y-8:Y0+CH-8}" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="${v?20:16}" font-weight="700" fill="${v?INK:'#4A6B70'}">${v||'–'}</text><text x="${x+bw/2}" y="${Y0+CH+26}" text-anchor="middle" font-family="Fredoka,sans-serif" font-size="16" font-weight="600" fill="${INK}">${t('room.'+r)}</text>`});
  return svg+`</svg>`;
 }
-function modeOf(age){return age&&age<=6?'little':'big'}
+function modeOf(age){return age&&age!=='13+'&&age<=6?'little':'big'}
 function showScores(){
  if(current){current.stop();current=null}curId=null;closeOverlay();renderTop();
  $('#hub').hidden=true;$('#play').hidden=true;$('#scores').hidden=false;
@@ -663,10 +666,10 @@ function playerPicker(){
 }
 function newPlayer(){
  const ids=Object.keys(AVATARS),pick=ids[Math.floor(Math.random()*ids.length)];
- const o=overlay(`<h2>${bi('newT')}</h2><div class="field"><label for="pname">${bi('nameL')}</label><input id="pname" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false"></div><div><p class="flabel" id="picl" style="margin:0 0 8px">${bi('picL')}</p><div class="avgrid" role="radiogroup" aria-labelledby="picl">${ids.map((id,i)=>`<label class="avopt"><input type="radio" name="av" id="av-${id}" value="${id}" ${id===pick?'checked':''} aria-label="Picture ${i+1}">${headSVG(id)}</label>`).join('')}</div></div><div class="field"><p class="flabel" id="agel" style="margin:0">${bi('ageL')}</p><div class="agerow" role="radiogroup" aria-labelledby="agel">${[4,5,6,7,8,9,10,11,12].map(a=>`<label class="ageopt"><input type="radio" name="age" id="age-${a}" value="${a}"><span>${a}</span></label>`).join('')}</div><p class="agehint" id="agehint"></p></div><p class="hiprev" id="hiprev"></p><div class="row"><button class="cta" id="pGo" disabled>${bi('start')}</button>${state.players.length?`<button class="cta alt" id="pBack">${bi('cancel')}</button>`:''}</div>`);
+ const o=overlay(`<h2>${bi('newT')}</h2><div class="field"><label for="pname">${bi('nameL')}</label><input id="pname" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false"></div><div><p class="flabel" id="picl" style="margin:0 0 8px">${bi('picL')}</p><div class="avgrid" role="radiogroup" aria-labelledby="picl">${ids.map((id,i)=>`<label class="avopt"><input type="radio" name="av" id="av-${id}" value="${id}" ${id===pick?'checked':''} aria-label="Picture ${i+1}">${headSVG(id)}</label>`).join('')}</div></div><div class="field"><p class="flabel" id="agel" style="margin:0">${bi('ageL')}</p><div class="agerow" role="radiogroup" aria-labelledby="agel">${[4,5,6,7,8,9,10,11,12].map(a=>`<label class="ageopt"><input type="radio" name="age" id="age-${a}" value="${a}"><span>${a}</span></label>`).join('')}<label class="ageopt"><input type="radio" name="age" id="age-13plus" value="13+" aria-label="13+ ${tl('tester','en')} / ${tl('tester','ms')}"><span class="wide">13+<small>${t('tester')}</small></span></label></div><p class="agehint" id="agehint"></p></div><p class="hiprev" id="hiprev"></p><div class="row"><button class="cta" id="pGo" disabled>${bi('start')}</button>${state.players.length?`<button class="cta alt" id="pBack">${bi('cancel')}</button>`:''}</div>`);
  const inp=o.querySelector('#pname'),go=o.querySelector('#pGo'),prev=o.querySelector('#hiprev');
  const clean=()=>inp.value.replace(/[<>&"'`{}]/g,'').replace(/\s+/g,' ').trim().slice(0,14);
- const ageV=()=>{const a=o.querySelector('input[name=age]:checked');return a?+a.value:0};
+ const ageV=()=>{const a=o.querySelector('input[name=age]:checked');return !a?0:a.value==='13+'?'13+':+a.value};
  const upd=()=>{const n=clean(),a=ageV();go.disabled=!n||!a;prev.innerHTML=n?esc(tl('hiPrev',state.lang)+n+'!')+'<span class="tr">'+esc(tl('hiPrev',other())+n+'!')+'</span>':'';const am=l=>tl('ageMode',l).replace('{m}',tl(modeOf(a),l).split(' ')[0]);o.querySelector('#agehint').innerHTML=a?am(state.lang)+'<span class="tr">'+am(other())+'</span>':''};
  o.querySelectorAll('input[name=age]').forEach(r=>r.onchange=()=>{sfx('tap');upd()});
  inp.addEventListener('input',upd);inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!go.disabled)go.click()});
