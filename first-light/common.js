@@ -263,17 +263,53 @@
   FL.playerName = () => { const p = FL.profile(); return (p && p.name) || 'friend'; };
   FL.totalStars = () => FL.CHAPTERS.reduce((s, c) => s + Object.values(FL.getStars(c.id)).reduce((a, b) => a + (b || 0), 0), 0);
 
-  /* Link to the organiser's form, pre-filled where entry ids are set. stage: 'Before playing' | 'After playing'. */
-  FL.formLink = (stage, extra = {}) => {
-    if (!FL.FORM_URL) return '';
+  /* The answers the organiser's form receives. stage: 'Before playing' | 'After playing' | 'Updated details'. */
+  FL.formValues = (stage, extra = {}) => {
     const p = FL.profile() || {};
-    const vals = { name: p.name, email: p.consent ? p.email : '', guardian: FL.isUnder18(p.year) && p.guardian ? 'Yes, my parent or guardian agrees' : '', school: p.school, state: p.state, year: p.year, stage,
+    const vals = { name: p.name, email: p.consent ? p.email : '', guardian: FL.isUnder18(p.year) && p.guardian ? 'Yes, my parent or guardian agrees' : '',
+      school: p.school, state: p.state, year: p.year, stage,
       interest: stage === 'After playing' ? extra.interest : p.interest,
       consent: p.consent ? 'Yes, you may email me about medical physics outreach events' : '',
       favourite: extra.favourite, study: extra.study, stars: String(FL.totalStars()) };
-    const q = [];
-    for (const [k, id] of Object.entries(FL.FORM_ENTRIES)) if (id && vals[k] != null && vals[k] !== '') q.push(encodeURIComponent(id) + '=' + encodeURIComponent(vals[k]));
-    return FL.FORM_URL + (q.length ? (FL.FORM_URL.includes('?') ? '&' : '?') + 'usp=pp_url&' + q.join('&') : '');
+    const out = {};
+    for (const [k, id] of Object.entries(FL.FORM_ENTRIES)) if (id && vals[k] != null && vals[k] !== '') out[id] = String(vals[k]);
+    return out;
+  };
+
+  /* Send answers straight to the organiser's Google Form. Google does not let a page read the reply,
+     so a send counts as done when the request leaves the browser; a network failure is queued and retried. */
+  FL.submitForm = async (stage, extra = {}) => {
+    if (!FL.FORM_URL) return false;
+    const fields = FL.formValues(stage, extra);
+    try {
+      await fetch(FL.FORM_URL.replace(/\/viewform.*$/, '/formResponse'), { method: 'POST', mode: 'no-cors', body: new URLSearchParams(fields) });
+      FL.store.set('sent:' + stage, Date.now());
+      return true;
+    } catch (e) {
+      const box = FL.store.get('outbox', []); box.push({ fields, stage, at: Date.now() }); FL.store.set('outbox', box.slice(-10));
+      return false;
+    }
+  };
+  FL.flushOutbox = async () => {
+    const box = FL.store.get('outbox', []);
+    if (!box.length || !FL.FORM_URL || navigator.onLine === false) return;
+    const left = [];
+    for (const item of box) {
+      try { await fetch(FL.FORM_URL.replace(/\/viewform.*$/, '/formResponse'), { method: 'POST', mode: 'no-cors', body: new URLSearchParams(item.fields) }); FL.store.set('sent:' + item.stage, Date.now()); }
+      catch (e) { left.push(item); }
+    }
+    FL.store.set('outbox', left);
+  };
+  window.addEventListener('online', () => FL.flushOutbox());
+
+  /* A short closing dialog after a send. */
+  FL.showSent = (ok, stage) => {
+    openDialog(`<span class="fl-kicker">${stage === 'After playing' ? 'Thank you' : 'All set'}</span>
+      <h2 id="fl-dlg-title">${stage === 'After playing' ? 'Feedback sent' : 'Welcome aboard, ' + esc(FL.playerName())}</h2>
+      <p>${ok ? (stage === 'After playing' ? 'Your answers have gone to the organiser. Thank you for playing.' : 'Your details have gone to the organiser. Your first day starts now.')
+              : 'This device is offline, so your answers are saved here and will be sent automatically when it reconnects.'}</p>
+      <div class="fl-actions"><button class="fl-btn" type="button" data-ok>${stage === 'After playing' ? 'Close' : 'Start playing'}</button></div>`,
+      (root, close) => { root.querySelector('[data-ok]').onclick = close; });
   };
 
   /* Replace the {name} token in any text on the page, now and as the page changes. */
@@ -356,25 +392,7 @@
     return close;
   }
 
-  /* Step 2 of sign-up and the "Send my details" button: open the organiser's form. */
-  FL.showSend = (stage = 'Before playing', extra = {}, required = false) => {
-    const href = FL.formLink(stage, extra);
-    const must = required && !!href;
-    openDialog(`<span class="fl-kicker">${stage === 'After playing' ? 'Thank you' : 'One more step'}</span>
-      <h2 id="fl-dlg-title">${stage === 'After playing' ? 'Send your feedback' : 'Send your details'}</h2>
-      ${href ? `<p>Your answers are ready on the organiser's form. Open it, check them and press <b>Submit</b>.${must ? ' You need to send your details before you start playing.' : ' Nothing is sent until you do.'}</p>`
-             : `<p>The organiser has not added their form yet. Your details are saved on this device, and you can send them later from the menu.</p>`}
-      <div class="fl-actions">
-        ${must ? '' : `<button class="fl-btn alt" type="button" data-skip>${href ? 'Not now' : 'OK'}</button>`}
-        ${href ? `<a class="fl-btn" href="${esc(href)}" target="_blank" rel="noopener" data-open>${must ? 'Open the form and start playing' : 'Open the form'}</a>` : ''}
-      </div>`, (root, close) => {
-      const skip = root.querySelector('[data-skip]'); if (skip) skip.onclick = close;
-      const a = root.querySelector('[data-open]');
-      if (a) a.addEventListener('click', () => { FL.store.set('sent:' + (stage === 'After playing' ? 'after' : 'before'), Date.now()); setTimeout(close, 300); });
-    });
-  };
-
-  /* After-game feedback: interest again, favourite chapter, and study plans. Then the form. */
+  /* After-game feedback: interest again, favourite chapter, and study plans, sent straight to the organiser. */
   FL.showFeedback = () => {
     const prev = FL.store.get('feedback', {});
     openDialog(`<span class="fl-kicker">Feedback</span>
@@ -384,18 +402,20 @@
         <div class="fl-f wide"><label for="fl-fav">Favourite chapter</label><select id="fl-fav">${opt(FL.CHAPTERS.map(c => c.id + '. ' + c.title), prev.favourite, 'Choose…')}</select></div>
         <div class="fl-f wide"><label for="fl-study">Would you consider studying physics after SPM, O level or IGCSE?</label><select id="fl-study">${opt(['Yes', 'Maybe', 'No', 'I already am'], prev.study, 'Choose…')}</select></div>
         <p class="fl-err fl-f wide" id="fl-err" hidden>Choose a number from 1 to 5 first.</p>
-        <div class="fl-actions fl-f wide"><button class="fl-btn alt" type="button" data-cancel>Cancel</button><button class="fl-btn" type="submit">Next</button></div>
+        <div class="fl-actions fl-f wide"><button class="fl-btn alt" type="button" data-cancel>Cancel</button><button class="fl-btn" type="submit">Send feedback</button></div>
       </form>`, (root, close) => {
       root.querySelector('[data-cancel]').onclick = close;
       root.querySelectorAll('input').forEach(el => el.addEventListener('change', () => { root.querySelector('#fl-err').hidden = true; }));
-      root.querySelector('form').addEventListener('submit', e => {
+      root.querySelector('form').addEventListener('submit', async e => {
         e.preventDefault();
         const r = root.querySelector('input[name="fl-int2"]:checked');
         if (!r) { root.querySelector('#fl-err').hidden = false; return; }
         const fb = { interest: +r.value, favourite: root.querySelector('#fl-fav').value, study: root.querySelector('#fl-study').value };
         FL.store.set('feedback', fb);
+        const btn = root.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
+        const ok = await FL.submitForm('After playing', fb);
         close();
-        FL.showSend('After playing', fb);
+        FL.showSent(ok, 'After playing');
       });
     });
   };
@@ -418,7 +438,7 @@
         <label class="fl-check fl-f wide" id="fl-guardian-row"${FL.isUnder18(p.year) ? '' : ' hidden'}><input type="checkbox" id="fl-guardian"${p.guardian ? ' checked' : ''}><span>My parent or guardian agrees to me sharing these details with the organiser.</span></label>
         <label class="fl-check fl-f wide"><input type="checkbox" id="fl-consent"${p.consent ? ' checked' : ''}><span>Optional: the organiser may email me about medical physics outreach events.</span></label>
         <div class="fl-f wide" id="fl-email-row"${p.consent ? '' : ' hidden'}><label for="fl-email">Email <small>(needed only for event news)</small></label><input id="fl-email" type="email" maxlength="120" autocomplete="email" value="${esc(p.email || '')}"></div>
-        <p class="fl-privacy fl-f wide">Your details are sent to the organiser on a Google Form and used only for this outreach programme. <a href="${FL.PRIVACY_URL}" target="_blank" rel="noopener">Read the privacy notice</a> · <a href="${FL.PRIVACY_URL}#bm" target="_blank" rel="noopener">Notis privasi (Bahasa Malaysia)</a></p>
+        <p class="fl-privacy fl-f wide">${editing ? 'Saving sends your updated details' : 'Pressing <b>Start my first day</b> sends these details'} to the organiser's Google Form. They are used only for this outreach programme. <a href="${FL.PRIVACY_URL}" target="_blank" rel="noopener">Read the privacy notice</a> · <a href="${FL.PRIVACY_URL}#bm" target="_blank" rel="noopener">Notis privasi (Bahasa Malaysia)</a></p>
         <p class="fl-err fl-f wide" id="fl-err" hidden></p>
         <div class="fl-actions fl-f wide">${editing ? '<button class="fl-btn alt" type="button" data-cancel>Cancel</button>' : ''}<button class="fl-btn" type="submit">${editing ? 'Save' : 'Start my first day'}</button></div>
       </form>`, (root, close) => {
@@ -430,7 +450,7 @@
         $$('#fl-email-row').hidden = !$$('#fl-consent').checked;
       };
       root.querySelectorAll('#fl-year, #fl-consent').forEach(el => el.addEventListener('change', sync));
-      $$('form').addEventListener('submit', e => {
+      $$('form').addEventListener('submit', async e => {
         e.preventDefault();
         const name = $$('#fl-name').value.trim().replace(/\s+/g, ' ');
         const consent = $$('#fl-consent').checked;
@@ -451,10 +471,12 @@
         const prof = { name, email, school: $$('#fl-school').value.trim(), state: $$('#fl-state').value, year: $$('#fl-year').value,
           interest: +picked.value, guardian, consent, joined: p.joined || new Date().toISOString().slice(0, 10) };
         FL.store.set('profile', prof);
+        const btn = $$('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
+        const ok = await FL.submitForm(editing ? 'Updated details' : 'Before playing');
         close();
         document.querySelectorAll('.fl-chip b').forEach(b => { b.textContent = name; });
         if (onDone) onDone(prof);
-        if (!editing) FL.showSend('Before playing', {}, true);
+        if (!editing) FL.showSent(ok, 'Before playing');
       });
     });
   };
@@ -472,6 +494,7 @@
       group.insertBefore(b, group.firstChild);
     }
     /* Personalise only once a name exists, so {name} tokens wait for the sign-up. */
+    FL.flushOutbox();
     if (FL.profileComplete()) FL.personalize();
     else FL.showSignup(() => { FL.personalize(); if (FL.onSignedUp) FL.onSignedUp(); });
   };

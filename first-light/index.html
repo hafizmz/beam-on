@@ -129,9 +129,8 @@
 
   <div class="you card">
     <div><span class="eyebrow">You and the organiser</span>
-      <p>Send your details to the outreach team, and tell them how the game went once you have played.</p></div>
+      <p>Your details went to the outreach team when you signed up. After playing, tell them how it went.</p></div>
     <div class="row">
-      <button class="ghost" type="button" id="sendBtn">Send my details</button>
       <button class="ghost" type="button" id="fbBtn">Tell us how it went</button>
       <button class="ghost" type="button" id="editBtn">Edit my details</button>
     </div>
@@ -254,13 +253,11 @@ function askReset() {
     location.reload();
   };
   document.getElementById('noClear').onclick = () => { area.innerHTML = '<button class="danger" id="resetAll">Clear progress on this device</button>'; document.getElementById('resetAll').onclick = askReset;
-document.getElementById('sendBtn').onclick = () => FL.showSend('Before playing');
 document.getElementById('fbBtn').onclick = () => FL.showFeedback();
 document.getElementById('editBtn').onclick = () => FL.showSignup(() => location.reload(), true);
 FL.onSignedUp = render; };
 }
 document.getElementById('resetAll').onclick = askReset;
-document.getElementById('sendBtn').onclick = () => FL.showSend('Before playing');
 document.getElementById('fbBtn').onclick = () => FL.showFeedback();
 document.getElementById('editBtn').onclick = () => FL.showSignup(() => location.reload(), true);
 FL.onSignedUp = render;
