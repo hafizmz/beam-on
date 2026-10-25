@@ -17,7 +17,7 @@ A six-chapter medical physics game for secondary school students (ages 15–17, 
 
 - Each chapter takes 10–15 minutes and stands alone.
 - Every level has a password-locked **Show solution** button for demonstrations. Ask the organiser for the password.
-- Players sign up before playing with a name or nickname, school, state, Form or year, interest in medical physics (1–5) and age group. Players under 18 must confirm that a parent or guardian agrees. Email is optional and asked only from players who want news of outreach events. The game then opens the organiser's Google Form with these answers filled in for the player to submit.
+- Players sign up before playing with a name or nickname, school, state, Form or year, interest in medical physics (1–5). Players in Form 1–5 or studying A levels or the IB (under 18) must confirm that a parent or guardian agrees. Email is optional and asked only from players who want news of outreach events. The game then opens the organiser's Google Form with these answers filled in for the player to submit.
 - Privacy: see the bilingual [privacy notice](privacy.html) (English and Bahasa Malaysia), written for the Personal Data Protection Act 2010 as amended in 2024.
 - Progress is saved in the browser. Use **Clear progress on this device** on the menu page before the next group plays.
 

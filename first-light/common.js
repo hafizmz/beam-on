@@ -250,13 +250,16 @@
     name: 'entry.2112143680', email: 'entry.2043421316', school: 'entry.1756856791', state: 'entry.2029939603',
     year: 'entry.1791770449', stage: 'entry.200189267', interest: 'entry.519842191', consent: 'entry.1405417863',
     favourite: 'entry.39961460', study: 'entry.1200602730', stars: 'entry.1861690002',
-    age: 'entry.1475119608', guardian: 'entry.1139715430'
+    guardian: 'entry.1139715430'
   };
   FL.YEARS = ['Form 1–3 / Year 7–9', 'Form 4 / Year 10 (SPM, O level, IGCSE)', 'Form 5 / Year 11 (SPM, O level, IGCSE)', 'Form 6 / STPM', 'A level or IB', 'Matriculation or foundation', 'University', 'Teacher', 'Other'];
   FL.STATES = ['Johor', 'Kedah', 'Kelantan', 'Kuala Lumpur', 'Labuan', 'Melaka', 'Negeri Sembilan', 'Pahang', 'Perak', 'Perlis', 'Pulau Pinang', 'Putrajaya', 'Sabah', 'Sarawak', 'Selangor', 'Terengganu', 'Outside Malaysia'];
+  /* Players in these groups are under 18, so a parent or guardian must agree before they send details. */
+  FL.UNDER18 = ['Form 1–3 / Year 7–9', 'Form 4 / Year 10 (SPM, O level, IGCSE)', 'Form 5 / Year 11 (SPM, O level, IGCSE)', 'A level or IB'];
+  FL.isUnder18 = year => FL.UNDER18.includes(year);
   FL.profile = () => FL.store.get('profile', null);
   /* A profile counts as complete when every required field is filled in. */
-  FL.profileComplete = () => { const p = FL.profile(); return !!(p && p.name && p.school && p.state && p.year && p.interest && p.age && (p.age !== 'Under 18' || p.guardian) && (!p.consent || p.email)); };
+  FL.profileComplete = () => { const p = FL.profile(); return !!(p && p.name && p.school && p.state && p.year && p.interest && (!FL.isUnder18(p.year) || p.guardian) && (!p.consent || p.email)); };
   FL.playerName = () => { const p = FL.profile(); return (p && p.name) || 'friend'; };
   FL.totalStars = () => FL.CHAPTERS.reduce((s, c) => s + Object.values(FL.getStars(c.id)).reduce((a, b) => a + (b || 0), 0), 0);
 
@@ -264,7 +267,7 @@
   FL.formLink = (stage, extra = {}) => {
     if (!FL.FORM_URL) return '';
     const p = FL.profile() || {};
-    const vals = { name: p.name, email: p.consent ? p.email : '', age: p.age, guardian: p.age === 'Under 18' && p.guardian ? 'Yes, my parent or guardian agrees' : '', school: p.school, state: p.state, year: p.year, stage,
+    const vals = { name: p.name, email: p.consent ? p.email : '', guardian: FL.isUnder18(p.year) && p.guardian ? 'Yes, my parent or guardian agrees' : '', school: p.school, state: p.state, year: p.year, stage,
       interest: stage === 'After playing' ? extra.interest : p.interest,
       consent: p.consent ? 'Yes, you may email me about medical physics outreach events' : '',
       favourite: extra.favourite, study: extra.study, stars: String(FL.totalStars()) };
@@ -412,10 +415,7 @@
         <div class="fl-f"><label for="fl-state">State</label><select id="fl-state" required>${opt(FL.STATES, p.state, 'Choose…')}</select></div>
         <div class="fl-f wide"><label for="fl-year">Form or year</label><select id="fl-year" required>${opt(FL.YEARS, p.year, 'Choose…')}</select></div>
         <div class="fl-f wide"><fieldset><legend>How interested are you in a career in medical physics?</legend>${scale('fl-int', p.interest)}<div class="fl-ends"><span>1 · Not at all</span><span>5 · Very</span></div></fieldset></div>
-        <div class="fl-f wide"><fieldset><legend>How old are you?</legend><div class="fl-two">
-          <label><input type="radio" name="fl-age" value="Under 18"${p.age === 'Under 18' ? ' checked' : ''}>Under 18</label>
-          <label><input type="radio" name="fl-age" value="18 or over"${p.age === '18 or over' ? ' checked' : ''}>18 or over</label></div></fieldset></div>
-        <label class="fl-check fl-f wide" id="fl-guardian-row"${p.age === 'Under 18' ? '' : ' hidden'}><input type="checkbox" id="fl-guardian"${p.guardian ? ' checked' : ''}><span>My parent or guardian agrees to me sharing these details with the organiser.</span></label>
+        <label class="fl-check fl-f wide" id="fl-guardian-row"${FL.isUnder18(p.year) ? '' : ' hidden'}><input type="checkbox" id="fl-guardian"${p.guardian ? ' checked' : ''}><span>My parent or guardian agrees to me sharing these details with the organiser.</span></label>
         <label class="fl-check fl-f wide"><input type="checkbox" id="fl-consent"${p.consent ? ' checked' : ''}><span>Optional: the organiser may email me about medical physics outreach events.</span></label>
         <div class="fl-f wide" id="fl-email-row"${p.consent ? '' : ' hidden'}><label for="fl-email">Email <small>(needed only for event news)</small></label><input id="fl-email" type="email" maxlength="120" autocomplete="email" value="${esc(p.email || '')}"></div>
         <p class="fl-privacy fl-f wide">Your details are sent to the organiser on a Google Form and used only for this outreach programme. <a href="${FL.PRIVACY_URL}" target="_blank" rel="noopener">Read the privacy notice</a> · <a href="${FL.PRIVACY_URL}#bm" target="_blank" rel="noopener">Notis privasi (Bahasa Malaysia)</a></p>
@@ -426,33 +426,30 @@
       if ($$('[data-cancel]')) $$('[data-cancel]').onclick = close;
       root.querySelectorAll('input, select').forEach(el => el.addEventListener('input', () => { err.hidden = true; }));
       const sync = () => {
-        const age = root.querySelector('input[name="fl-age"]:checked');
-        $$('#fl-guardian-row').hidden = !(age && age.value === 'Under 18');
+        $$('#fl-guardian-row').hidden = !FL.isUnder18($$('#fl-year').value);
         $$('#fl-email-row').hidden = !$$('#fl-consent').checked;
       };
-      root.querySelectorAll('input[name="fl-age"], #fl-consent').forEach(el => el.addEventListener('change', sync));
+      root.querySelectorAll('#fl-year, #fl-consent').forEach(el => el.addEventListener('change', sync));
       $$('form').addEventListener('submit', e => {
         e.preventDefault();
         const name = $$('#fl-name').value.trim().replace(/\s+/g, ' ');
         const consent = $$('#fl-consent').checked;
         const email = consent ? $$('#fl-email').value.trim() : '';
         const picked = root.querySelector('input[name="fl-int"]:checked');
-        const ageEl = root.querySelector('input[name="fl-age"]:checked');
-        const age = ageEl ? ageEl.value : '';
-        const guardian = age === 'Under 18' && $$('#fl-guardian').checked;
+        const under18 = FL.isUnder18($$('#fl-year').value);
+        const guardian = under18 && $$('#fl-guardian').checked;
         let msg = '';
         if (!name) msg = 'Enter a first name or nickname.';
         else if (!$$('#fl-school').value.trim()) msg = 'Enter the name of your school.';
         else if (!$$('#fl-state').value) msg = 'Choose your state.';
         else if (!$$('#fl-year').value) msg = 'Choose your form or year.';
         else if (!picked) msg = 'Choose how interested you are, from 1 to 5.';
-        else if (!age) msg = 'Choose whether you are under 18.';
-        else if (age === 'Under 18' && !guardian) msg = 'Ask a parent or guardian first, then tick the box to show they agree.';
+        else if (under18 && !guardian) msg = 'Ask a parent or guardian first, then tick the box to show they agree.';
         else if (consent && !email) msg = 'Enter your email for event news, or untick the box.';
         else if (consent && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) msg = 'That email does not look complete. Check it and try again.';
         if (msg) { err.textContent = msg; err.hidden = false; return; }
         const prof = { name, email, school: $$('#fl-school').value.trim(), state: $$('#fl-state').value, year: $$('#fl-year').value,
-          interest: +picked.value, age, guardian, consent, joined: p.joined || new Date().toISOString().slice(0, 10) };
+          interest: +picked.value, guardian, consent, joined: p.joined || new Date().toISOString().slice(0, 10) };
         FL.store.set('profile', prof);
         close();
         document.querySelectorAll('.fl-chip b').forEach(b => { b.textContent = name; });
