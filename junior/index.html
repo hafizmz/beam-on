@@ -68,8 +68,14 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-
 
 footer{margin-top:34px;padding-top:16px;border-top:3px dashed var(--grey);display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;color:var(--ink-soft);font-size:15px}
 footer p{margin:0;max-width:62ch}
-.credit{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:3px solid var(--ink);border-radius:16px;padding:10px 14px;color:var(--ink)!important;box-shadow:3px 3px 0 var(--ink)}
-.credit svg{width:26px;height:26px;flex:none;margin-top:1px}
+.footL{flex:1 1 380px;min-width:0;display:grid;gap:10px;align-content:start}
+.footR{flex:0 1 380px;min-width:0}
+.credit{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center;background:var(--card);border:3px solid var(--ink);border-radius:20px;padding:14px 16px;color:var(--ink);box-shadow:5px 5px 0 var(--ink);font-size:16px;line-height:1.45}
+.credit .girl{grid-row:span 2;width:78px;height:78px;border-radius:50%;background:#DFF1FA;border:3px solid var(--ink);overflow:hidden;align-self:start}
+.credit .girl svg{width:100%;height:100%;display:block}
+.credit h3{margin:0;font:700 20px var(--display);line-height:1.2}
+.credit p{margin:0;max-width:none}
+.credit b,.credit h3{white-space:nowrap}
 footer a{color:var(--ink);font-weight:700}
 .linkish{background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;color:var(--ink-soft);font-size:15px}
 
@@ -267,10 +273,12 @@ table.recent td.n,table.recent th.n{text-align:right}
     <div class="rooms" id="rooms"></div>
     <div class="cert" id="cert" hidden></div>
     <footer>
-      <p id="teach"></p>
-      <p id="privacy"></p>
-      <p id="credit" class="credit"></p>
-      <p><a href="https://hafizmz.github.io/beam-on" target="_blank" rel="noopener" id="older"></a> · <button class="linkish" id="reset"></button></p>
+      <div class="footL">
+        <p id="teach"></p>
+        <p id="privacy"></p>
+        <p><a href="https://hafizmz.github.io/beam-on" target="_blank" rel="noopener" id="older"></a> · <button class="linkish" id="reset"></button></p>
+      </div>
+      <aside class="footR"><div id="credit" class="credit"></div></aside>
     </footer>
   </section>
 
@@ -329,6 +337,7 @@ function save(){try{localStorage.setItem('bojr',JSON.stringify(state))}catch(e){
 /* ---------- words ---------- */
 const S={
  tester:{en:'Tester',ms:'Penguji'},
+ creditT:{en:'Voice: Maya Al-Zahra',ms:'Suara: Maya Al-Zahra'},
  credit:{en:'Thank you to <b>Maya Al-Zahra</b> for the voice-over! Maya was born on 7 November, the same birthday as Marie Curie. That day is celebrated around the world as International Day of Medical Physics.',ms:'Terima kasih kepada <b>Maya Al-Zahra</b> untuk suara latar! Maya lahir pada 7 November, sama dengan tarikh lahir Marie Curie. Hari itu diraikan di seluruh dunia sebagai Hari Fizik Perubatan Antarabangsa.'},
  privacy:{en:'Privacy: to improve the game we count anonymous play data on this site: age, mode, language, room, marks, time taken and device type. Names and pictures stay on this device and are never sent.',ms:'Privasi: untuk menambah baik permainan ini, kami mengira data main tanpa nama: umur, mod, bahasa, bilik, markah, masa dan jenis peranti. Nama dan gambar kekal dalam peranti ini dan tidak pernah dihantar.'},
  sub:{en:'Meet the machines in the hospital',ms:'Jom kenali mesin di hospital'},
@@ -627,7 +636,7 @@ function renderHub(){
  const all=ROOMS.every(r=>(b[r]||0)>0);
  const c=$('#cert');c.hidden=!all;
  if(all)c.innerHTML=`<svg viewBox="0 0 80 96"><path d="M24 56L14 92l14-6 8 10 6-34M56 56l10 36-14-6-8 10-6-34" fill="${CORAL}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="38" r="32" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="40" cy="38" r="24" fill="${SKY}" stroke="${INK}" stroke-width="3"/><path d="M40 22l4.7 9.6 10.5 1.5-7.6 7.4 1.8 10.5L40 46l-9.4 5 1.8-10.5-7.6-7.4 10.5-1.5z" fill="${SUN}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/></svg><div><h2>${esc(t('certT'))}</h2><p><b>${esc(t('certName'))}</b></p><p>${t('certB')} <b>${tot} / ${MAXT}</b></p></div>`;
- $('#teach').textContent=t('teach');$('#privacy').textContent=t('privacy');$('#credit').innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="${SUN}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/></svg><span>${t('credit')}</span>`;$('#older').textContent=t('older');$('#reset').textContent=t('resetMine');$('#reset').dataset.arm='';
+ $('#teach').textContent=t('teach');$('#privacy').textContent=t('privacy');$('#credit').innerHTML=`<span class="girl" role="img" aria-label="Girl in a yellow shirt"><svg viewBox="0 0 80 80"><path d="M10 82Q12 58 40 56Q68 58 70 82Z" fill="${SUN}" stroke="${INK}" stroke-width="3"/><path d="M32 57Q40 64 48 57" fill="none" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/><path d="M19 36Q17 10 40 9Q63 10 61 36L63 58Q53 62 49 51L31 51Q27 62 17 58Z" fill="#3B2A24" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><rect x="35" y="47" width="10" height="11" fill="#E9BC98" stroke="${INK}" stroke-width="2.5"/><ellipse cx="40" cy="35" rx="16" ry="18" fill="#E9BC98" stroke="${INK}" stroke-width="2.5"/><path d="M24 31Q26 16 40 16Q54 16 56 31Q50 24 44 25Q40 29 34 26Q28 26 24 31Z" fill="#3B2A24" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><circle cx="54" cy="21" r="4.5" fill="${CORAL}" stroke="${INK}" stroke-width="2"/><circle cx="33.5" cy="36" r="2.4" fill="${INK}"/><circle cx="46.5" cy="36" r="2.4" fill="${INK}"/><circle cx="34.3" cy="35.2" r=".8" fill="#fff"/><circle cx="47.3" cy="35.2" r=".8" fill="#fff"/><circle cx="29" cy="43" r="3" fill="${CORAL}" opacity=".45"/><circle cx="51" cy="43" r="3" fill="${CORAL}" opacity=".45"/><path d="M34 44Q40 50 46 44" fill="none" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/></svg></span><h3>${t('creditT')}</h3><p>${t('credit')}</p>`;$('#older').textContent=t('older');$('#reset').textContent=t('resetMine');$('#reset').dataset.arm='';
 }
 function showHub(){mMode('hub');if(current){current.stop();current=null}curId=null;closeOverlay();$('#play').hidden=true;$('#scores').hidden=true;$('#hub').hidden=false;renderHub();window.scrollTo(0,0)}
 function openGame(id){
