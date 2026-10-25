@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Morning Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+.avatar.fa { background: var(--good); color: var(--board); }
+#cv { cursor: default; }
+#cv.hot { cursor: pointer; }
+.clues { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; margin-top: 10px; }
+.clues .chip { position: relative; }
+.clues .chip[data-seen="true"] { border-color: var(--good); }
+.clues .chip[data-seen="true"]::after { content: "✓"; position: absolute; top: 4px; right: 7px; color: var(--good); font-size: 12px; }
+.clue { margin-top: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.clue h3 { font: 600 16px/1.2 var(--display); margin: 0 0 4px; }
+.clue p { margin: 4px 0 0; font-size: 14px; }
+.clue .big { font: 500 26px/1.1 var(--mono); font-variant-numeric: tabular-nums; margin: 2px 0 4px; }
+.clue canvas { width: 100%; height: auto; display: block; margin-top: 8px; }
+.clue .who { color: var(--muted); font-size: 13px; }
+.clock { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.clock .time { font: 500 30px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.clock .left { font-size: 13px; color: var(--muted); text-align: right; }
+.tbar { height: 6px; border-radius: 3px; background: var(--paper); overflow: hidden; margin: 8px 0 10px; }
+.tbar i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.tbar i.low { background: var(--warn); }
+.tbar i.out { background: var(--bad); }
+.gauge { position: relative; height: 30px; border-radius: 8px; background: var(--paper); margin-top: 10px; overflow: hidden; }
+.gauge .band { position: absolute; top: 0; bottom: 0; left: 30%; width: 40%; background: color-mix(in srgb, var(--good) 18%, transparent); border-left: 1px dashed var(--good); border-right: 1px dashed var(--good); }
+.gauge .mid { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--good); opacity: .6; }
+.gauge .mk { position: absolute; top: 3px; bottom: 3px; width: 4px; margin-left: -2px; border-radius: 2px; background: var(--ink); transition: left .25s; }
+.gauge .lab { position: absolute; bottom: 2px; font: 500 10px/1 var(--mono); color: var(--muted); }
+.gaugeRow { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; }
+.diag { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.diag legend { padding: 0; margin-bottom: 4px; font: 600 15px/1.2 var(--display); }
+.diag label { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; font-size: 14px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--paper); }
+.diag label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.diag input { margin: 2px 0 0; accent-color: var(--accent); }
+.field + .field { margin-top: 10px; }
+.field .hint { font-size: 12px; color: var(--muted); }
+#remeasure { margin-top: 12px; width: 100%; }
+.raw { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 14px; }
+.raw dd { margin: 0; font: 500 14px/1.3 var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.raw dt { color: var(--muted); }
+.locked-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body data-music="2">
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow"><a href="index.html">All chapters</a> · Chapter 3 · Quality Assurance</div>
+      <h1>Morning Check</h1>
+    </div>
+    <div class="hright">
+      <nav class="levels" id="levels" aria-label="Levels"></nav>
+      <div class="audio" role="group" aria-label="Audio">
+        <button id="musicBtn" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Music</button>
+        <button id="sfxBtn" aria-pressed="true">Sound</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="game">
+    <section class="board" aria-label="Linac morning check setup">
+      <canvas id="cv" aria-label="Side view of the linac, water tank with ionisation chamber, and the bench with thermometer, barometer and electrometer. Click an object to inspect it."></canvas>
+      <div class="legend"><span>Click anything with a <b style="color:var(--accent)">?</b> to inspect it, or use the evidence buttons. Each clue takes a few minutes.</span></div>
+      <div class="clues" id="clues" role="group" aria-label="Evidence"></div>
+      <div class="clue" id="clue" aria-live="polite"></div>
+    </section>
+
+    <aside class="panel">
+      <div class="card mentor">
+        <div class="avatar alt" id="avatar" aria-hidden="true">KR</div>
+        <div><b id="speaker">Kak Ros, radiation therapist</b><p id="mentor"></p></div>
+      </div>
+
+      <div class="card">
+        <div class="clock"><span class="time" id="clockTime">07:30</span><span class="left" id="clockLeft">60 min until Mei Ling arrives</span></div>
+        <div class="tbar"><i id="tbar" style="width:100%"></i></div>
+        <dl class="raw">
+          <dt>Today's reading (100 MU)</dt><dd id="rawNc">–</dd>
+          <dt>Baseline at reference conditions</dt><dd>20.00 nC</dd>
+          <dt>Raw reading vs baseline</dt><dd id="rawPct">–</dd>
+        </dl>
+      </div>
+
+      <div class="card" id="calc">
+        <h2>Correction calculator</h2>
+        <div class="field">
+          <label for="tIn"><span>Room temperature T</span><output id="tOut" class="num"></output></label>
+          <input type="range" id="tIn" min="15" max="35" step="0.1">
+        </div>
+        <div class="field">
+          <label for="pIn"><span>Air pressure P</span><output id="pOut" class="num"></output></label>
+          <input type="range" id="pIn" min="95" max="105" step="0.01">
+        </div>
+        <dl class="kv" style="margin-top:12px">
+          <dt>k<sub>TP</sub></dt><dd id="kOut"></dd>
+          <dt>Corrected reading</dt><dd id="cOut"></dd>
+        </dl>
+        <div class="gaugeRow"><span>Output vs baseline</span><span><b class="num" id="oOut"></b> <span class="pill" id="oPill"></span></span></div>
+        <div class="gauge" aria-hidden="true"><div class="band"></div><div class="mid"></div><div class="mk" id="mk"></div><span class="lab" style="left:4px">−5%</span><span class="lab" style="left:calc(30% - 12px)">−2</span><span class="lab" style="left:calc(70% + 3px)">+2</span><span class="lab" style="right:4px">+5%</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Linac and couch</h2>
+        <div class="field">
+          <label for="ssdIn"><span>Couch readout (SSD)</span><output id="ssdOut" class="num"></output></label>
+          <input type="range" id="ssdIn" min="97" max="103" step="0.1">
+          <span class="hint">The couch&rsquo;s own display of the source-to-surface distance. Raise or lower the couch with this.</span>
+        </div>
+        <div class="field">
+          <label for="calIn"><span>Monitor chamber calibration</span><output id="calOut" class="num"></output></label>
+          <input type="range" id="calIn" min="-5" max="5" step="0.1">
+          <span class="hint">Changes how much dose the linac gives per monitor unit (MU).</span>
+        </div>
+        <button class="ghost" id="remeasure">Re-measure (3 min)</button>
+      </div>
+
+      <div class="card">
+        <fieldset class="diag" id="diag">
+          <legend>Your diagnosis</legend>
+        </fieldset>
+      </div>
+
+      <button class="action" id="go"><span class="lamp" aria-hidden="true"></span>Sign off the check</button>
+      <div class="row">
+        <button class="ghost" id="reset">Reset level</button>
+        <button class="ghost" id="solve">Show solution</button>
+      </div>
+      <form class="card lock" id="lock" hidden>
+        <label for="pw"><b>Teacher password</b><span>The solution is locked so students solve it themselves.</span></label>
+        <div class="lockrow">
+          <input id="pw" type="password" autocomplete="off" placeholder="Password">
+          <button class="primary" type="submit">Unlock</button>
+        </div>
+        <p class="pwerr" id="pwerr" hidden>That password is not right. Check with your teacher and try again.</p>
+      </form>
+
+      <div class="card result" id="result" hidden aria-live="polite"></div>
+
+      <details class="card" id="notebook">
+        <summary>Physicist's notebook</summary>
+        <div class="note">
+          <p><b>Why the weather changes the reading.</b> An ionisation chamber is a tiny pocket of air between two electrodes. Radiation knocks electrons off air molecules, and the electrometer collects that charge in nanocoulombs (nC). The chamber is open to the room, so the number of air molecules inside follows the gas law, n = PV ÷ RT. Low pressure or warm air means fewer molecules, less charge, and a <b>lower</b> reading for exactly the same dose.</p>
+          <p>So every reading is corrected back to reference conditions (20 °C, 101.33 kPa):</p>
+          <div class="formula">k<sub>TP</sub> = (273.15 + T) ÷ (273.15 + 20) × 101.33 ÷ P</div>
+          <div class="work" id="work"></div>
+          <p><b>Why ±2% matters.</b> A course of treatment is often 15 to 30 daily doses. If the linac gave 3% too much every day, the healthy tissue around the tumour would get 3% too much too. That is why nobody is treated until the morning check is inside tolerance.</p>
+          <p><b>Inverse square law, again.</b> Dose falls with the square of the distance from the source. The chamber sits 10 cm deep, so its distance from the source is SSD + 10 cm. At SSD 98.5 cm the chamber is 108.5 cm away instead of 110 cm, giving (110 ÷ 108.5)² = 1.028, about 2.8% extra.</p>
+          <p class="fine">Simplified for the game: real checks follow a dosimetry code such as IAEA TRS-398 and also correct for polarity, ion recombination and the chamber's calibration factor. The small change in depth dose when the SSD moves is ignored, and the tank drawing exaggerates couch movement so you can see it.</p>
+        </div>
+      </details>
+    </aside>
+  </div>
+  <footer>Part of <a href="index.html">Beam On: First Light</a>. Physics is simplified for learning; see the notebook for what is simplified.</footer>
+</div>
+<script src="common.js"></script>
+<script>
+/*LOGIC-START*/
+const REF = { T: 20, P: 101.33, nC: 20.0, ssd: 100, depth: 10 };
+const COST = { thermo: 4, baro: 4, odi: 6, depth: 6, elec: 0, log: 8, weather: 3, service: 6 };
+const REMEASURE = 3, RECAL = 5, WRONG = 10, START = 60;
+const TOL = 2, CAL_TOL = 0.5, T_TOL = 0.5, P_TOL = 0.15;
+const kTP = (T, P) => ((273.15 + T) / (273.15 + REF.T)) * (REF.P / P);
+const isf = ssd => Math.pow((REF.ssd + REF.depth) / (ssd + REF.depth), 2);
+const DIAG = [
+  { id: 'fine', text: 'Machine is fine: the reading just needs the temperature–pressure correction' },
+  { id: 'ssd', text: 'Setup error: the couch distance (SSD) is wrong' },
+  { id: 'depth', text: 'Setup error: the chamber is at the wrong depth' },
+  { id: 'drift', text: 'Machine output has drifted: recalibrate, log it and tell the physicist in charge' },
+  { id: 'elec', text: 'Electrometer fault: send it for repair' }
+];
+const LEVELS = [
+  { id: 1, name: 'Stormy morning', T: 24.0, P: 99.5, ssd0: 100, machine: 100.3, diag: 'fine',
+    trend: [100.2, 99.8, 100.1, 100.4, 99.9, 100.0, 100.3, 99.7, 100.1, 100.2, 99.9, 100.0, 100.2] },
+  { id: 2, name: 'A little too close', T: 22.0, P: 101.0, ssd0: 98.5, couchOff: 1.5, machine: 100.1, diag: 'ssd',
+    trend: [99.9, 100.2, 100.0, 99.8, 100.1, 100.3, 99.9, 100.0, 100.2, 99.8, 100.1, 100.0, 99.9] },
+  { id: 3, name: 'Slow drift', T: 21.5, P: 100.6, ssd0: 100, machine: 102.6, diag: 'drift',
+    trend: [99.6, 99.9, 100.1, 100.3, 100.6, 100.8, 101.1, 101.2, 101.5, 101.7, 101.9, 102.1, 102.3] }
+];
+function newState(lv) {
+  return { time: START, Tin: 20, Pin: 101.33, ssd: lv.ssd0, measuredSSD: lv.ssd0, cal: 0, measuredCal: 0, seen: [], diag: null, done: false, wrong: 0 };
+}
+const trueOutput = (lv, st) => lv.machine * (1 + st.measuredCal / 100) * isf(st.measuredSSD);
+const rawNc = (lv, st) => REF.nC * trueOutput(lv, st) / 100 / kTP(lv.T, lv.P);
+const correctedNc = (lv, st) => rawNc(lv, st) * kTP(st.Tin, st.Pin);
+const outputPct = (lv, st) => correctedNc(lv, st) / REF.nC * 100;
+const dirty = st => Math.abs(st.ssd - st.measuredSSD) > 0.05 || Math.abs(st.cal - st.measuredCal) > 0.05;
+const remeasureCost = st => REMEASURE + (Math.abs(st.cal - st.measuredCal) > 0.05 ? RECAL : 0);
+function inspect(st, id) { if (!st.seen.includes(id)) { st.seen.push(id); st.time -= COST[id]; } return st; }
+function remeasure(st) { st.time -= remeasureCost(st); st.measuredSSD = st.ssd; st.measuredCal = st.cal; return st; }
+function starsFor(time) { return time >= 35 ? 3 : time >= 20 ? 2 : time > 0 ? 1 : 0; }
+/* Returns { win, issues:[], hint } — issues are written for the player. */
+function judge(lv, st) {
+  const issues = [];
+  const out = outputPct(lv, st);
+  const tpOK = Math.abs(st.Tin - lv.T) <= T_TOL && Math.abs(st.Pin - lv.P) <= P_TOL;
+  if (!st.diag) return { win: false, issues: ['Choose a diagnosis first.'], hint: null, noPenalty: true };
+  if (dirty(st)) return { win: false, issues: ['You changed the setup but have not re-measured yet.'], hint: null, noPenalty: true };
+  if (!tpOK) issues.push('The calculator is not using today\'s temperature and pressure, so the corrected output is wrong.');
+  if (Math.abs(st.measuredSSD - REF.ssd) > 0.05) issues.push(`The distance indicator shows the water surface at ${st.measuredSSD.toFixed(1)} cm from the source. The protocol says 100.0 cm.`);
+  if (st.diag !== lv.diag) issues.push('That diagnosis does not match the evidence.');
+  if (lv.diag !== 'drift' && Math.abs(st.measuredCal) > 0.05) issues.push('You changed the machine\'s calibration, but nothing was wrong with the machine. Set it back to 0.0%.');
+  if (lv.diag === 'drift' && st.diag === 'drift' && tpOK && Math.abs(out - 100) > CAL_TOL) issues.push(`After calibration the output must be within ±${CAL_TOL}% of 100%. It is ${out.toFixed(1)}%.`);
+  if (tpOK && Math.abs(out - 100) > TOL && !(lv.diag === 'drift' && st.diag === 'drift')) issues.push(`The corrected output is ${out.toFixed(1)}%, outside the ±2% tolerance.`);
+  let hint = null;
+  if (lv.id === 1) hint = st.diag === 'drift' || st.diag === 'elec' ? 'Before blaming the machine, check the air. The chamber is open to the room, so today\'s weather changes the reading.' : 'Look at the thermometer and the barometer, then put those numbers in the calculator.';
+  if (lv.id === 2) hint = st.diag === 'drift' ? 'Recalibrating would hide a setup mistake. What could make the chamber get more dose today? Check every distance in the setup.' : 'Even after the correction the output is high. Something about the setup is different from the protocol. Do not trust a single readout: check the distance with the optical distance indicator.';
+  if (lv.id === 3) hint = st.diag === 'fine' ? 'Today\'s reading looks fine before correction, but that is only because it is cool and the pressure is lowish. Correct it properly, then read the logbook.' : 'The setup matches the protocol. Look at how the output has changed over the last two weeks.';
+  return { win: issues.length === 0, issues, hint };
+}
+/*LOGIC-END*/
+
+const $ = FL.$;
+const CLUES = [
+  { id: 'thermo', name: 'Thermometer' }, { id: 'baro', name: 'Barometer' }, { id: 'odi', name: 'Distance indicator' },
+  { id: 'depth', name: 'Chamber depth' }, { id: 'elec', name: 'Electrometer' }, { id: 'log', name: 'Logbook' },
+  { id: 'weather', name: 'Weather notice' }, { id: 'service', name: 'Service file' }
+];
+const WEATHER = {
+  1: 'MetMalaysia: thunderstorms over the Klang Valley this morning as a low-pressure system passes through.',
+  2: 'MetMalaysia: hot and sunny across the Klang Valley, light winds, no warnings.',
+  3: 'MetMalaysia: hazy morning, otherwise normal conditions.'
+};
+const SERVICE = {
+  1: 'Last service three weeks ago. All checks passed. No faults reported since.',
+  2: 'Yesterday evening: engineer replaced the couch height sensor and re-zeroed the couch readout. Signed off at 21:40.',
+  3: 'Twelve days ago: magnetron replaced (the part that powers the beam). Engineer\'s note: "Output may settle over the next few weeks. Keep an eye on the trend."'
+};
+const TEXT = {
+  1: { intro: ['KR', 'Selamat pagi, {name}! The morning check on Linac 1 reads low, outside our ±2% tolerance. Mei Ling arrives at 08:30 for her first breast treatment. Can you find out why before then?'] },
+  2: { intro: ['KR', 'Morning again! Today the electrometer reads a little high. Dr. Lim wants it checked properly before we treat. Mei Ling is in the waiting room early, reading the newspaper.'] },
+  3: { intro: ['DL', 'Week three of Mei Ling\'s treatment. Today\'s reading looks fine at first glance, but something in the logbook has been bothering me. Can you check it properly?'] }
+};
+const PHYSICS = {
+  1: ['An ionisation chamber measures the charge made in a small pocket of air.', 'Low pressure and warm air mean fewer air molecules, so the raw reading falls. The k<sub>TP</sub> correction puts it back on the same footing every day.'],
+  2: ['Inverse square law: the chamber was 108.5 cm from the source instead of 110 cm, so it received (110 ÷ 108.5)² = 2.8% more dose.', 'A setup error can look exactly like a machine fault. Check the setup before you change the machine.'],
+  3: ['One reading can look fine while a trend shows the machine slowly drifting.', 'Recalibrating the monitor chamber makes 100 monitor units deliver the right dose again.']
+};
+const CARDS = {
+  1: { role: 'QA physicist', text: 'Every morning, before the first patient, medical physics staff check that each linac gives exactly the dose it should. If it is more than 2% out, nobody is treated until it is fixed.' },
+  2: { role: 'Dosimetry and calibration', text: 'Physicists write the measurement protocols and train the team to follow them, because a centimetre in the wrong place changes the answer.' },
+  3: { role: 'Linac physicist', text: 'Physicists look after each linac for its whole life: commissioning it, calibrating it, and watching the trends after every repair.' }
+};
+const WIN_LINES = {
+  1: ['DL', 'Spot on. The machine was fine; the storm was not. Mei Ling\'s first treatment starts on time.'],
+  2: ['DL', 'Well caught. If you had recalibrated, every patient today would have been under-dosed by almost 3%. Mei Ling is on the couch now.'],
+  3: ['DL', 'That is exactly why we keep a logbook. I\'ll let the engineers know about the magnetron. Mei Ling only has two weeks to go.']
+};
+const PEOPLE = {
+  DL: { name: 'Dr. Lim, Head of Physics', cls: '' },
+  KR: { name: 'Kak Ros, radiation therapist', cls: 'alt' },
+  FA: { name: 'Farah, MSc student on placement', cls: 'fa' }
+};
+const FARAH = {
+  thermo: 'Twenty degrees is the reference. Is warmer air good or bad for the reading?',
+  baro: 'If there are fewer air molecules in the chamber, would it collect more charge or less?',
+  odi: 'The protocol says the water surface should be 100.0 cm from the source.',
+  depth: 'Ten centimetres, same as the protocol. That one looks right to me.',
+  log: 'The logbook only records corrected readings. Is there a pattern?',
+  weather: 'Does the weather really matter inside a concrete bunker?',
+  service: 'Dr. Lim always says: after any repair, check twice.',
+  elec: 'The raw reading is only the starting point. It still needs correcting.'
+};
+
+const S = { level: 0, st: null, clue: null, hover: null, measuring: 0, measureT0: 0, stars: FL.getStars(3), busy: false };
+const lv = () => LEVELS[S.level];
+
+function say(who, text) {
+  const p = PEOPLE[who];
+  $('avatar').textContent = who; $('avatar').className = 'avatar ' + p.cls;
+  $('speaker').textContent = p.name; $('mentor').textContent = text;
+}
+const clockStr = t => { const m = 7 * 60 + 30 + (START - t); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+
+/* ---------- Panel rendering ---------- */
+function renderDiag() {
+  const fs = $('diag');
+  fs.querySelectorAll('label').forEach(l => l.remove());
+  DIAG.forEach(d => {
+    const l = document.createElement('label');
+    l.innerHTML = `<input type="radio" name="diag" id="dg-${d.id}" value="${d.id}"><span>${d.text}</span>`;
+    l.querySelector('input').onchange = () => { S.st.diag = d.id; FL.audio.click(); };
+    fs.appendChild(l);
+  });
+}
+function renderClueButtons() {
+  const box = $('clues'); box.innerHTML = '';
+  CLUES.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.id = 'clue-' + c.id; b.dataset.clue = c.id;
+    b.innerHTML = `${c.name}<small>${COST[c.id] ? COST[c.id] + ' min' : 'free'}</small>`;
+    b.onclick = () => openClue(c.id);
+    box.appendChild(b);
+  });
+}
+function update() {
+  const L = lv(), st = S.st;
+  const t = Math.max(0, st.time);
+  $('clockTime').textContent = clockStr(t);
+  $('clockLeft').textContent = t > 0 ? `${t} min until Mei Ling arrives` : 'Mei Ling is waiting';
+  const bar = $('tbar'); bar.style.width = (t / START * 100) + '%';
+  bar.className = t <= 0 ? 'out' : t < 20 ? 'low' : '';
+  const raw = rawNc(L, st);
+  $('rawNc').textContent = S.measuring ? 'measuring…' : raw.toFixed(2) + ' nC';
+  $('rawPct').textContent = S.measuring ? '–' : (raw / REF.nC * 100).toFixed(1) + '%';
+  $('tIn').value = st.Tin; $('pIn').value = st.Pin; $('ssdIn').value = (st.ssd + (L.couchOff || 0)).toFixed(1); $('calIn').value = st.cal;
+  $('tOut').textContent = st.Tin.toFixed(1) + ' °C';
+  $('pOut').textContent = st.Pin.toFixed(2) + ' kPa';
+  $('ssdOut').textContent = (st.ssd + (L.couchOff || 0)).toFixed(1) + ' cm';
+  $('calOut').textContent = (st.cal >= 0 ? '+' : '') + st.cal.toFixed(1) + '%';
+  const k = kTP(st.Tin, st.Pin), c = correctedNc(L, st), o = outputPct(L, st);
+  $('kOut').textContent = k.toFixed(4);
+  $('cOut').textContent = c.toFixed(2) + ' nC';
+  $('oOut').textContent = o.toFixed(1) + '%';
+  const ok = Math.abs(o - 100) <= TOL;
+  const pill = $('oPill'); pill.className = 'pill ' + (ok ? 'ok' : 'no'); pill.textContent = ok ? 'In tolerance' : 'Out';
+  $('mk').style.left = FL.clamp((o - 95) / 10 * 100, 1, 99) + '%';
+  const rm = $('remeasure');
+  rm.textContent = Math.abs(st.cal - st.measuredCal) > 0.05 ? `Recalibrate and re-measure (${remeasureCost(st)} min)` : `Re-measure (${REMEASURE} min)`;
+  rm.setAttribute('aria-pressed', dirty(st) ? 'true' : 'false');
+  CLUES.forEach(cl => { const b = $('clue-' + cl.id); if (b) b.dataset.seen = st.seen.includes(cl.id) ? 'true' : 'false'; });
+  $('work').innerHTML = `Your values: T = ${st.Tin.toFixed(1)} °C, P = ${st.Pin.toFixed(2)} kPa<br>k<sub>TP</sub> = (${(273.15 + st.Tin).toFixed(2)} ÷ 293.15) × (101.33 ÷ ${st.Pin.toFixed(2)}) = ${k.toFixed(4)}<br>Corrected = ${raw.toFixed(2)} nC × ${k.toFixed(4)} = ${c.toFixed(2)} nC → ${o.toFixed(1)}% of baseline`;
+  const lock = st.done || st.time <= 0 || S.busy;
+  ['go', 'remeasure', 'tIn', 'pIn', 'ssdIn', 'calIn'].forEach(id => { $(id).disabled = lock; });
+  draw();
+}
+
+/* ---------- Clues ---------- */
+function clueHTML(id) {
+  const L = lv(), st = S.st;
+  switch (id) {
+    case 'thermo': return `<h3>Room thermometer</h3><p class="big">${L.T.toFixed(1)} °C</p><p>Hanging next to the water tank, at chamber height. Reference temperature is 20.0 °C.${L.id === 1 ? ' Kak Ros says the air-conditioning tripped overnight.' : ''}</p>`;
+    case 'baro': return `<h3>Barometer</h3><p class="big">${L.P.toFixed(2)} kPa</p><p>Air pressure in the bunker right now. Reference pressure is 101.33 kPa, a typical day at sea level.</p>`;
+    case 'odi': return `<h3>Optical distance indicator</h3><p class="big">SSD ${st.ssd.toFixed(1)} cm</p><p>A small projector in the linac head shines a scale onto the water surface. It reads the source-to-surface distance (SSD). The protocol says 100.0 cm. It is an independent check, separate from the couch&rsquo;s own readout.</p>`;
+    case 'depth': return `<h3>Chamber depth</h3><p class="big">10.0 cm</p><p>The ruler on the tank shows the chamber's centre 10.0 cm below the water surface, as the protocol says.</p>`;
+    case 'elec': return `<h3>Electrometer</h3><p class="big">${rawNc(L, st).toFixed(2)} nC</p><p>Charge collected for 100 monitor units. On a reference day (20 °C, 101.33 kPa) a correctly calibrated linac gives 20.00 nC. This raw number has not been corrected yet.</p>`;
+    case 'log': return `<h3>Output logbook</h3><p>Corrected output for the last 13 working days. The green band is the ±2% tolerance.</p><canvas id="logcv" width="600" height="220" aria-label="Line chart of daily output"></canvas>`;
+    case 'weather': return `<h3>Weather notice</h3><p>${WEATHER[L.id]}</p>`;
+    case 'service': return `<h3>Service file</h3><p>${SERVICE[L.id]}</p>`;
+  }
+  return '';
+}
+function openClue(id) {
+  const st = S.st;
+  if (st.done || S.busy) { showClue(id); return; }
+  if (st.time <= 0) return;
+  const first = !st.seen.includes(id);
+  inspect(st, id);
+  if (first) { id === 'log' || id === 'service' || id === 'weather' ? FL.audio.paper() : FL.audio.blip(id.length % 5); }
+  else FL.audio.click();
+  showClue(id);
+  if (first && FARAH[id] && Math.random() < 0.55) say('FA', FARAH[id]);
+  update();
+  checkTime();
+}
+function showClue(id) {
+  S.clue = id;
+  $('clue').innerHTML = clueHTML(id);
+  if (id === 'log') drawLog();
+  draw();
+}
+function drawLog() {
+  const cv = $('logcv'); if (!cv) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), W = 600, H = 220;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const col = { ink: FL.css('--ink'), muted: FL.css('--muted'), line: FL.css('--line'), good: FL.css('--good'), accent: FL.css('--accent'), board: FL.css('--board') };
+  const L = lv(), data = L.trend;
+  const x0 = 46, x1 = W - 16, y0 = 14, y1 = H - 30, lo = 96.5, hi = 103.5;
+  const X = i => x0 + (x1 - x0) * i / (data.length), Y = v => y1 - (v - lo) / (hi - lo) * (y1 - y0);
+  c.clearRect(0, 0, W, H);
+  c.fillStyle = col.good; c.globalAlpha = .15; c.fillRect(x0, Y(102), x1 - x0, Y(98) - Y(102)); c.globalAlpha = 1;
+  c.strokeStyle = col.line; c.lineWidth = 1; c.font = `500 12px ${FL.css('--mono')}`; c.fillStyle = col.muted; c.textAlign = 'right'; c.textBaseline = 'middle';
+  for (let v = 97; v <= 103; v++) { c.beginPath(); c.moveTo(x0, Y(v)); c.lineTo(x1, Y(v)); c.globalAlpha = v === 100 ? .9 : .45; c.stroke(); c.globalAlpha = 1; c.fillText(v + '%', x0 - 6, Y(v)); }
+  c.textAlign = 'center'; c.textBaseline = 'top';
+  data.forEach((v, i) => { if (i % 2 === 0) c.fillText('D' + (i + 1), X(i), y1 + 8); });
+  c.fillText('Today', X(data.length), y1 + 8);
+  c.strokeStyle = col.accent; c.lineWidth = 2.5; c.beginPath();
+  data.forEach((v, i) => { i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v)); }); c.stroke();
+  c.fillStyle = col.accent; data.forEach((v, i) => { c.beginPath(); c.arc(X(i), Y(v), 3.5, 0, 7); c.fill(); });
+  c.strokeStyle = col.muted; c.setLineDash([4, 4]); c.beginPath(); c.arc(X(data.length), Y(100), 9, 0, 7); c.stroke(); c.setLineDash([]);
+  c.fillStyle = col.muted; c.textBaseline = 'middle'; c.fillText('?', X(data.length), Y(100));
+}
+
+/* ---------- Stage drawing ---------- */
+const SW = 800, SH = 470;
+const cv = $('cv');
+let ctx = null, scale = 1, dpr = 1;
+function resize() {
+  const r = FL.fitCanvas(cv, SW / SH); ctx = r.ctx; scale = r.w / SW; dpr = Math.min(window.devicePixelRatio || 1, 2);
+  draw();
+}
+function surfY() { return 262 - (100 - S.st.ssd) * 10; }
+function hotspots() {
+  const sy = surfY();
+  return [
+    { id: 'weather', x: 22, y: 36, w: 156, h: 108 },
+    { id: 'odi', x: 196, y: sy - 34, w: 66, h: 40 },
+    { id: 'depth', x: 330, y: sy + 4, w: 68, h: 76 },
+    { id: 'log', x: 636, y: 48, w: 128, h: 160 },
+    { id: 'thermo', x: 486, y: 222, w: 40, h: 120 },
+    { id: 'baro', x: 554, y: 256, w: 72, h: 80 },
+    { id: 'elec', x: 630, y: 254, w: 146, h: 80 },
+    { id: 'service', x: 26, y: 256, w: 156, h: 50 }
+  ];
+}
+function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function draw() {
+  if (!ctx || !S.st) return;
+  const c = ctx, L = lv(), st = S.st;
+  c.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+  const col = { board: FL.css('--board'), paper: FL.css('--paper'), ink: FL.css('--ink'), muted: FL.css('--muted'), line: FL.css('--line'), accent: FL.css('--accent'), beam: FL.css('--beam'), good: FL.css('--good'), bad: FL.css('--bad'), room: FL.css('--room'), slab: FL.css('--slab'), zone: FL.css('--zone') };
+  const body = FL.css('--body'), mono = FL.css('--mono');
+  c.clearRect(0, 0, SW, SH);
+  c.fillStyle = col.room; c.fillRect(0, 0, SW, 404);
+  c.fillStyle = col.paper; c.fillRect(0, 404, SW, SH - 404);
+  c.strokeStyle = col.line; c.lineWidth = 2; c.beginPath(); c.moveTo(0, 404); c.lineTo(SW, 404); c.stroke();
+  const label = (t, x, y, align = 'center', size = 12, color = col.muted, weight = 700) => { c.font = `${weight} ${size}px ${body}`; c.fillStyle = color; c.textAlign = align; c.textBaseline = 'alphabetic'; c.fillText(t, x, y); };
+
+  // Notice board (weather)
+  c.fillStyle = col.beam; c.globalAlpha = .22; rr(c, 24, 38, 152, 104, 6); c.fill(); c.globalAlpha = 1;
+  c.strokeStyle = col.line; c.lineWidth = 1.5; rr(c, 24, 38, 152, 104, 6); c.stroke();
+  c.fillStyle = col.board; c.save(); c.translate(70, 84); c.rotate(-0.05); c.fillRect(-36, -30, 72, 58); c.restore();
+  c.fillStyle = col.board; c.save(); c.translate(132, 90); c.rotate(0.06); c.fillRect(-30, -26, 60, 48); c.restore();
+  c.fillStyle = col.bad; c.beginPath(); c.arc(70, 58, 3.5, 0, 7); c.fill(); c.fillStyle = col.accent; c.beginPath(); c.arc(132, 68, 3.5, 0, 7); c.fill();
+  c.strokeStyle = col.muted; c.lineWidth = 1.2;
+  for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(46, 74 + i * 9); c.lineTo(94, 72 + i * 9); c.stroke(); }
+  // little cloud + bolt on the weather sheet
+  c.fillStyle = col.muted; c.beginPath(); c.arc(124, 88, 8, 0, 7); c.arc(134, 85, 10, 0, 7); c.arc(144, 90, 7, 0, 7); c.fill();
+  c.fillStyle = col.beam; c.beginPath(); c.moveTo(134, 96); c.lineTo(128, 108); c.lineTo(133, 107); c.lineTo(130, 116); c.lineTo(139, 102); c.lineTo(134, 103); c.closePath(); c.fill();
+  label('Notice board', 100, 158);
+
+  // Wall clock
+  const t = Math.max(0, st.time), mins = 7 * 60 + 30 + (START - t);
+  c.fillStyle = col.board; c.strokeStyle = col.ink; c.lineWidth = 2.5; c.beginPath(); c.arc(470, 78, 30, 0, 7); c.fill(); c.stroke();
+  c.lineWidth = 1.5; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; c.beginPath(); c.moveTo(470 + Math.sin(a) * 24, 78 - Math.cos(a) * 24); c.lineTo(470 + Math.sin(a) * 28, 78 - Math.cos(a) * 28); c.stroke(); }
+  const ha = ((mins / 60) % 12) / 12 * Math.PI * 2, ma = (mins % 60) / 60 * Math.PI * 2;
+  c.lineCap = 'round'; c.lineWidth = 3.5; c.beginPath(); c.moveTo(470, 78); c.lineTo(470 + Math.sin(ha) * 14, 78 - Math.cos(ha) * 14); c.stroke();
+  c.lineWidth = 2; c.strokeStyle = col.bad; c.beginPath(); c.moveTo(470, 78); c.lineTo(470 + Math.sin(ma) * 22, 78 - Math.cos(ma) * 22); c.stroke(); c.lineCap = 'butt';
+  label(clockStr(t), 470, 126, 'center', 12, col.ink, 500);
+
+  // Linac head
+  const sy = surfY();
+  c.fillStyle = col.slab; c.strokeStyle = col.ink; c.lineWidth = 1.5;
+  c.fillRect(226, 0, 148, 54); c.strokeRect(226, -2, 148, 56);
+  c.beginPath(); c.moveTo(236, 54); c.lineTo(364, 54); c.lineTo(344, 122); c.lineTo(256, 122); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = col.accent; c.fillRect(236, 54, 128, 7);
+  c.fillStyle = col.ink; c.fillRect(270, 122, 60, 14);
+  label('LINAC 1', 300, 98, 'center', 12, col.ink, 700);
+  // ODI projector
+  c.fillStyle = col.ink; c.fillRect(234, 104, 14, 10);
+  c.strokeStyle = col.bad; c.globalAlpha = .55; c.setLineDash([3, 4]); c.lineWidth = 1.2; c.beginPath(); c.moveTo(241, 114); c.lineTo(276, sy); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+
+  // Beam
+  const glow = S.measuring ? 0.25 + 0.2 * Math.sin((performance.now() - S.measureT0) / 90) : 0;
+  c.fillStyle = col.beam; c.globalAlpha = 0.16 + glow;
+  c.beginPath(); c.moveTo(286, 136); c.lineTo(314, 136); c.lineTo(342, sy); c.lineTo(258, sy); c.closePath(); c.fill();
+  c.globalAlpha = 0.1 + glow * 0.6; c.beginPath(); c.moveTo(258, sy); c.lineTo(342, sy); c.lineTo(356, sy + 104); c.lineTo(244, sy + 104); c.closePath(); c.fill(); c.globalAlpha = 1;
+
+  // Water tank
+  c.fillStyle = col.accent; c.globalAlpha = .16; c.fillRect(202, sy, 196, 104); c.globalAlpha = 1;
+  c.strokeStyle = col.ink; c.lineWidth = 2.5; c.beginPath(); c.moveTo(200, sy - 12); c.lineTo(200, sy + 106); c.lineTo(400, sy + 106); c.lineTo(400, sy - 12); c.stroke();
+  c.strokeStyle = col.accent; c.lineWidth = 2; c.beginPath(); c.moveTo(202, sy); c.lineTo(398, sy); c.stroke();
+  // ODI scale projected on the surface
+  c.strokeStyle = col.bad; c.lineWidth = 1.5; c.fillStyle = col.bad;
+  for (let i = -3; i <= 3; i++) { const x = 276 + i * 6; c.beginPath(); c.moveTo(x, sy - (i === 0 ? 9 : 5)); c.lineTo(x, sy); c.stroke(); }
+  label(st.seen.includes('odi') ? 'SSD ' + st.ssd.toFixed(1) : 'SSD ?', 232, sy - 12, 'center', 12, col.bad, 500);
+  // Depth ruler
+  c.strokeStyle = col.muted; c.lineWidth = 1.2;
+  for (let d = 0; d <= 14; d += 2) { const y = sy + d * 5; c.beginPath(); c.moveTo(384, y); c.lineTo(d % 10 === 0 ? 372 : 378, y); c.stroke(); }
+  label('cm', 388, sy + 82, 'right', 11, col.muted, 500);
+  // Chamber + stem + cable
+  const cy = sy + 50;
+  c.strokeStyle = col.ink; c.lineWidth = 3; c.beginPath(); c.moveTo(300, cy - 4); c.lineTo(300, sy - 20); c.stroke();
+  c.fillStyle = col.ink; rr(c, 288, cy - 6, 24, 12, 6); c.fill();
+  c.strokeStyle = col.muted; c.lineWidth = 2; c.beginPath(); c.moveTo(300, sy - 20); c.bezierCurveTo(330, sy - 70, 560, sy - 60, 646, 270); c.stroke();
+  c.setLineDash([2, 3]); c.strokeStyle = col.ink; c.lineWidth = 1; c.beginPath(); c.moveTo(318, cy); c.lineTo(370, cy); c.stroke(); c.setLineDash([]);
+  label('10 cm', 352, cy - 6, 'center', 11, col.ink, 500);
+  label('Ion chamber', 300, cy + 24, 'center', 11, col.muted, 700);
+  // Couch
+  c.fillStyle = col.slab; c.strokeStyle = col.ink; c.lineWidth = 1.5;
+  c.fillRect(180, sy + 108, 240, 14); c.strokeRect(180, sy + 108, 240, 14);
+  c.fillRect(286, sy + 122, 28, 396 - (sy + 122)); c.strokeRect(286, sy + 122, 28, 396 - (sy + 122));
+  c.fillRect(250, 396, 100, 8);
+  label('Couch', 300, 430, 'center', 12, col.muted);
+
+  // Bench
+  c.fillStyle = col.slab; c.fillRect(472, 336, 318, 10); c.fillRect(484, 346, 8, 58); c.fillRect(770, 346, 8, 58);
+  // Thermometer
+  c.fillStyle = col.board; c.strokeStyle = col.ink; c.lineWidth = 1.5; rr(c, 499, 226, 14, 98, 7); c.fill(); c.stroke();
+  c.fillStyle = col.bad; c.beginPath(); c.arc(506, 326, 10, 0, 7); c.fill();
+  const lvlY = 320 - (L.T - 10) * 3.6; c.fillRect(503, lvlY, 6, 326 - lvlY);
+  c.strokeStyle = col.muted; c.lineWidth = 1; for (let i = 0; i < 7; i++) { c.beginPath(); c.moveTo(513, 236 + i * 13); c.lineTo(518, 236 + i * 13); c.stroke(); }
+  // Barometer
+  c.fillStyle = col.board; c.strokeStyle = col.ink; c.lineWidth = 2; c.beginPath(); c.arc(590, 296, 30, 0, 7); c.fill(); c.stroke();
+  c.lineWidth = 1; c.strokeStyle = col.muted;
+  for (let i = 0; i <= 10; i++) { const a = -Math.PI * 0.75 + i / 10 * Math.PI * 1.5; c.beginPath(); c.moveTo(590 + Math.sin(a) * 22, 296 - Math.cos(a) * 22); c.lineTo(590 + Math.sin(a) * 27, 296 - Math.cos(a) * 27); c.stroke(); }
+  const pa = -Math.PI * 0.75 + FL.clamp((L.P - 97) / 8, 0, 1) * Math.PI * 1.5;
+  c.strokeStyle = col.bad; c.lineWidth = 2.5; c.beginPath(); c.moveTo(590, 296); c.lineTo(590 + Math.sin(pa) * 20, 296 - Math.cos(pa) * 20); c.stroke();
+  c.fillStyle = col.ink; c.beginPath(); c.arc(590, 296, 3, 0, 7); c.fill();
+  label('kPa', 590, 316, 'center', 10, col.muted, 500);
+  // Electrometer
+  c.fillStyle = col.slab; c.strokeStyle = col.ink; c.lineWidth = 1.5; rr(c, 632, 260, 140, 74, 8); c.fill(); c.stroke();
+  c.fillStyle = '#10221a'; rr(c, 642, 272, 120, 36, 4); c.fill();
+  c.font = `500 20px ${mono}`; c.fillStyle = '#7ef0a6'; c.textAlign = 'right'; c.textBaseline = 'middle';
+  const shown = S.measuring ? (rawNc(L, st) * Math.min(1, (performance.now() - S.measureT0) / 1100)).toFixed(2) : rawNc(L, st).toFixed(2);
+  c.fillText(shown, 734, 291); c.font = `500 11px ${mono}`; c.fillText('nC', 756, 292);
+  c.fillStyle = col.ink; c.beginPath(); c.arc(652, 322, 4, 0, 7); c.arc(670, 322, 4, 0, 7); c.fill();
+  c.fillStyle = S.measuring ? col.beam : col.good; c.beginPath(); c.arc(758, 322, 4, 0, 7); c.fill();
+  label('Thermometer', 506, 364, 'center', 11); label('Barometer', 590, 364, 'center', 11); label('Electrometer', 702, 364, 'center', 11);
+  // Logbook clipboard on the wall
+  c.fillStyle = col.board; c.strokeStyle = col.ink; c.lineWidth = 1.5; rr(c, 642, 54, 116, 148, 6); c.fill(); c.stroke();
+  c.fillStyle = col.slab; rr(c, 680, 46, 40, 16, 4); c.fill(); c.stroke();
+  c.strokeStyle = col.line; c.lineWidth = 1; for (let i = 0; i < 9; i++) { c.beginPath(); c.moveTo(654, 80 + i * 13); c.lineTo(746, 80 + i * 13); c.stroke(); }
+  c.strokeStyle = col.accent; c.lineWidth = 1.8; c.beginPath();
+  L.trend.forEach((v, i) => { const x = 656 + i * 7, y = 150 - (v - 99) * 9; i ? c.lineTo(x, y) : c.moveTo(x, y); }); c.stroke();
+  label('Logbook', 700, 222);
+  // Service cabinet
+  c.fillStyle = col.slab; c.strokeStyle = col.ink; c.lineWidth = 1.5; c.fillRect(30, 300, 148, 104); c.strokeRect(30, 300, 148, 104);
+  c.beginPath(); c.moveTo(30, 352); c.lineTo(178, 352); c.stroke();
+  c.fillStyle = col.ink; c.fillRect(96, 322, 18, 4); c.fillRect(96, 374, 18, 4);
+  c.fillStyle = col.beam; c.save(); c.translate(104, 290); c.rotate(-0.04); rr(c, -54, -14, 108, 20, 3); c.fill(); c.restore();
+  label('SERVICE', 104, 286, 'center', 10, col.ink, 700);
+  label('Service file', 104, 424);
+
+  // Hotspot badges and hover
+  for (const h of hotspots()) {
+    const seen = st.seen.includes(h.id), on = S.hover === h.id || S.clue === h.id;
+    if (on) { c.strokeStyle = col.accent; c.lineWidth = 2; c.setLineDash([6, 4]); rr(c, h.x - 4, h.y - 4, h.w + 8, h.h + 8, 8); c.stroke(); c.setLineDash([]); }
+    const bx = h.x + h.w, by = h.y;
+    c.fillStyle = seen ? col.good : col.accent; c.beginPath(); c.arc(bx, by, 10, 0, 7); c.fill();
+    c.fillStyle = col.board; c.font = `800 13px ${body}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(seen ? '✓' : '?', bx, by + 1);
+  }
+  if (S.measuring) requestAnimationFrame(draw);
+}
+function hitAt(e) {
+  const r = cv.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * SW, y = (e.clientY - r.top) / r.height * SH;
+  return hotspots().find(h => x >= h.x - 6 && x <= h.x + h.w + 10 && y >= h.y - 10 && y <= h.y + h.h + 6);
+}
+cv.addEventListener('pointermove', e => { const h = hitAt(e); const id = h ? h.id : null; if (id !== S.hover) { S.hover = id; cv.classList.toggle('hot', !!id); draw(); } });
+cv.addEventListener('pointerleave', () => { S.hover = null; cv.classList.remove('hot'); draw(); });
+cv.addEventListener('click', e => { const h = hitAt(e); if (h) openClue(h.id); });
+
+/* ---------- Actions ---------- */
+function checkTime() {
+  if (S.st.time <= 0 && !S.st.done) {
+    S.st.done = true;
+    FL.audio.alarm();
+    say('KR', 'It is 08:30 and the check is not signed off. We have to postpone Mei Ling\'s treatment. Reset the level and try again with fewer detours.');
+    FL.showFail($('result'), { title: 'Out of time', issues: ['Mei Ling\'s treatment had to be postponed.', 'Inspect the clues that matter most, and avoid wrong sign-offs (each costs 10 minutes).'] });
+    update();
+  }
+}
+$('tIn').addEventListener('input', e => { S.st.Tin = +e.target.value; update(); });
+$('pIn').addEventListener('input', e => { S.st.Pin = +e.target.value; update(); });
+$('ssdIn').addEventListener('input', e => { S.st.ssd = Math.round((+e.target.value - (lv().couchOff || 0)) * 10) / 10; update(); });
+$('calIn').addEventListener('input', e => { S.st.cal = Math.round(+e.target.value * 10) / 10; update(); });
+function doRemeasure() {
+  return new Promise(res => {
+    const st = S.st;
+    if (st.done || st.time <= 0 || S.busy) return res();
+    S.busy = true; S.measuring = 1; S.measureT0 = performance.now();
+    remeasure(st);
+    FL.audio.beam();
+    update();
+    setTimeout(() => {
+      S.measuring = 0; S.busy = false;
+      if (S.clue === 'elec' || S.clue === 'odi') showClue(S.clue);
+      update(); checkTime(); res();
+    }, FL.reduced ? 200 : 1300);
+  });
+}
+$('remeasure').onclick = () => doRemeasure();
+function signOff() {
+  const L = lv(), st = S.st;
+  if (st.done || st.time <= 0 || S.busy) return;
+  const j = judge(L, st);
+  const box = $('result');
+  if (j.win) {
+    st.done = true;
+    const stars = starsFor(st.time);
+    S.stars = FL.setStars(3, L.id, stars);
+    say(...WIN_LINES[L.id]);
+    const next = S.level < LEVELS.length - 1;
+    FL.showWin(box, {
+      chapter: 3, stars, title: 'Check signed off',
+      summary: `Signed off at ${clockStr(st.time)}, with ${st.time} minutes to spare. ${stars < 3 ? 'Three stars needs 35 or more minutes left.' : ''}`,
+      physics: PHYSICS[L.id], card: CARDS[L.id],
+      nextLabel: next ? `Next: Level ${L.id + 1}, ${LEVELS[S.level + 1].name}` : 'Finish Chapter 3',
+      onNext: () => {
+        if (next) return loadLevel(S.level + 1);
+        FL.chapterComplete(box, {
+          title: 'Chapter 3 complete',
+          text: 'Three mornings, three different causes: the weather, a couch set 1.5 cm too high, and a machine slowly drifting after a repair. Mei Ling finished all 25 of her treatments, and every one of them gave the dose her doctors prescribed.',
+          pathway: 'Chapter 4, Safe Zone: the department installs an MR simulator, and you keep its powerful magnet room safe.'
+        });
+        const nb = document.createElement('button'); nb.className = 'primary'; nb.textContent = 'Next: Chapter 4, Safe Zone';
+        nb.onclick = () => { location.href = 'ch4.html'; }; box.appendChild(nb);
+      }
+    });
+    renderLevelsNav();
+  } else {
+    if (!j.noPenalty) { st.time -= WRONG; st.wrong++; }
+    FL.showFail(box, { title: j.noPenalty ? 'Not ready to sign off' : 'Dr. Lim will not sign that (−10 min)', issues: j.issues });
+    if (j.hint) say(st.wrong > 1 ? 'DL' : 'FA', j.hint);
+    checkTime();
+  }
+  update();
+}
+$('go').onclick = signOff;
+
+/* ---------- Levels ---------- */
+function renderLevelsNav() { FL.renderLevels($('levels'), LEVELS, S.level, S.stars, i => loadLevel(i)); }
+function loadLevel(i) {
+  S.level = i; S.st = newState(LEVELS[i]); S.clue = null; S.busy = false; S.measuring = 0;
+  $('result').hidden = true;
+  document.querySelectorAll('input[name="diag"]').forEach(r => { r.checked = false; });
+  $('clue').innerHTML = '<h3>Start your investigation</h3><p>Today\'s electrometer reading is in the panel. Inspect the setup to find out whether the machine, the setup or the room is to blame.</p>';
+  say(...TEXT[LEVELS[i].id].intro);
+  renderLevelsNav();
+  update();
+}
+$('reset').onclick = () => { FL.audio.remove(); loadLevel(S.level); };
+
+/* ---------- Show solution (teacher) ---------- */
+const sleep = ms => new Promise(r => setTimeout(r, FL.reduced ? Math.min(ms, 120) : ms));
+async function solve() {
+  if (S.busy) return;
+  loadLevel(S.level);
+  const L = lv(), st = S.st;
+  say('DL', 'Watch closely. Check the air first, then the setup, then the machine.');
+  const key = { 1: ['thermo', 'baro'], 2: ['thermo', 'baro', 'odi'], 3: ['thermo', 'baro', 'log'] }[L.id];
+  for (const id of key) { openClue(id); await sleep(650); }
+  st.Tin = L.T; st.Pin = L.P; FL.audio.tick(); update(); await sleep(500);
+  if (L.id === 2) { st.ssd = 100; update(); FL.audio.place(); await sleep(400); await doRemeasure(); showClue('odi'); }
+  if (L.id === 3) {
+    const need = Math.round((100 / L.machine - 1) * 1000) / 10;
+    st.cal = need; update(); FL.audio.tick(); await sleep(400); await doRemeasure();
+  }
+  const r = $('dg-' + L.diag); r.checked = true; st.diag = L.diag; FL.audio.click(); await sleep(450);
+  signOff();
+}
+FL.setupLock(solve);
+
+renderDiag();
+renderClueButtons();
+FL.initAudio();
+loadLevel(0);
+new ResizeObserver(resize).observe(cv.parentElement);
+resize();
+FL.onTheme(() => { draw(); if (S.clue === 'log') drawLog(); });
+</script>
+</body>
+</html>

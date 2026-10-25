@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Beam On: First Light, a six-chapter medical physics game for secondary school students.">
+<title>Beam On: First Light</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+/* Hub layout: hero, then the department floor plan as the chapter menu, then careers, pathway and teacher notes. */
+.hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: end; padding-block: 8px 4px; }
+@media (max-width: 860px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+.hero h1 { font-size: clamp(40px, 7vw, 76px); line-height: .95; }
+.hero h1 span { color: var(--accent); }
+.lede { font-size: 18px; max-width: 46ch; margin: 14px 0 0; text-wrap: pretty; }
+.progress { display: grid; gap: 8px; justify-items: start; }
+.progress .big { font: 800 44px/1 var(--display); font-variant-numeric: tabular-nums; }
+.progress .big small { font: 600 16px/1 var(--body); color: var(--muted); margin-left: 6px; }
+.pbar { width: 100%; height: 10px; border-radius: 5px; background: var(--board); border: 1px solid var(--line); overflow: hidden; }
+.pbar i { display: block; height: 100%; background: var(--beam); width: 0; transition: width .4s; }
+.start { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; background: var(--beam); color: var(--beam-ink); font: 800 18px/1 var(--display); padding: 14px 20px; border-radius: 12px; margin-top: 6px; }
+.start .lamp { width: 10px; height: 10px; border-radius: 50%; background: var(--beam-ink); }
+
+.section-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+.section-h h2 { font: 800 26px/1.1 var(--display); margin: 0; letter-spacing: -.01em; }
+.section-h p { margin: 0; color: var(--muted); font-size: 14px; }
+
+/* Blueprint floor plan */
+.plan { position: relative; background: var(--board); border: 1px solid var(--line); border-radius: 16px; padding: 18px;
+  background-image: linear-gradient(var(--zone) 1px, transparent 1px), linear-gradient(90deg, var(--zone) 1px, transparent 1px); background-size: 24px 24px; }
+.rooms { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas: "c2 c3 c4" "c1 c1 c5" "c6 c6 c6"; }
+@media (max-width: 760px) { .rooms { grid-template-columns: minmax(0, 1fr); grid-template-areas: "c1" "c2" "c3" "c4" "c5" "c6"; } }
+.room { position: relative; display: grid; gap: 8px; align-content: start; text-decoration: none; color: var(--ink); background: var(--board);
+  border: 2px solid var(--ink); border-radius: 6px; padding: 16px 16px 14px; min-height: 172px; transition: transform .15s, box-shadow .15s; }
+.room:hover { transform: translateY(-2px); box-shadow: 0 6px 0 -2px var(--accent); }
+.room .label { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.room .no { position: absolute; top: -13px; right: 14px; background: var(--ink); color: var(--board); font: 800 13px/1 var(--display); padding: 6px 9px; border-radius: 999px; }
+.room h3 { font: 800 24px/1.05 var(--display); margin: 0; letter-spacing: -.01em; }
+.room .concept { font-size: 14px; color: var(--muted); margin: 0; }
+.room .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: auto; padding-top: 6px; }
+.room .stars { font-size: 15px; }
+.room .play { font: 700 14px/1 var(--body); color: var(--accent); }
+.room.done { border-color: var(--good); }
+.room.done .no { background: var(--good); }
+.room .door { position: absolute; width: 28px; height: 6px; background: var(--board); bottom: -4px; left: 22px; border-left: 2px solid var(--ink); }
+.room[data-ch="1"] { grid-area: c1; background: color-mix(in srgb, var(--slab) 22%, var(--board)); min-height: 196px; border-width: 5px; }
+.room[data-ch="2"] { grid-area: c2; }
+.room[data-ch="3"] { grid-area: c3; }
+.room[data-ch="4"] { grid-area: c4; outline: 2px dashed var(--accent); outline-offset: -9px; }
+.room[data-ch="5"] { grid-area: c5; }
+.room[data-ch="6"] { grid-area: c6; border-style: dashed; min-height: 150px; }
+.room .fx { position: absolute; right: 16px; top: 26px; width: 56px; height: 56px; opacity: .9; pointer-events: none; }
+.room .label, .room h3, .room .concept { padding-right: 70px; }
+.plan .corridor { margin-top: 14px; text-align: center; font: 500 11px/1 var(--mono); letter-spacing: .3em; color: var(--muted); text-transform: uppercase; }
+
+/* Career album */
+.album { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 12px; }
+.ccard { border-radius: 12px; padding: 14px; border: 1px dashed var(--line); background: var(--board); display: grid; gap: 6px; min-height: 120px; align-content: start; }
+.ccard .eyebrow { color: var(--muted); }
+.ccard b { font: 700 17px/1.15 var(--display); }
+.ccard p { margin: 0; font-size: 13px; color: var(--muted); }
+.ccard.got { border: 1px solid var(--accent); background: var(--accent-soft); }
+.ccard.got .eyebrow { color: var(--accent); }
+
+/* Pathway */
+.path { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; counter-reset: step; }
+@media (max-width: 860px) { .path { grid-template-columns: minmax(0, 1fr); } }
+.path li { position: relative; padding: 16px 18px 16px 0; display: grid; gap: 6px; align-content: start; }
+.path li::before { counter-increment: step; content: counter(step); width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--board); display: grid; place-items: center; font: 800 14px/1 var(--display); position: relative; z-index: 1; }
+.path li::after { content: ""; position: absolute; top: 31px; left: 30px; right: 0; height: 2px; background: var(--line); }
+.path li:last-child::after { display: none; }
+@media (max-width: 860px) { .path li { padding: 0 0 18px 44px; } .path li::before { position: absolute; left: 0; top: 0; } .path li::after { top: 30px; bottom: 0; left: 14px; right: auto; width: 2px; height: auto; } }
+.path b { font: 700 16px/1.2 var(--display); }
+.path span { font-size: 14px; color: var(--muted); }
+
+.epilogue { border-radius: 16px; padding: 22px; background: var(--ink); color: var(--board); display: grid; gap: 10px; }
+.epilogue .eyebrow { color: var(--beam); }
+.epilogue p { margin: 0; max-width: 60ch; font-size: 16px; }
+.epilogue .turn { font: 800 clamp(30px, 5vw, 44px)/1 var(--display); color: var(--beam); }
+.teaser { border-radius: 16px; padding: 18px; border: 1px dashed var(--line); color: var(--muted); font-size: 15px; }
+
+.teach { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.teach .card p, .teach .card li { font-size: 14px; }
+.teach .card ul { margin: 6px 0 0; padding-left: 18px; }
+.hello { margin: 0 0 6px; font-size: 16px; color: var(--muted); }
+.hello b { color: var(--ink); }
+.you { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 20px; align-items: center; margin-top: 18px; }
+@media (max-width: 760px) { .you { grid-template-columns: minmax(0, 1fr); } }
+.you p { margin: 4px 0 0; font-size: 14px; }
+.you .ghost { flex: 0 1 auto; }
+.confirm { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; font-size: 14px; }
+.danger { border: 1px solid var(--bad); color: var(--bad); background: transparent; border-radius: 10px; padding: 9px 12px; font: 600 14px/1 var(--body); cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap" data-music="0">
+  <header class="top">
+    <div class="eyebrow">A medical physics game · Ages 15–17 · SPM Physics</div>
+    <div class="audio" role="group" aria-label="Audio">
+      <button id="musicBtn" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Music</button>
+      <button id="sfxBtn" aria-pressed="true">Sound</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="hello" id="hello" hidden></p>
+      <h1>Beam On: <span>First Light</span></h1>
+      <p class="lede">You are the new medical physicist at a cancer centre in Malaysia. Six chapters, six rooms, and every puzzle runs on the physics you learn for SPM.</p>
+      <a class="start" id="startBtn" href="ch1.html"><span class="lamp" aria-hidden="true"></span><span id="startLabel">Start Chapter 1</span></a>
+    </div>
+    <div class="progress card">
+      <span class="eyebrow" id="progLabel">Your progress</span>
+      <div class="big"><span id="starCount">0</span><small>of 54 stars</small></div>
+      <div class="pbar"><i id="starBar"></i></div>
+      <span class="fine" id="chapterCount">0 of 6 chapters started</span>
+    </div>
+  </section>
+
+  <div class="section-h"><h2>The department</h2><p>Each room is a chapter. Play them in order, or jump to the physics you are studying.</p></div>
+  <nav class="plan" aria-label="Chapters">
+    <div class="rooms" id="rooms"></div>
+    <div class="corridor" aria-hidden="true">Main corridor · Patient entrance</div>
+  </nav>
+
+  <div class="you card">
+    <div><span class="eyebrow">You and the organiser</span>
+      <p>Send your details to the outreach team, and tell them how the game went once you have played.</p></div>
+    <div class="row">
+      <button class="ghost" type="button" id="sendBtn">Send my details</button>
+      <button class="ghost" type="button" id="fbBtn">Tell us how it went</button>
+      <button class="ghost" type="button" id="editBtn">Edit my details</button>
+    </div>
+  </div>
+
+  <div class="section-h"><h2>Career cards</h2><p>Win a level to collect the job behind it.</p></div>
+  <div class="album" id="album"></div>
+
+  <div class="section-h"><h2>How to become a medical physicist</h2><p>The route in Malaysia, step by step.</p></div>
+  <div class="card">
+    <ol class="path">
+      <li><b>SPM</b><span>Physics and Additional Mathematics. Chemistry and Biology help too.</span></li>
+      <li><b>Pre-university</b><span>STPM, matriculation, foundation or A-levels in science.</span></li>
+      <li><b>Bachelor's degree</b><span>BSc in Physics or Medical Physics.</span></li>
+      <li><b>MSc Medical Physics</b><span>Radiation physics, dosimetry, imaging and radiation protection.</span></li>
+      <li><b>Clinical training</b><span>Supervised hospital training, then work as a medical physicist. A PhD opens research.</span></li>
+    </ol>
+  </div>
+
+  <div id="ending"></div>
+
+  <div class="section-h"><h2>For teachers</h2><p>Running a session at school or an open day.</p></div>
+  <div class="teach">
+    <div class="card"><h2>Session plan</h2><ul>
+      <li>Each chapter takes 10–15 minutes and stands alone.</li>
+      <li>Chapter 1 and 6 pair well for a 30-minute taster: bunker shielding, then protons.</li>
+      <li>Every level ends with the physics it used and a real job title.</li>
+    </ul></div>
+    <div class="card"><h2>Syllabus links</h2><ul>
+      <li>Ch 1: radioactivity, absorption, inverse square law</li>
+      <li>Ch 2: X-rays, exponential attenuation</li>
+      <li>Ch 3: measurement, error, gas laws</li>
+      <li>Ch 4: magnetism and waves</li>
+      <li>Ch 5: half-life and decay</li>
+      <li>Ch 6: energy and charged particles</li>
+    </ul></div>
+    <div class="card"><h2>Solutions and progress</h2>
+      <p>Each level has a Show solution button locked with a teacher password. Ask the session organiser for it.</p>
+      <p>Progress and each player's details are saved in this browser only. Players send their details through your form; clear the device before the next group plays.</p>
+      <div class="confirm" id="resetArea"><button class="danger" id="resetAll">Clear progress on this device</button></div>
+    </div>
+  </div>
+
+  <footer>Made for school outreach in medical physics. Physics in every chapter is simplified for learning, and each chapter's notebook says how. Music and sound are generated live in your browser.</footer>
+</div>
+
+<script src="common.js"></script>
+<script>
+document.body.dataset.music = '0';
+FL.initAudio();
+
+const ICONS = {
+  1: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="10" width="44" height="44" rx="3" fill="none" stroke="currentColor" stroke-width="6" opacity=".35"/><circle cx="32" cy="32" r="7" fill="var(--beam)"/><path d="M32 20v-6M32 50v-6M20 32h-6M50 32h-6" stroke="var(--beam)" stroke-width="3" stroke-linecap="round"/></svg>',
+  2: '<svg viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="34" rx="24" ry="17" fill="none" stroke="currentColor" stroke-width="3" opacity=".4"/><circle cx="38" cy="32" r="6" fill="var(--target)"/><path d="M6 14L36 31M58 12L40 30M32 62L37 38" stroke="var(--beam)" stroke-width="3" stroke-linecap="round"/></svg>',
+  3: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="14" width="48" height="34" rx="5" fill="none" stroke="currentColor" stroke-width="3" opacity=".4"/><path d="M14 38l9-10 8 6 9-14 9 9" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M14 22h36" stroke="var(--good)" stroke-width="2" stroke-dasharray="3 3"/></svg>',
+  4: '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" stroke-width="7" opacity=".35"/><circle cx="32" cy="32" r="10" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M4 32c8-14 20-14 28 0s20 14 28 0" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".7"/></svg>',
+  5: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 12v44h50" fill="none" stroke="currentColor" stroke-width="3" opacity=".4"/><path d="M10 16C22 40 34 48 56 52" fill="none" stroke="var(--accent)" stroke-width="3"/><circle cx="22" cy="33" r="3" fill="var(--beam)"/><circle cx="36" cy="44" r="3" fill="var(--beam)"/></svg>',
+  6: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M6 44h30c6 0 8-26 12-26s4 26 10 26" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round"/><path d="M6 52h52" stroke="currentColor" stroke-width="2" opacity=".4"/></svg>'
+};
+const ROOMS = { 1: 'Linac bunker', 2: 'Planning office', 3: 'Control room', 4: 'MR simulator', 5: 'Nuclear medicine', 6: 'Proton wing · under construction' };
+const CARD_TEXT = {
+  1: 'Designs the shielding and checks every room is safe before a beam is switched on.',
+  2: 'Plans the beams for each patient so the tumour gets the dose and healthy organs are spared.',
+  3: 'Measures the machines every morning and keeps every patient\'s dose accurate.',
+  4: 'Keeps MRI scans safe and the images sharp, using magnets and radio waves.',
+  5: 'Works with radioactive tracers that show where cancer is in the body.',
+  6: 'Brings new treatments like proton therapy from the lab to patients.'
+};
+
+function render() {
+  const prof = FL.profile(), hello = document.getElementById('hello');
+  hello.hidden = !prof;
+  if (prof) { hello.textContent = 'Welcome back, '; const b = document.createElement('b'); b.textContent = prof.name; hello.append(b, '.'); }
+  document.getElementById('progLabel').textContent = prof ? prof.name + "'s progress" : 'Your progress';
+  let total = 0, started = 0, finished = 0;
+  const rooms = document.getElementById('rooms'), album = document.getElementById('album');
+  rooms.innerHTML = ''; album.innerHTML = '';
+  let firstUnfinished = null;
+  for (const ch of FL.CHAPTERS) {
+    const st = FL.getStars(ch.id);
+    const sum = Object.values(st).reduce((a, b) => a + (b || 0), 0);
+    const won = Object.values(st).filter(Boolean).length;
+    total += sum; if (won) started++; if (won >= ch.levels) finished++;
+    if (!firstUnfinished && won < ch.levels) firstUnfinished = ch;
+    const a = document.createElement('a');
+    a.className = 'room' + (won >= ch.levels ? ' done' : '');
+    a.dataset.ch = ch.id; a.href = ch.file;
+    a.innerHTML = `<span class="no">Ch ${ch.id}</span><span class="label">${ROOMS[ch.id]}</span>
+      <h3>${ch.title}</h3><p class="concept">${ch.concept}</p>
+      <span class="fx">${ICONS[ch.id]}</span>
+      <span class="foot"><span class="stars" aria-label="${sum} of 9 stars">${'★'.repeat(Math.min(9, sum))}${'☆'.repeat(Math.max(0, 9 - sum))}</span><span class="play">${won ? (won >= ch.levels ? 'Replay' : 'Continue') : 'Play'} →</span></span>
+      <span class="door" aria-hidden="true"></span>`;
+    rooms.appendChild(a);
+    const c = document.createElement('div');
+    c.className = 'ccard' + (won ? ' got' : '');
+    c.innerHTML = `<span class="eyebrow">Chapter ${ch.id} · ${won ? 'Collected' : 'Locked'}</span><b>${ch.role}</b><p>${won ? CARD_TEXT[ch.id] : 'Win a level in ' + ch.title + ' to collect this card.'}</p>`;
+    album.appendChild(c);
+  }
+  document.getElementById('starCount').textContent = total;
+  document.getElementById('starBar').style.width = (total / 54 * 100) + '%';
+  document.getElementById('chapterCount').textContent = `${started} of 6 chapters started · ${finished} finished`;
+  const sb = document.getElementById('startBtn'), sl = document.getElementById('startLabel');
+  if (!firstUnfinished) { sb.href = 'ch6.html'; sl.textContent = 'Replay the finale'; }
+  else { sb.href = firstUnfinished.file; sl.textContent = (total ? 'Continue: ' : 'Start ') + 'Chapter ' + firstUnfinished.id; }
+  const end = document.getElementById('ending');
+  end.innerHTML = finished === 6
+    ? `<div class="epilogue"><span class="eyebrow">Epilogue · Years later</span>
+        <p>A new MSc student arrives on placement in your department. She is twenty-four, she asks good questions, and she remembers the day protons treated her brain tumour when she was fourteen. Her name is Aisyah.</p>
+        <span class="turn">Your turn, ${FL.esc(FL.playerName())}.</span></div>`
+    : `<div class="teaser">Finish all six chapters to unlock the epilogue.</div>`;
+}
+render();
+window.addEventListener('pageshow', render);
+
+function askReset() {
+  const area = document.getElementById('resetArea');
+  area.innerHTML = '<span>Clear all stars, cards and player details on this device?</span><button class="danger" id="yesClear">Clear progress</button><button class="ghost" id="noClear" style="flex:0 0 auto">Keep</button>';
+  document.getElementById('yesClear').onclick = () => {
+    try { Object.keys(localStorage).filter(k => k.startsWith('firstlight:') || k.startsWith('shieldit:')).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+    location.reload();
+  };
+  document.getElementById('noClear').onclick = () => { area.innerHTML = '<button class="danger" id="resetAll">Clear progress on this device</button>'; document.getElementById('resetAll').onclick = askReset;
+document.getElementById('sendBtn').onclick = () => FL.showSend('Before playing');
+document.getElementById('fbBtn').onclick = () => FL.showFeedback();
+document.getElementById('editBtn').onclick = () => FL.showSignup(() => location.reload(), true);
+FL.onSignedUp = render; };
+}
+document.getElementById('resetAll').onclick = askReset;
+document.getElementById('sendBtn').onclick = () => FL.showSend('Before playing');
+document.getElementById('fbBtn').onclick = () => FL.showFeedback();
+document.getElementById('editBtn').onclick = () => FL.showSignup(() => location.reload(), true);
+FL.onSignedUp = render;
+</script>
+</body>
+</html>

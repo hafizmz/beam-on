@@ -4,6 +4,8 @@ A Theme Hospital-inspired browser game about running a radiotherapy department, 
 
 **Play it:** https://hafizmz.github.io/beam-on/
 
+**New: Beam On: First Light**, a six-chapter story game for secondary school students: https://hafizmz.github.io/beam-on/first-light/
+
 ## What you do
 
 - Build the patient pathway: consult clinic, CT simulator, planning room, physics office, linac bunkers and an HDR brachytherapy suite.

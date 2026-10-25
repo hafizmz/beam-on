@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Tracer Time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+/* Chapter 5: a PET day planned around a decaying vial. */
+#cv { cursor: crosshair; }
+.vialbar { height: 8px; border-radius: 4px; background: var(--paper); overflow: hidden; margin-top: 10px; }
+.vialbar i { display: block; height: 100%; background: var(--accent); transition: width .2s; }
+.vialbar i.over { background: var(--bad); }
+.plist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pbtn { width: 100%; text-align: left; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 10px; padding: 8px 10px; cursor: pointer; font: 14px/1.3 var(--body); }
+.pbtn[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.pbtn .pn { font-weight: 700; min-width: 0; }
+.pbtn .pn .urg { font: 700 10px/1 var(--body); letter-spacing: .05em; text-transform: uppercase; color: var(--bad); margin-left: 6px; }
+.pbtn .pd { grid-column: 1; font-size: 12px; color: var(--muted); min-width: 0; }
+.pbtn .pill { grid-row: 1 / span 2; grid-column: 2; }
+.pill.idle { background: color-mix(in srgb, var(--muted) 16%, transparent); color: var(--muted); }
+.selctl { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.selctl .who { font-size: 14px; }
+.selctl .who b { font-family: var(--display); }
+.stepper { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; }
+.stepper button { width: 44px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 700 18px/1 var(--body); cursor: pointer; }
+.stepper .when { text-align: center; font: 500 16px/1.2 var(--mono); font-variant-numeric: tabular-nums; }
+.stepper .when small { display: block; font: 400 12px/1.2 var(--body); color: var(--muted); }
+.selrow { display: flex; gap: 6px; flex-wrap: wrap; }
+.selrow .ghost { flex: 1 1 auto; }
+.lab { display: grid; gap: 8px; margin-top: 10px; }
+.lab canvas { width: 100%; height: auto; display: block; border-radius: 8px; background: var(--paper); }
+.labrow { display: flex; gap: 6px; }
+.labrow .ghost { flex: 1; }
+.legend .sw { display: inline-block; width: 14px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+</style>
+</head>
+<body data-music="4">
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow"><a href="index.html">All chapters</a> · Chapter 5 · Nuclear Medicine</div>
+      <h1>Tracer Time</h1>
+    </div>
+    <div class="hright">
+      <nav class="levels" id="levels" aria-label="Levels"></nav>
+      <div class="audio" role="group" aria-label="Audio">
+        <button id="musicBtn" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Music</button>
+        <button id="sfxBtn" aria-pressed="true">Sound</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="game">
+    <section class="board" aria-label="PET day planner: vial activity over the day and each patient's booking">
+      <canvas id="cv" tabindex="0" aria-label="Timeline from 07:00 to 13:00. Drag along a patient's row to set their injection time."></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--accent)"></span>FDG left in the vial</span>
+        <span><span class="sw" style="background:color-mix(in srgb, var(--accent) 25%, transparent)"></span>Resting (60 min uptake)</span>
+        <span><span class="sw" style="background:var(--beam)"></span>PET scan (20 min)</span>
+        <span>· Tap or drag along a patient's row to book their injection</span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card mentor">
+        <div class="avatar" id="avatar" aria-hidden="true">DL</div>
+        <div><b id="speaker">Dr. Lim, Head of Physics</b><p id="mentor"></p></div>
+      </div>
+
+      <div class="card">
+        <h2>Today's FDG vial</h2>
+        <dl class="kv">
+          <dt>Arrives</dt><dd id="vArrive"></dd>
+          <dt>Activity on arrival</dt><dd id="vA0"></dd>
+          <dt>Half-life of F-18</dt><dd>110 min</dd>
+          <dt>Vial needed for your plan</dt><dd id="vSpend"></dd>
+          <dt>Left at 13:00 (wasted)</dt><dd id="vLeft"></dd>
+        </dl>
+        <div class="vialbar" aria-hidden="true"><i id="vBar"></i></div>
+      </div>
+
+      <div class="card">
+        <h2 id="pTitle">Patients</h2>
+        <ul class="plist" id="plist"></ul>
+        <div class="selctl" id="selctl" hidden>
+          <div class="who" id="selWho"></div>
+          <div class="stepper">
+            <button id="tMinus" aria-label="Inject 5 minutes earlier">−</button>
+            <div class="when" id="selWhen" aria-live="polite"></div>
+            <button id="tPlus" aria-label="Inject 5 minutes later">+</button>
+          </div>
+          <div class="selrow">
+            <button class="ghost" id="bookBtn">Book</button>
+            <button class="ghost" id="reschedBtn" hidden>Reschedule to Thursday</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="action" id="go"><span class="lamp" aria-hidden="true"></span>Run the day</button>
+      <div class="row">
+        <button class="ghost" id="reset">Reset level</button>
+        <button class="ghost" id="solve">Show solution</button>
+      </div>
+      <form class="card lock" id="lock" hidden>
+        <label for="pw"><b>Teacher password</b><span>The solution is locked so students solve it themselves.</span></label>
+        <div class="lockrow">
+          <input id="pw" type="password" autocomplete="off" placeholder="Password">
+          <button class="primary" type="submit">Unlock</button>
+        </div>
+        <p class="pwerr" id="pwerr" hidden>That password is not right. Check with your teacher and try again.</p>
+      </form>
+
+      <div class="card result" id="result" hidden aria-live="polite"></div>
+
+      <details class="card" id="notebook">
+        <summary>Physicist's notebook</summary>
+        <div class="note">
+          <p>A radioactive tracer loses half of its activity every half-life, whatever you do with it:</p>
+          <div class="formula">A = A₀ × (½)^(t ÷ T½)</div>
+          <p>For fluorine-18, T½ = 110 minutes. The decay constant is λ = ln 2 ÷ T½ = 0.0063 per minute, so about 0.6% of the atoms decay every minute.</p>
+          <div class="work" id="work"></div>
+          <p><b>Why booking order matters:</b> every MBq a patient needs later in the day costs more of the morning's delivery, because some of it decays while it waits. Give the biggest doses first, while the vial is strongest, and keep the bookings close together.</p>
+          <p><b>Why the cyclotron is nearby:</b> F-18 is made in a cyclotron by firing protons at oxygen-18 water. With a 110-minute half-life, it must be made a short drive from the hospital, early in the morning. You cannot make it last week and store it.</p>
+          <p><b>Radiation safety:</b> injected patients are slightly radioactive for a few hours, so they rest in their own uptake room and wait apart from other patients, like the separate entrance on the department floor plan.</p>
+          <h2 style="margin-top:14px">Decay lab</h2>
+          <p>Each dot is one atom. Every atom decays at a random moment, yet together they follow the half-life curve.</p>
+          <div class="lab">
+            <canvas id="labcv" width="300" height="150" aria-label="Grid of 100 atoms; bright atoms have not decayed yet"></canvas>
+            <div class="field"><label for="labT"><span>Time after delivery</span><output id="labOut"></output></label>
+              <input type="range" id="labT" min="0" max="440" step="10" value="0"></div>
+            <div class="labrow">
+              <button class="ghost" id="labPlay">Play</button>
+              <button class="ghost" id="labShuffle">New atoms</button>
+            </div>
+          </div>
+          <p class="fine">Game simplifications: doses use 3.7 MBq per kg (between 120 and 370 MBq), quality control takes 20 minutes, there is one scanner, and activity left in syringes and tubing is ignored. Real departments also measure every dose in a calibrated activity meter before injection.</p>
+        </div>
+      </details>
+    </aside>
+  </div>
+  <footer>Part of <a href="index.html">Beam On: First Light</a>. Physics is simplified for learning; see the notebook for what is simplified.</footer>
+</div>
+<script src="common.js"></script>
+<script>
+/* Chapter 5 engine: pure functions, shared verbatim with ch5.html. Times are minutes after 07:00. */
+const T_HALF = 109.8;
+const UPTAKE = 60, SCAN = 20, QC = 20, STEP = 5;
+const decay = (dt, T = T_HALF) => Math.pow(0.5, dt / T);
+const doseFor = mass => Math.round(Math.min(370, Math.max(120, 3.7 * mass)));
+const fmtClock = m => { const t = 7 * 60 + Math.round(m); const h = Math.floor(t / 60), mm = t % 60; return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`; };
+
+/* Activity left in the vial at time t (after any withdrawal made at exactly t when inclusive). */
+function vialAt(level, booked, t, inclusive = true) {
+  if (t < level.t0) return level.Acal * decay(t - level.calAt);
+  let a = level.A0 * decay(t - level.t0);
+  for (const b of booked) if (b.t < t || (inclusive && b.t === t)) a -= b.dose * decay(t - b.t);
+  return a;
+}
+
+/* sched: { [pid]: minute | 'R' } ; missing = not booked */
+function evaluate(level, sched) {
+  const pats = level.patients.map(p => ({ ...p, dose: doseFor(p.mass) }));
+  const booked = pats.filter(p => typeof sched[p.id] === 'number').map(p => ({ ...p, t: sched[p.id] })).sort((a, b) => a.t - b.t);
+  const resched = pats.filter(p => sched[p.id] === 'R');
+  const unbooked = pats.filter(p => sched[p.id] == null);
+  const issues = [];
+  const status = {};
+  for (const p of pats) status[p.id] = sched[p.id] === 'R' ? 'resched' : sched[p.id] == null ? 'unbooked' : 'ok';
+  const earliest = level.t0 + QC, latest = level.close - UPTAKE - SCAN;
+  for (const b of booked) {
+    if (b.t < earliest) { status[b.id] = 'early'; issues.push({ type: 'early', p: b }); }
+    if (b.t > latest) { status[b.id] = 'late'; issues.push({ type: 'late', p: b }); }
+  }
+  for (let i = 1; i < booked.length; i++) {
+    const a = booked[i - 1], b = booked[i];
+    if (b.t - a.t < SCAN) { status[a.id] = status[b.id] = 'clash'; issues.push({ type: 'clash', p: a, q: b }); }
+  }
+  let spend = 0;
+  const draws = [];
+  for (let i = 0; i < booked.length; i++) {
+    const b = booked[i];
+    const before = vialAt(level, booked.slice(0, i), b.t, true);
+    draws.push({ id: b.id, t: b.t, dose: b.dose, before });
+    if (b.t >= level.t0 && before + 0.5 < b.dose) { if (status[b.id] === 'ok') status[b.id] = 'short'; issues.push({ type: 'short', p: b, have: Math.max(0, before) }); }
+    spend += b.dose / decay(b.t - level.t0);
+  }
+  const scanned = booked.filter(b => status[b.id] === 'ok').length;
+  const urgentMissing = pats.filter(p => p.urgent && status[p.id] !== 'ok');
+  if (unbooked.length) issues.push({ type: 'unbooked', list: unbooked });
+  const need = level.mustScan || pats.length;
+  if (!unbooked.length && booked.length < need) issues.push({ type: 'toofew', need, have: booked.length });
+  if (urgentMissing.length && !unbooked.length) issues.push({ type: 'urgent', list: urgentMissing });
+  const leftAtClose = vialAt(level, booked, level.close, true);
+  const usedFrac = spend / level.A0;
+  const win = issues.length === 0 && scanned >= need;
+  const lastEnd = booked.length ? booked[booked.length - 1].t + UPTAKE + SCAN : null;
+  return { pats, booked, resched, unbooked, issues, status, spend, usedFrac, leftAtClose, win, scanned, need, draws, lastEnd };
+}
+
+/* Best possible schedule: try every subset (respecting urgent + mustScan) and every order, packed from the earliest slot. */
+function optimum(level) {
+  const pats = level.patients;
+  const need = level.mustScan || pats.length;
+  let best = null;
+  const n = pats.length;
+  for (let mask = 0; mask < 1 << n; mask++) {
+    const chosen = pats.filter((_, i) => mask & (1 << i));
+    if (chosen.length !== need) continue;
+    if (pats.some((p, i) => p.urgent && !(mask & (1 << i)))) continue;
+    for (const perm of permutations(chosen)) {
+      const sched = {};
+      for (const p of pats) sched[p.id] = 'R';
+      perm.forEach((p, k) => { sched[p.id] = level.t0 + QC + k * SCAN; });
+      const r = evaluate(level, sched);
+      if (r.win && (!best || r.spend < best.spend)) best = { spend: r.spend, sched, order: perm.map(p => p.id) };
+    }
+  }
+  return best;
+}
+function* permutations(arr) {
+  if (arr.length <= 1) { yield arr.slice(); return; }
+  for (let i = 0; i < arr.length; i++) {
+    const rest = arr.slice(0, i).concat(arr.slice(i + 1));
+    for (const p of permutations(rest)) yield [arr[i], ...p];
+  }
+}
+function starsFor(level, spend, opt) {
+  if (spend <= opt * 1.005 + 0.5) return 3;
+  if (spend <= opt * level.two) return 2;
+  return 1;
+}
+
+const LEVELS = [
+  { id: 1, name: 'First clinic', t0: 0, calAt: 0, A0: 1800, Acal: 1800, close: 360, two: 1.15,
+    patients: [
+      { id: 'siti', name: 'Puan Siti', age: 55, mass: 62, note: 'Checking whether her cancer has spread' },
+      { id: 'tan', name: 'Mr. Tan', age: 68, mass: 74, note: 'Lymphoma, checking how treatment is working' },
+      { id: 'kumar', name: 'Encik Kumar', age: 41, mass: 81, note: 'Lung nodule found on a chest X-ray' }
+    ] },
+  { id: 2, name: 'Heavy morning', t0: 0, calAt: 0, A0: 2620, Acal: 2620, close: 360, two: 1.02,
+    patients: [
+      { id: 'lee', name: 'Ms. Lee', age: 34, mass: 52, note: 'Breast cancer staging' },
+      { id: 'hamid', name: 'Pak Hamid', age: 63, mass: 96, note: 'Colon cancer follow-up' },
+      { id: 'devi', name: 'Mrs. Devi', age: 58, mass: 66, note: 'Lymphoma, mid-treatment check' },
+      { id: 'wong', name: 'Mr. Wong', age: 47, mass: 112, note: 'Melanoma staging' },
+      { id: 'nurul', name: 'Cik Nurul', age: 29, mass: 58, note: 'Hodgkin lymphoma staging' },
+      { id: 'raj', name: 'Mr. Raj', age: 71, mass: 79, note: 'Lung cancer staging' }
+    ] },
+  { id: 3, name: 'Late delivery', t0: 90, calAt: 0, A0: 1983, Acal: 3500, close: 360, mustScan: 5, two: 1.025,
+    patients: [
+      { id: 'azman', name: 'Encik Azman', age: 52, mass: 84, note: 'Surgery planned tomorrow; scan decides the operation', urgent: true },
+      { id: 'grace', name: 'Ms. Grace', age: 44, mass: 61, note: 'New lymphoma diagnosis; treatment starts Monday', urgent: true },
+      { id: 'ismail', name: 'Pak Ismail', age: 66, mass: 108, note: 'Routine yearly follow-up; well and stable' },
+      { id: 'mei', name: 'Mdm. Chong', age: 59, mass: 70, note: 'Lung cancer staging' },
+      { id: 'ravi', name: 'Mr. Ravi', age: 38, mass: 77, note: 'Checking a lump in the neck' },
+      { id: 'fatimah', name: 'Puan Fatimah', age: 61, mass: 64, note: 'Pancreas cancer staging' }
+    ] }
+];
+
+const CH = 5;
+const SPEAKERS = {
+  lim: { name: 'Dr. Lim, Head of Physics', init: 'DL', alt: false },
+  mei: { name: 'Dr. Mei, Nuclear Medicine Physician', init: 'DM', alt: true },
+  farah: { name: 'Farah, MSc student on placement', init: 'FA', alt: true }
+};
+const STORY = {
+  1: { who: 'mei',
+    intro: 'Selamat pagi, {name}! The FDG vial arrived from the cyclotron at 07:00 with 1,800 MBq. Three patients today, including Puan Siti, who is checking whether her cancer has spread. Tap or drag along each patient\'s row to book an injection. Each patient rests for 60 minutes, then has a 20-minute scan.',
+    physics: ['Half-life: every 110 minutes, half of the F-18 left in the vial decays.', 'A dose booked later in the day needs more of the morning\'s delivery, because some of it decays while it waits.'],
+    card: { role: 'Nuclear medicine physicist', text: 'Physicists calibrate the activity meters that measure every dose, test the PET scanner every morning, and keep the radiation dose to patients and staff as low as possible.' },
+    winText: r => `All three patients were scanned by ${fmtClock(r.lastEnd)}. That afternoon, Dr. Mei calls Puan Siti with good news: the scan is clear, with no sign that the cancer has spread.` },
+  2: { who: 'lim',
+    intro: 'Six patients today, and the cyclotron could only send 2,620 MBq. Some patients are much heavier than others, so they need more activity. Watch the vial curve as you book: does it matter who goes first?',
+    physics: ['Give the biggest doses first, while the vial is strongest.', 'Pack the bookings close together: every gap lets more of the vial decay unused.'],
+    card: { role: 'Radiopharmacy and cyclotron', text: 'F-18 is made before dawn by firing protons at oxygen-18 water in a cyclotron. Physicists, chemists and engineers run it so the tracer reaches hospitals while it is still strong.' },
+    winText: r => `All six patients were scanned by ${fmtClock(r.lastEnd)}, using ${Math.round(r.usedFrac * 100)}% of the vial. Heavier patients went early, while the activity was high.` },
+  3: { who: 'farah',
+    intro: 'Bad news: an accident on the highway. The vial was 3,500 MBq at 07:00, but it only arrives at 08:30, and F-18 kept decaying in the van. Now there is far less, and we cannot scan all six today. Encik Azman and Ms. Grace are urgent. Plan five scans, and choose one patient to reschedule to Thursday.',
+    physics: ['Decay never waits: the vial lost 43% of its activity during the 90-minute delay.', 'When activity is short, triage: scan the urgent patients, and reschedule a patient who can safely wait and needs a large dose.'],
+    card: { role: 'PET physicist', text: 'PET physicists keep the scanner and its images accurate, and help the team decide what to do when the tracer supply goes wrong.' },
+    winText: r => `Five patients were scanned by ${fmtClock(r.lastEnd)}, including both urgent patients. Pak Ismail, who is well and stable, comes back on Thursday, and his large dose freed enough activity for everyone else.` }
+};
+
+const S = { level: 0, sched: {}, sel: null, res: null, opt: null, hoverT: null, running: false, clock: null, flash: {} };
+const $ = FL.$;
+const cv = $('cv');
+let G = null;
+
+function L() { return LEVELS[S.level]; }
+function storageKey() { return 'ch5:sched:' + L().id; }
+
+function setMentor(whoKey, text) {
+  const w = SPEAKERS[whoKey];
+  $('speaker').textContent = w.name;
+  const av = $('avatar'); av.textContent = w.init; av.classList.toggle('alt', w.alt);
+  $('mentor').textContent = text;
+}
+
+function loadLevel(i) {
+  S.level = i; S.sel = null; S.hoverT = null; S.flash = {};
+  const saved = FL.store.get(storageKey(), null);
+  S.sched = saved && typeof saved === 'object' ? saved : {};
+  for (const k of Object.keys(S.sched)) if (!L().patients.some(p => p.id === k)) delete S.sched[k];
+  S.opt = optimum(L());
+  $('result').hidden = true;
+  const st = STORY[L().id];
+  setMentor(st.who, st.intro);
+  $('reschedBtn').hidden = !L().mustScan;
+  $('pTitle').textContent = L().mustScan ? `Patients · scan ${L().mustScan} of ${L().patients.length}` : `Patients · ${L().patients.length} to scan`;
+  renderLevels();
+  layout();
+  update();
+}
+function renderLevels() { FL.renderLevels($('levels'), LEVELS, S.level, FL.getStars(CH), i => loadLevel(i)); }
+function save() { FL.store.set(storageKey(), S.sched); }
+
+/* ---------- Readouts ---------- */
+const fmtMBq = v => `${Math.round(v).toLocaleString('en')} MBq`;
+const STATUS_TEXT = { ok: ['ok', 'Booked'], unbooked: ['idle', 'Not booked'], resched: ['idle', 'Thursday'], clash: ['no', 'Clash'], short: ['no', 'Short'], early: ['no', 'Too early'], late: ['no', 'Too late'] };
+
+function update() {
+  const lv = L();
+  S.res = evaluate(lv, S.sched);
+  const r = S.res;
+  $('vArrive').textContent = fmtClock(lv.t0) + (lv.t0 > 0 ? ' (late)' : '');
+  $('vA0').textContent = fmtMBq(lv.A0);
+  $('vSpend').textContent = r.booked.length ? `${fmtMBq(r.spend)} · ${Math.round(r.usedFrac * 100)}%` : '–';
+  $('vLeft').textContent = r.booked.length ? fmtMBq(Math.max(0, r.leftAtClose)) : fmtMBq(vialAt(lv, [], lv.close));
+  const bar = $('vBar'); bar.style.width = Math.min(100, r.usedFrac * 100) + '%'; bar.classList.toggle('over', r.usedFrac > 1.0005);
+  const ul = $('plist'); ul.innerHTML = '';
+  for (const p of r.pats) {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.className = 'pbtn'; b.setAttribute('aria-pressed', S.sel === p.id ? 'true' : 'false');
+    const [cls, txt] = STATUS_TEXT[r.status[p.id]];
+    const t = S.sched[p.id];
+    b.innerHTML = `<span class="pn">${FL.esc(p.name)}, ${p.age}${p.urgent ? '<span class="urg">Urgent</span>' : ''}</span>
+      <span class="pd">${p.mass} kg · needs ${p.dose} MBq · ${FL.esc(p.note)}</span>
+      <span class="pill ${cls}">${txt}${typeof t === 'number' ? ' ' + fmtClock(t) : ''}</span>`;
+    b.onclick = () => { FL.audio.click(); select(p.id); };
+    li.appendChild(b); ul.appendChild(li);
+  }
+  renderSel();
+  renderWork();
+  draw();
+}
+
+function select(id) { S.sel = id; update(); }
+function renderSel() {
+  const box = $('selctl');
+  if (!S.sel) { box.hidden = true; return; }
+  box.hidden = false;
+  const p = S.res.pats.find(q => q.id === S.sel);
+  const t = S.sched[p.id];
+  $('selWho').innerHTML = `<b>${FL.esc(p.name)}</b> needs ${p.dose} MBq at injection.`;
+  if (typeof t === 'number') {
+    $('selWhen').innerHTML = `Inject ${fmtClock(t)}<small>Scan ${fmtClock(t + UPTAKE)}–${fmtClock(t + UPTAKE + SCAN)}</small>`;
+    $('bookBtn').textContent = 'Remove booking';
+  } else {
+    $('selWhen').innerHTML = t === 'R' ? 'Rescheduled<small>Comes back on Thursday</small>' : 'Not booked<small>Tap a time in the row, or press Book</small>';
+    $('bookBtn').textContent = 'Book first free time';
+  }
+  $('tMinus').disabled = $('tPlus').disabled = typeof t !== 'number';
+  $('reschedBtn').textContent = t === 'R' ? 'Bring back today' : 'Reschedule to Thursday';
+}
+
+function firstFree() {
+  const lv = L(), taken = Object.entries(S.sched).filter(([k, v]) => typeof v === 'number' && k !== S.sel).map(([, v]) => v);
+  for (let t = lv.t0 + QC; t <= lv.close - UPTAKE - SCAN; t += STEP) if (taken.every(u => Math.abs(u - t) >= SCAN)) return t;
+  return lv.t0 + QC;
+}
+function setTime(id, t, sound = true) {
+  t = FL.clamp(Math.round(t / STEP) * STEP, 0, L().close - STEP);
+  if (S.sched[id] === t) return;
+  S.sched[id] = t; save();
+  if (sound) FL.audio.tick();
+  $('result').hidden = true;
+  update();
+}
+$('tMinus').onclick = () => { const t = S.sched[S.sel]; if (typeof t === 'number') setTime(S.sel, t - STEP); };
+$('tPlus').onclick = () => { const t = S.sched[S.sel]; if (typeof t === 'number') setTime(S.sel, t + STEP); };
+$('bookBtn').onclick = () => {
+  if (!S.sel) return;
+  if (typeof S.sched[S.sel] === 'number') { delete S.sched[S.sel]; FL.audio.remove(); }
+  else { S.sched[S.sel] = firstFree(); FL.audio.place(); }
+  save(); $('result').hidden = true; update();
+};
+$('reschedBtn').onclick = () => {
+  if (!S.sel) return;
+  if (S.sched[S.sel] === 'R') { delete S.sched[S.sel]; FL.audio.click(); }
+  else { S.sched[S.sel] = 'R'; FL.audio.paper(); }
+  save(); $('result').hidden = true; update();
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea, select') || !S.sel || S.running) return;
+  const t = S.sched[S.sel];
+  if (typeof t !== 'number') return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); setTime(S.sel, t - STEP); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); setTime(S.sel, t + STEP); }
+});
+
+/* Worked example in the notebook, for the selected (or first booked) patient. */
+function renderWork() {
+  const lv = L(), r = S.res;
+  const p = r.booked.find(b => b.id === S.sel) || r.booked[0];
+  if (!p) { $('work').textContent = 'Book a patient to see the worked example for their dose.'; return; }
+  const dt = p.t - lv.t0, f = decay(dt);
+  $('work').innerHTML = `${FL.esc(p.name)}: injected ${fmtClock(p.t)}, ${dt} min after the vial arrived.<br>Fraction left = (½)^(${dt} ÷ 109.8) = ${f.toFixed(3)}<br>Needs ${p.dose} MBq then, so it costs ${p.dose} ÷ ${f.toFixed(3)} = ${Math.round(p.dose / f)} MBq of the delivery.`;
+}
+
+/* ---------- Drawing ---------- */
+function layout() {
+  const cs = getComputedStyle(cv.parentElement);
+  const w = Math.floor(cv.parentElement.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
+  const narrow = w < 560;
+  const n = L().patients.length;
+  const g = { w, narrow };
+  g.labW = narrow ? 92 : 150;
+  g.x0 = g.labW + 6; g.x1 = w - (narrow ? 10 : 18);
+  g.tMax = L().close;
+  g.chartTop = 44; g.chartH = narrow ? 120 : 170;
+  g.laneY = g.chartTop + g.chartH + 34; g.laneH = 24;
+  g.rowY = g.laneY + g.laneH + 14; g.rowH = narrow ? 42 : 46;
+  g.h = g.rowY + n * g.rowH + 30;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(g.h * dpr);
+  cv.style.width = w + 'px'; cv.style.height = g.h + 'px';
+  g.ctx = cv.getContext('2d'); g.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  G = g;
+}
+const X = t => G.x0 + (t / G.tMax) * (G.x1 - G.x0);
+const T = x => (x - G.x0) / (G.x1 - G.x0) * G.tMax;
+
+function draw() {
+  if (!G) return;
+  const ctx = G.ctx, lv = L(), r = S.res;
+  const c = { ink: FL.css('--ink'), muted: FL.css('--muted'), line: FL.css('--line'), board: FL.css('--board'), paper: FL.css('--paper'),
+    accent: FL.css('--accent'), beam: FL.css('--beam'), good: FL.css('--good'), bad: FL.css('--bad'), warn: FL.css('--warn'), soft: FL.css('--accent-soft') };
+  const mono = FL.css('--mono'), body = FL.css('--body');
+  const tEnd = S.clock == null ? lv.close : S.clock;
+  ctx.clearRect(0, 0, G.w, G.h);
+  ctx.fillStyle = c.board; ctx.fillRect(0, 0, G.w, G.h);
+
+  /* Hour grid across the whole stage */
+  ctx.font = `500 11px ${mono}`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  for (let t = 0; t <= lv.close; t += 30) {
+    const x = Math.round(X(t)) + 0.5, hour = t % 60 === 0;
+    ctx.strokeStyle = c.line; ctx.globalAlpha = hour ? 0.9 : 0.4; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, G.chartTop); ctx.lineTo(x, G.h - 22); ctx.stroke(); ctx.globalAlpha = 1;
+    if (hour && (!G.narrow || t % 120 === 0)) { ctx.fillStyle = c.muted; ctx.textAlign = x > G.w - 24 ? 'right' : 'center'; ctx.fillText(fmtClock(t), Math.min(x, G.w - 2), G.h - 8); ctx.textAlign = 'center'; }
+  }
+  /* Closing time and the "too late to inject" zone */
+  const late = lv.close - UPTAKE - SCAN;
+  ctx.fillStyle = c.bad; ctx.globalAlpha = 0.07;
+  ctx.fillRect(X(late), G.rowY - 4, X(lv.close) - X(late), lv.patients.length * G.rowH + 4); ctx.globalAlpha = 1;
+  ctx.strokeStyle = c.bad; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(X(lv.close) - 0.5, G.chartTop); ctx.lineTo(X(lv.close) - 0.5, G.h - 22); ctx.stroke(); ctx.setLineDash([]);
+  /* Waiting for delivery + quality control */
+  if (lv.t0 > 0) { ctx.fillStyle = c.muted; ctx.globalAlpha = 0.08; ctx.fillRect(X(0), G.chartTop, X(lv.t0) - X(0), G.h - 22 - G.chartTop); ctx.globalAlpha = 1; }
+  ctx.fillStyle = c.accent; ctx.globalAlpha = 0.08; ctx.fillRect(X(lv.t0), G.rowY - 4, X(lv.t0 + QC) - X(lv.t0), lv.patients.length * G.rowH + 4); ctx.globalAlpha = 1;
+
+  drawCurve(ctx, c, mono, body, tEnd);
+  drawLane(ctx, c, body, tEnd);
+  drawRows(ctx, c, mono, body, tEnd);
+
+  /* Labels for zones */
+  ctx.font = `700 11px ${body}`; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = c.accent; ctx.textAlign = 'left';
+  ctx.fillText('QC', X(lv.t0) + 3, G.rowY - 7);
+  ctx.fillStyle = c.bad; ctx.textAlign = 'right';
+  ctx.fillText(G.narrow ? 'Too late' : 'Too late to inject', X(lv.close) - 4, G.rowY - 7);
+
+  /* Clock / hover line */
+  const tl = S.clock != null ? S.clock : S.hoverT;
+  if (tl != null && tl >= 0 && tl <= lv.close) {
+    const x = Math.round(X(tl)) + 0.5;
+    ctx.strokeStyle = S.clock != null ? c.beam : c.ink; ctx.lineWidth = S.clock != null ? 2 : 1; ctx.globalAlpha = 0.8;
+    ctx.beginPath(); ctx.moveTo(x, G.chartTop - 6); ctx.lineTo(x, G.h - 22); ctx.stroke(); ctx.globalAlpha = 1;
+    const v = vialAt(lv, r.booked, tl, true);
+    const label = `${fmtClock(tl)} · ${tl < lv.t0 ? 'in transit ' : ''}${Math.round(v)} MBq`;
+    ctx.font = `500 12px ${mono}`;
+    const tw = ctx.measureText(label).width + 12;
+    const lx = FL.clamp(x - tw / 2, 2, G.w - tw - 2);
+    ctx.fillStyle = c.ink; roundRect(ctx, lx, 4, tw, 20, 6); ctx.fill();
+    ctx.fillStyle = c.board; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(label, lx + 6, 14.5);
+  }
+}
+
+function drawCurve(ctx, c, mono, body, tEnd) {
+  const lv = L(), r = S.res;
+  const top = G.chartTop, h = G.chartH, base = top + h;
+  const vmax = Math.max(lv.Acal, lv.A0) * 1.08;
+  const vmin = -0.12 * lv.A0;
+  const Y = v => base - (v - vmin) / (vmax - vmin) * h;
+  /* Axis labels */
+  ctx.font = `500 11px ${mono}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const v of [0, lv.A0 / 2, lv.A0]) {
+    const y = Math.round(Y(v)) + 0.5;
+    ctx.strokeStyle = c.line; ctx.globalAlpha = v === 0 ? 1 : 0.6; ctx.setLineDash(v === 0 ? [] : [3, 4]);
+    ctx.beginPath(); ctx.moveTo(G.x0, y); ctx.lineTo(G.x1, y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = c.muted; ctx.fillText(Math.round(v).toLocaleString('en'), G.x0 - 6, y);
+  }
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = c.ink; ctx.font = `700 13px ${body}`;
+  ctx.fillText(G.narrow ? 'Vial (MBq)' : 'FDG in the vial (MBq)', 8, 18);
+  /* Half-life bracket: from arrival, one half-life later the untouched vial is at half */
+  const th = lv.t0 + T_HALF;
+  if (th < lv.close) {
+    const yA = Y(lv.A0), yH = Y(lv.A0 / 2);
+    ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(X(lv.t0), yA); ctx.lineTo(X(th), yA); ctx.lineTo(X(th), yH); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = c.muted; ctx.font = `500 11px ${body}`; ctx.textAlign = 'center';
+    ctx.fillText('1 half-life = 110 min', (X(lv.t0) + X(th)) / 2, yA - 6);
+  }
+  /* Untouched vial (no patients) for comparison */
+  ctx.strokeStyle = c.muted; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  for (let t = lv.t0; t <= lv.close; t += 2) { const y = Y(lv.A0 * decay(t - lv.t0)); t === lv.t0 ? ctx.moveTo(X(t), y) : ctx.lineTo(X(t), y); }
+  ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  /* In transit (Level 3) */
+  if (lv.t0 > 0) {
+    ctx.strokeStyle = c.warn; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    for (let t = 0; t <= Math.min(lv.t0, tEnd); t += 2) { const y = Y(lv.Acal * decay(t - lv.calAt)); t === 0 ? ctx.moveTo(X(t), y) : ctx.lineTo(X(t), y); }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = c.warn; ctx.font = `700 11px ${body}`; ctx.textAlign = 'left';
+    ctx.fillText('Stuck in traffic', X(0) + 4, Y(lv.Acal) + 16);
+  }
+  /* Actual vial with withdrawals, filled */
+  if (tEnd > lv.t0) {
+    const pts = [];
+    const times = new Set();
+    for (let t = lv.t0; t <= Math.min(lv.close, tEnd); t += 1) times.add(t);
+    for (const b of r.booked) if (b.t >= lv.t0 && b.t <= tEnd) { times.add(b.t - 0.001); times.add(b.t); }
+    const ts = [...times].sort((a, b) => a - b);
+    for (const t of ts) pts.push([X(t), Y(Math.max(0, vialAt(lv, r.booked, t, true)))]);
+    ctx.beginPath(); ctx.moveTo(pts[0][0], Y(0));
+    for (const [x, y] of pts) ctx.lineTo(x, y);
+    ctx.lineTo(pts[pts.length - 1][0], Y(0)); ctx.closePath();
+    ctx.fillStyle = c.accent; ctx.globalAlpha = 0.16; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    ctx.strokeStyle = c.accent; ctx.lineWidth = 2.5; ctx.stroke();
+    /* Withdrawal markers: a drop for each dose; a red stub below zero shows the shortfall */
+    let ranOut = null;
+    for (const d of r.draws) {
+      if (d.t > tEnd || d.t < lv.t0) continue;
+      const have = Math.max(0, d.before), short = d.before + 0.5 < d.dose;
+      const x = X(d.t);
+      ctx.strokeStyle = c.ink; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x, Y(have)); ctx.lineTo(x, Y(Math.max(0, have - d.dose))); ctx.stroke();
+      if (short) {
+        if (ranOut == null) ranOut = d.t;
+        const deficit = d.dose - have;
+        ctx.strokeStyle = c.bad; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(x, Y(0)); ctx.lineTo(x, Math.min(base, Y(-deficit))); ctx.stroke();
+        ctx.fillStyle = c.bad; ctx.beginPath(); ctx.arc(x, Math.min(base, Y(-deficit)), 3.5, 0, 7); ctx.fill();
+      } else {
+        ctx.fillStyle = c.ink; ctx.beginPath(); ctx.arc(x, Y(have - d.dose), 3, 0, 7); ctx.fill();
+      }
+    }
+    if (tEnd >= lv.close && r.booked.length) {
+      const left = Math.max(0, vialAt(lv, r.booked, lv.close, true));
+      ctx.font = `700 12px ${mono}`; ctx.textAlign = 'right';
+      if (ranOut != null) { ctx.fillStyle = c.bad; ctx.fillText(`Ran out at ${fmtClock(ranOut)}`, X(lv.close) - 6, Y(0) - 8); }
+      else { ctx.fillStyle = c.ink; ctx.fillText(`${Math.round(left)} MBq left`, X(lv.close) - 6, FL.clamp(Y(left) - 8, top + 28, Y(0) - 6)); }
+    }
+  }
+  ctx.fillStyle = c.accent; ctx.beginPath(); ctx.arc(X(lv.t0), Y(lv.A0), 4, 0, 7); ctx.fill();
+}
+
+function drawLane(ctx, c, body, tEnd) {
+  const lv = L(), r = S.res, y = G.laneY, h = G.laneH;
+  ctx.fillStyle = c.paper; roundRect(ctx, G.x0, y, G.x1 - G.x0, h, 6); ctx.fill();
+  ctx.fillStyle = c.ink; ctx.font = `700 12px ${body}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('PET scanner', 8, y + h / 2);
+  const scans = r.booked.map(b => [b.t + UPTAKE, b.t + UPTAKE + SCAN, b]).sort((a, b) => a[0] - b[0]);
+  for (const [s, e, b] of scans) {
+    if (s > tEnd) continue;
+    const bad = r.status[b.id] !== 'ok';
+    ctx.fillStyle = bad ? c.bad : c.beam; ctx.globalAlpha = bad ? 0.75 : 1;
+    roundRect(ctx, X(s) + 0.5, y + 3, Math.max(2, X(Math.min(e, tEnd)) - X(s) - 1), h - 6, 4); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  for (let i = 1; i < scans.length; i++) {
+    const ov0 = scans[i][0], ov1 = Math.min(scans[i - 1][1], scans[i][1]);
+    if (ov1 > ov0) { ctx.fillStyle = c.bad; ctx.fillRect(X(ov0), y, X(ov1) - X(ov0), h); }
+  }
+}
+
+function drawRows(ctx, c, mono, body, tEnd) {
+  const lv = L(), r = S.res;
+  r.pats.forEach((p, i) => {
+    const y = G.rowY + i * G.rowH, h = G.rowH - 8, mid = y + h / 2;
+    const st = r.status[p.id], t = S.sched[p.id], sel = S.sel === p.id;
+    if (sel) { ctx.fillStyle = c.soft; roundRect(ctx, 2, y - 3, G.w - 4, h + 6, 8); ctx.fill(); }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = c.ink; ctx.font = `700 ${G.narrow ? 12 : 13}px ${body}`;
+    const nm = G.narrow ? p.name.replace(/^(Puan|Encik|Pak|Cik|Mr\.|Ms\.|Mrs\.|Mdm\.)\s+/, '') : p.name;
+    ctx.fillText(nm + (p.urgent ? ' !' : ''), 8, mid - 2);
+    ctx.fillStyle = c.muted; ctx.font = `500 11px ${mono}`;
+    ctx.fillText(`${p.mass} kg · ${p.dose} MBq`, 8, mid + 13);
+    ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+    ctx.strokeRect(G.x0 + 0.5, y + 0.5, G.x1 - G.x0 - 1, h - 1); ctx.setLineDash([]);
+    if (t === 'R') {
+      ctx.fillStyle = c.muted; ctx.font = `700 12px ${body}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('Rescheduled to Thursday', (G.x0 + G.x1) / 2, mid); return;
+    }
+    if (typeof t !== 'number') {
+      ctx.fillStyle = c.muted; ctx.font = `500 12px ${body}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(G.narrow ? 'Tap to book' : 'Tap or drag here to book an injection time', (G.x0 + G.x1) / 2, mid); return;
+    }
+    const bad = st !== 'ok';
+    const col = bad ? c.bad : c.accent;
+    /* Uptake bar */
+    const u1 = Math.min(t + UPTAKE, tEnd);
+    if (t <= tEnd) {
+      ctx.fillStyle = col; ctx.globalAlpha = 0.22;
+      roundRect(ctx, X(t), y + 6, Math.max(0, X(u1) - X(t)), h - 12, 5); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    /* Scan block */
+    const s0 = t + UPTAKE, s1 = Math.min(t + UPTAKE + SCAN, tEnd);
+    if (s0 <= tEnd) {
+      ctx.fillStyle = bad ? c.bad : c.beam;
+      roundRect(ctx, X(s0), y + 3, Math.max(0, X(s1) - X(s0)), h - 6, 5); ctx.fill();
+    }
+    /* Injection marker */
+    const fl = S.flash[p.id] || 0;
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X(t), mid, 6 + fl * 6, 0, 7); ctx.fill();
+    ctx.strokeStyle = c.board; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X(t), mid, 6 + fl * 6, 0, 7); ctx.stroke();
+    ctx.fillStyle = bad ? c.bad : c.ink; ctx.font = `500 11px ${mono}`; ctx.textBaseline = 'middle';
+    const lab = fmtClock(t);
+    if (X(t) - G.x0 > 44) { ctx.textAlign = 'right'; ctx.fillText(lab, X(t) - 10, mid); }
+    else { ctx.textAlign = 'left'; ctx.fillText(lab, X(t) + 10, y + 10); }
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+/* ---------- Pointer: book and drag along a patient's row ---------- */
+let drag = null;
+function hit(e) {
+  const rc = cv.getBoundingClientRect();
+  const x = (e.clientX - rc.left) * (G.w / rc.width), y = (e.clientY - rc.top) * (G.h / rc.height);
+  const row = Math.floor((y - G.rowY + 4) / G.rowH);
+  const inRow = row >= 0 && row < L().patients.length;
+  return { x, y, row: inRow ? row : -1, t: T(x), inChart: x >= G.x0 && x <= G.x1 };
+}
+cv.addEventListener('pointerdown', e => {
+  if (S.running) return;
+  const h = hit(e);
+  if (h.row < 0) return;
+  const p = L().patients[h.row];
+  S.sel = p.id;
+  if (!h.inChart) { FL.audio.click(); update(); return; }
+  cv.setPointerCapture(e.pointerId);
+  const t = S.sched[p.id];
+  if (typeof t === 'number' && h.t >= t - 12 && h.t <= t + UPTAKE + SCAN) {
+    drag = { id: p.id, off: h.t - t };
+  } else {
+    drag = { id: p.id, off: 0 };
+    if (S.sched[p.id] === 'R') delete S.sched[p.id];
+    S.sched[p.id] = FL.clamp(Math.round(h.t / STEP) * STEP, 0, L().close - STEP);
+    FL.audio.place(); save(); $('result').hidden = true;
+  }
+  update();
+});
+cv.addEventListener('pointermove', e => {
+  const h = hit(e);
+  if (drag) { setTime(drag.id, h.t - drag.off); return; }
+  const nt = h.inChart ? FL.clamp(Math.round(h.t / STEP) * STEP, 0, L().close) : null;
+  if (nt !== S.hoverT) { S.hoverT = nt; draw(); }
+});
+const endDrag = () => { if (drag) { drag = null; save(); } };
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('pointerleave', () => { if (!drag && S.hoverT != null) { S.hoverT = null; draw(); } });
+
+/* ---------- Run the day ---------- */
+function runDay(after) {
+  if (S.running) return;
+  const lv = L();
+  S.running = true; $('go').disabled = true; $('result').hidden = true;
+  const events = [];
+  for (const b of S.res.booked) { events.push({ t: b.t, kind: 'inj', id: b.id }); events.push({ t: b.t + UPTAKE, kind: 'scan', id: b.id }); }
+  events.sort((a, b) => a.t - b.t);
+  const finish = () => { S.running = false; S.clock = null; S.flash = {}; $('go').disabled = false; draw(); (after || judge)(); };
+  if (FL.reduced) { finish(); return; }
+  const dur = 5200, t0 = performance.now();
+  let ei = 0;
+  const stepFn = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    S.clock = p * lv.close;
+    while (ei < events.length && events[ei].t <= S.clock) {
+      const ev = events[ei++];
+      if (ev.kind === 'inj') { FL.audio.blip(ev.id.length % 5); S.flash[ev.id] = 1; }
+      else FL.audio.hum(0.9);
+    }
+    for (const k of Object.keys(S.flash)) S.flash[k] = Math.max(0, S.flash[k] - 0.06);
+    draw();
+    if (p < 1) requestAnimationFrame(stepFn); else finish();
+  };
+  requestAnimationFrame(stepFn);
+}
+
+function issueText(i) {
+  const lv = L();
+  switch (i.type) {
+    case 'unbooked': return `Book a time for ${i.list.map(p => p.name).join(', ')}.`;
+    case 'clash': return `${i.p.name}'s and ${i.q.name}'s scans overlap. Book injections at least 20 minutes apart, because each scan takes 20 minutes.`;
+    case 'early': return `${i.p.name} is booked before the FDG has passed quality control. The first injection can be at ${fmtClock(lv.t0 + QC)}.`;
+    case 'late': return `${i.p.name}'s scan would end at ${fmtClock(i.p.t + UPTAKE + SCAN)}, after the clinic closes at ${fmtClock(lv.close)}.`;
+    case 'short': return `At ${fmtClock(i.p.t)} the vial has only ${Math.round(i.have)} MBq left, but ${i.p.name} needs ${i.p.dose} MBq.`;
+    case 'toofew': return `There is enough FDG for ${i.need} patients today, and you have booked ${i.have}.`;
+    case 'urgent': return `${i.list.map(p => p.name).join(' and ')} ${i.list.length > 1 ? 'are' : 'is'} urgent and must be scanned today.`;
+  }
+  return '';
+}
+function hintFor(r) {
+  const lv = L(), types = new Set(r.issues.map(i => i.type));
+  if (types.has('unbooked')) return ['mei', 'Everyone on the list needs an injection time before we can run the day.'];
+  if (types.has('urgent')) return ['farah', 'The urgent patients cannot wait until Thursday. Reschedule someone who is well and stable instead.'];
+  if (types.has('clash')) return ['lim', 'There is only one PET scanner. Space the injections at least 20 minutes apart so each scan finishes before the next one starts.'];
+  if (types.has('early')) return ['mei', 'The tracer must pass quality control before it goes into anyone: about 20 minutes after it arrives.'];
+  if (types.has('late')) return ['mei', 'Our staff go home at 13:00. A patient injected after 11:40 cannot finish their scan in time.'];
+  if (types.has('short')) {
+    if (lv.mustScan) {
+      const booked = r.booked.length;
+      if (booked > lv.mustScan) return ['farah', 'Even a perfect schedule cannot fit all six today: the vial lost too much in the traffic. Pick one patient who can safely wait until Thursday.'];
+      return ['farah', 'Rescheduling helped, but not enough. Which patient can safely wait and also needs the most activity? Book the biggest doses first, packed close together.'];
+    }
+    return ['lim', 'The vial runs dry before the last patient. Every MBq needed later costs more of the delivery, because it decays while it waits. Book the heaviest patients first, while the vial is strongest, and keep the bookings packed close together.'];
+  }
+  if (types.has('toofew')) return ['farah', 'We can still fit five patients today. Only reschedule one.'];
+  return ['lim', 'Check the warnings on the timeline.'];
+}
+
+function judge() {
+  const lv = L(), r = S.res, box = $('result'), st = STORY[lv.id];
+  if (!r.win) {
+    FL.showFail(box, { title: 'The day did not go to plan', issues: r.issues.map(issueText) });
+    const [who, text] = hintFor(r); setMentor(who, text);
+    if (r.issues.some(i => i.type === 'short')) $('notebook').open = true;
+    return;
+  }
+  const stars = starsFor(lv, r.spend, S.opt.spend);
+  FL.setStars(CH, lv.id, stars);
+  const best = Math.round(S.opt.spend / lv.A0 * 100);
+  const next = S.level < LEVELS.length - 1;
+  FL.showWin(box, {
+    chapter: CH, stars, title: 'Every scan done safely',
+    summary: `${st.winText(r)} Your plan needed ${Math.round(r.usedFrac * 100)}% of the vial; the best possible plan needs ${best}%.${stars < 3 ? ' Book the heaviest patients first and pack the bookings from the earliest slot for three stars.' : ''}`,
+    physics: st.physics, card: st.card,
+    nextLabel: next ? `Next: Level ${lv.id + 1}, ${LEVELS[S.level + 1].name}` : 'Finish Chapter 5',
+    onNext: () => next ? loadLevel(S.level + 1) : finishChapter()
+  });
+  setMentor(st.who, stars === 3 ? 'Perfect timing. Not a single MBq more than we needed.' : 'Every patient scanned. Can you plan it so the vial lasts even better?');
+  renderLevels();
+}
+function finishChapter() {
+  const box = $('result');
+  FL.chapterComplete(box, {
+    title: 'Chapter 5 complete',
+    text: 'You planned a nuclear medicine day the way physicists do: around the half-life. Radioactive decay never pauses, so every booking, every delay and every dose has a cost in activity.',
+    pathway: 'Chapter 6, Stop on the Spot: Aisyah is 14 and has a brain tumour right in front of her brainstem. Can a beam of protons stop exactly where it should?'
+  });
+  const go6 = document.createElement('button');
+  go6.className = 'primary'; go6.textContent = 'Play Chapter 6';
+  go6.onclick = () => { location.href = 'ch6.html'; };
+  box.appendChild(go6);
+  setMentor('lim', 'Well done. Next stop: the proton room, where physics lets us stop a beam inside the body.');
+}
+
+$('go').onclick = () => { FL.audio.beam(); runDay(); };
+$('reset').onclick = () => { S.sched = {}; save(); S.sel = null; $('result').hidden = true; setMentor(STORY[L().id].who, STORY[L().id].intro); FL.audio.remove(); update(); };
+
+/* Show solution: book the verified best plan patient by patient, then run the day. */
+FL.setupLock(() => {
+  if (S.running) return;
+  const opt = S.opt; if (!opt) return;
+  S.sched = {}; S.sel = null; $('result').hidden = true;
+  const order = [...opt.order, ...Object.keys(opt.sched).filter(k => opt.sched[k] === 'R')];
+  const stepMs = FL.reduced ? 0 : 380;
+  setMentor('lim', L().mustScan ? 'Here is one answer. Keep the two urgent patients, reschedule Pak Ismail (well, stable, and the biggest dose), then book the rest from the heaviest down, packed from 08:50.' : 'Here is one answer: the heaviest patient first, then the next heaviest, every 20 minutes from the first slot after quality control.');
+  order.forEach((id, k) => setTimeout(() => {
+    S.sched[id] = opt.sched[id]; S.sel = id;
+    if (opt.sched[id] === 'R') FL.audio.paper(); else FL.audio.place();
+    update();
+    if (k === order.length - 1) setTimeout(() => { save(); FL.audio.beam(); runDay(); }, stepMs + 200);
+  }, k * stepMs));
+});
+
+/* ---------- Decay lab ---------- */
+const lab = { seed: 7, times: [], playing: false };
+function seedAtoms() {
+  let s = lab.seed;
+  const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  lab.times = Array.from({ length: 100 }, () => -T_HALF / Math.LN2 * Math.log(1 - rnd()));
+}
+function drawLab() {
+  const c = $('labcv');
+  const w = c.parentElement.clientWidth || 300, h = Math.round(w * 0.42);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); c.style.height = h + 'px';
+  const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const t = +$('labT').value;
+  const accent = FL.css('--accent'), muted = FL.css('--line'), ink = FL.css('--ink'), mono = FL.css('--mono');
+  ctx.clearRect(0, 0, w, h);
+  const gw = Math.min(h - 16, w * 0.5), cell = gw / 10;
+  let left = 0;
+  for (let i = 0; i < 100; i++) {
+    const alive = lab.times[i] > t; if (alive) left++;
+    ctx.fillStyle = alive ? accent : muted;
+    ctx.beginPath(); ctx.arc(8 + (i % 10 + 0.5) * cell, 8 + (Math.floor(i / 10) + 0.5) * cell, cell * (alive ? 0.36 : 0.18), 0, 7); ctx.fill();
+  }
+  const x0 = gw + 24, x1 = w - 8, y0 = 12, y1 = h - 18;
+  ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.lineTo(x1, y1); ctx.stroke();
+  ctx.strokeStyle = accent; ctx.lineWidth = 2; ctx.beginPath();
+  for (let u = 0; u <= 440; u += 5) { const x = x0 + u / 440 * (x1 - x0), y = y1 - decay(u) * (y1 - y0); u ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke();
+  ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(x0 + t / 440 * (x1 - x0), y1 - left / 100 * (y1 - y0), 4, 0, 7); ctx.fill();
+  ctx.font = `500 11px ${mono}`; ctx.fillStyle = FL.css('--muted'); ctx.textAlign = 'left';
+  ctx.fillText('atoms left', x0 + 4, y0 + 8);
+  const expect = 100 * decay(t);
+  $('labOut').textContent = `${t} min · ${left} left (rule: ${expect.toFixed(0)})`;
+}
+$('labT').oninput = drawLab;
+$('labShuffle').onclick = () => { lab.seed = (lab.seed * 48271) % 2147483647; seedAtoms(); FL.audio.click(); drawLab(); };
+$('labPlay').onclick = () => {
+  if (lab.playing) return;
+  lab.playing = true; $('labT').value = 0;
+  const go = () => {
+    const v = +$('labT').value + 10;
+    $('labT').value = Math.min(440, v); drawLab();
+    if (v % 110 === 0) FL.audio.tick();
+    if (v < 440) setTimeout(go, FL.reduced ? 0 : 90); else lab.playing = false;
+  };
+  go();
+};
+$('notebook').addEventListener('toggle', () => { if ($('notebook').open) drawLab(); });
+
+/* ---------- Boot ---------- */
+FL.initAudio();
+seedAtoms();
+new ResizeObserver(() => { layout(); draw(); if ($('notebook').open) drawLab(); }).observe(cv.parentElement);
+FL.onTheme(() => { draw(); if ($('notebook').open) drawLab(); });
+loadLevel(0);
+</script>
+</body>
+</html>

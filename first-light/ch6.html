@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Stop on the Spot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+#cv { cursor: ew-resize; }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.toggles .ghost { flex: 0 1 auto; padding: 8px 12px; }
+.layers { display: grid; gap: 10px; }
+.layer { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.layer.sel { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.layer-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+.layer-head b { font-family: var(--display); font-weight: 600; }
+.layer-head .x { border: 1px solid var(--line); background: var(--board); color: var(--muted); border-radius: 8px; width: 28px; height: 28px; cursor: pointer; font: 700 15px/1 var(--body); }
+.layer-head .x:hover { color: var(--bad); border-color: var(--bad); }
+.swatch-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.addrow { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.addrow .ghost { flex: 0 0 auto; padding: 8px 12px; }
+.kv dd .pill { margin-left: 6px; }
+.mentor .more { margin-top: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 8px; padding: 6px 10px; font: 600 13px/1 var(--body); cursor: pointer; }
+.pathway { margin: 8px 0 0; padding-left: 20px; font-size: 14px; display: grid; gap: 4px; }
+.result .yourturn { font: 800 30px/1.1 var(--display); margin: 14px 0 0; letter-spacing: -.01em; }
+.layer .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.layer .fields.one { grid-template-columns: 1fr; }
+a.primary { display: block; text-align: center; text-decoration: none; }
+.lab-skip { margin-top: 8px; }
+</style>
+</head>
+<body data-music="5">
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow"><a href="index.html">All chapters</a> · Chapter 6 · The Proton Question</div>
+      <h1>Stop on the Spot</h1>
+    </div>
+    <div class="hright">
+      <nav class="levels" id="levels" aria-label="Levels"></nav>
+      <div class="audio" role="group" aria-label="Audio">
+        <button id="musicBtn" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Music</button>
+        <button id="sfxBtn" aria-pressed="true">Sound</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="game">
+    <section class="board" aria-label="Side view of Aisyah's head with the proton beam and a depth–dose chart">
+      <canvas id="cv" tabindex="0" aria-label="Head view. Drag left or right to move the selected layer's Bragg peak."></canvas>
+      <div class="toggles">
+        <button class="ghost" id="ctBtn" aria-pressed="false">CT stopping-power view</button>
+        <button class="ghost" id="xrBtn" aria-pressed="false">Compare with X-rays</button>
+      </div>
+      <p class="fine" id="ctNote" hidden style="margin:8px 0 0">CT stopping-power view: bone is bright, air is black. The orange ruler shows water-equivalent depth, which is what sets each layer's range.</p>
+      <div class="legend" id="legend">
+        <span>Drag on the picture to move the selected layer's peak</span>
+        <span>· Dose colour: <b style="color:#2b6cb0">low</b> → <b style="color:#c8402f">high</b></span>
+        <span>· <span class="swatch-dot" style="background:var(--target)"></span>Tumour <span class="swatch-dot" style="background:var(--organ);margin-left:8px"></span>Brainstem</span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card mentor">
+        <div class="avatar" id="avatar" aria-hidden="true">DL</div>
+        <div><b id="speaker">Dr. Lim, Head of Physics</b><p id="mentor"></p><button class="more" id="more" hidden>Next ›</button></div>
+      </div>
+
+      <div class="card">
+        <h2 id="layersTitle">Proton energy</h2>
+        <div class="layers" id="layers"></div>
+        <div class="addrow" id="addrow" hidden>
+          <span id="layerCount"></span>
+          <button class="ghost" id="addLayer">Add energy layer</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Plan check</h2>
+        <dl class="kv" id="readout"></dl>
+      </div>
+
+      <button class="action" id="go"><span class="lamp" aria-hidden="true"></span>Deliver protons</button>
+      <div class="row">
+        <button class="ghost" id="reset">Reset level</button>
+        <button class="ghost" id="solve">Show solution</button>
+      </div>
+      <form class="card lock" id="lock" hidden>
+        <label for="pw"><b>Teacher password</b><span>The solution is locked so students solve it themselves.</span></label>
+        <div class="lockrow">
+          <input id="pw" type="password" autocomplete="off" placeholder="Password">
+          <button class="primary" type="submit">Unlock</button>
+        </div>
+        <p class="pwerr" id="pwerr" hidden>That password is not right. Check with your teacher and try again.</p>
+      </form>
+
+      <div class="card result" id="result" hidden aria-live="polite"></div>
+
+      <details class="card" id="notebook">
+        <summary>Physicist's notebook</summary>
+        <div class="note">
+          <p><b>Why protons stop.</b> A proton loses energy as it knocks electrons out of the atoms it passes. The slower it goes, the longer it spends near each atom, so it loses energy faster and faster. Most of its energy is released in the last few millimetres, just before it stops: the <b>Bragg peak</b>. Beyond it, the dose drops almost to zero.</p>
+          <div class="formula">R ≈ 0.0022 × E<sup>1.77</sup></div>
+          <p>R is the range in water (cm) and E is the proton's kinetic energy (MeV). More energy means a longer range.</p>
+          <div class="work" id="work"></div>
+          <p><b>Spread-out Bragg peak.</b> One peak is only a few millimetres wide. Stacking peaks of lower energies, each with its own weight, gives a flat dose across the whole tumour. The deepest layer gets the biggest weight, because every shallower layer adds its entrance dose on top of the deeper ones.</p>
+          <p><b>Protons and X-rays.</b> An X-ray beam fades gradually, so it keeps going out the far side of the head. Protons stop. For a child like Aisyah, whose brain is still developing, less dose to healthy tissue means fewer long-term side effects.</p>
+          <p><b>Range uncertainty.</b> The range depends on what the protons pass through. Bone slows them about 1.6 times faster than water; air hardly slows them at all. Planners turn the CT scan into a map of stopping power, but that conversion is never perfect, so ranges can be off by about 3.5% plus 1 mm. Proton plans add a margin at the far edge and avoid stopping a beam right in front of a critical organ.</p>
+          <p class="fine">Game simplifications: dose is calculated along the beam's central axis with a simple sideways spread. Each peak is widened by a ripple filter to about 2.5 mm, and the entrance plateau is approximated. Real plans use several beam angles, pencil-beam or Monte Carlo dose engines, robust optimisation, and a biological factor of 1.1 for protons.</p>
+        </div>
+      </details>
+    </aside>
+  </div>
+  <footer>Part of <a href="index.html">Beam On: First Light</a>. Physics is simplified for learning; see the notebook for what is simplified.</footer>
+</div>
+<script src="common.js"></script>
+<script>
+/* ======================= Physics (pure functions) ======================= */
+const PH = (() => {
+  const ALPHA = 0.0022, P = 1.77, DZ = 0.02, ZMAX = 22, RIPPLE = 0.25, PLATEAU = 0.18;
+  function erfc(x) { const z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+    const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+    return x >= 0 ? r : 2 - r; }
+  const rangeOf = E => ALPHA * Math.pow(E, P);
+  const energyFor = R => Math.pow(Math.max(R, 0.1) / ALPHA, 1 / P);
+  const sigmaOf = R => Math.sqrt(Math.pow(0.012 * Math.pow(R, 0.935), 2) + RIPPLE * RIPPLE);
+  const cache = new Map();
+  function pristine(E) {
+    const key = Math.round(E * 10);
+    if (cache.has(key)) return cache.get(key);
+    const R = rangeOf(E), a = 1 - 1 / P, s = sigmaOf(R), n = Math.round(ZMAX / DZ);
+    const raw = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const x0 = i * DZ, x1 = x0 + DZ;
+      if (x0 >= R) break;
+      const hi = Math.min(x1, R);
+      raw[i] = (Math.pow(R - x0, 1 - a) - Math.pow(R - hi, 1 - a)) / ((1 - a) * DZ) * (1 - 0.01 * x0);
+    }
+    const k = Math.ceil(4 * s / DZ), ker = []; let ks = 0;
+    for (let j = -k; j <= k; j++) { const g = Math.exp(-0.5 * Math.pow(j * DZ / s, 2)); ker.push(g); ks += g; }
+    const out = new Float64Array(n); let mx = 0;
+    for (let i = 0; i < n; i++) {
+      let v = 0;
+      for (let j = -k; j <= k; j++) { const t = i + j; if (t >= 0 && t < n) v += raw[t] * ker[j + k]; }
+      out[i] = v / ks; if (out[i] > mx) mx = out[i];
+    }
+    let mx2 = 0;
+    for (let i = 0; i < n; i++) { out[i] = out[i] / mx + PLATEAU * 0.5 * erfc((i * DZ - R) / (Math.SQRT2 * s)); if (out[i] > mx2) mx2 = out[i]; }
+    for (let i = 0; i < n; i++) out[i] /= mx2;
+    const res = { E, R, curve: out }; cache.set(key, res); return res;
+  }
+  const sampleW = (c, w) => { const f = w / DZ, i = Math.floor(f); if (i < 0) return c[0]; if (i >= c.length - 1) return 0; const t = f - i; return c[i] * (1 - t) + c[i + 1] * t; };
+  function wet(z, segs) { let w = z; for (const s of segs) { const o = Math.max(0, Math.min(z, s.to) - s.from); if (o > 0) w += o * (s.spr - 1); } return w; }
+  /* Inverse: physical depth where the water-equivalent depth reaches w. */
+  function physFor(w, segs, zmax) { let lo = 0, hi = zmax; if (wet(hi, segs) < w) return Infinity; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (wet(m, segs) < w) lo = m; else hi = m; } return (lo + hi) / 2; }
+  function photon(z) { return (1 - Math.exp(-z / 0.45)) * Math.exp(-0.045 * z); }
+  /* Evaluate a plan. layers [{E,w}], L level geometry, scale = range scaling (1 nominal). */
+  function evaluate(layers, L, scale = 1) {
+    const nz = Math.round(L.depth / DZ) + 1, zs = new Float64Array(nz), dose = new Float64Array(nz), per = layers.map(() => new Float64Array(nz));
+    for (let i = 0; i < nz; i++) {
+      const z = i * DZ, w = wet(z, L.segs) / scale; zs[i] = z;
+      layers.forEach((ly, k) => { const v = ly.w * sampleW(pristine(ly.E).curve, w); per[k][i] = v; dose[i] += v; });
+    }
+    const inT = z => z >= L.target[0] && z <= L.target[1], inB = z => z >= L.stem[0] && z <= L.stem[1];
+    let tsum = 0, tn = 0, gmax = 0;
+    for (let i = 0; i < nz; i++) { if (inT(zs[i])) { tsum += dose[i]; tn++; } if (dose[i] > gmax) gmax = dose[i]; }
+    /* Normalise so the tumour's average dose is 100%. If the beam misses the tumour, fall back to the peak
+       (as 125%) so the picture stays readable instead of exploding. */
+    const ref = Math.max(tn ? tsum / tn : 0, 0.8 * gmax);
+    const norm = ref > 0 ? 100 / ref : 0;
+    for (let i = 0; i < nz; i++) dose[i] *= norm;
+    per.forEach(p => { for (let i = 0; i < nz; i++) p[i] *= norm; });
+    const ph = new Float64Array(nz); let ps = 0;
+    for (let i = 0; i < nz; i++) { ph[i] = photon(zs[i]); if (inT(zs[i])) ps += ph[i]; }
+    const pn = 100 / (ps / tn);
+    let tmin = Infinity, tmax = 0, tminZ = 0, tmaxZ = 0, bmax = 0, peakZ = 0, peak = 0, healthy = 0, phHealthy = 0, pb = 0;
+    for (let i = 0; i < nz; i++) {
+      ph[i] *= pn; const z = zs[i];
+      if (dose[i] > peak) { peak = dose[i]; peakZ = z; }
+      if (inT(z)) { if (dose[i] < tmin) { tmin = dose[i]; tminZ = z; } if (dose[i] > tmax) { tmax = dose[i]; tmaxZ = z; } }
+      else if (z >= L.brain) { healthy += dose[i] * DZ; phHealthy += ph[i] * DZ; }
+      if (inB(z)) { bmax = Math.max(bmax, dose[i]); pb = Math.max(pb, ph[i]); }
+    }
+    const peaks = per.map(p => { let m = 0, mz = 0; for (let i = 0; i < nz; i++) if (p[i] > m) { m = p[i]; mz = zs[i]; } return mz; });
+    if (!(tsum > 0)) { tmin = 0; tmax = 0; }
+    return { zs, dose, per, ph, peaks, tmin, tmax, tminZ, tmaxZ, bmax, peakZ, peak, entrance: dose[0], phEntrance: Math.max(...ph.slice(0, 5)), phStem: pb, phExit: ph[nz - 1],
+      healthyRatio: phHealthy > 0 ? healthy / phHealthy : 0, ok: tsum > 0 };
+  }
+  return { rangeOf, energyFor, wet, physFor, photon, evaluate, pristine, DZ };
+})();
+
+/* ======================= Levels ======================= */
+const SKULL = [{ from: 0.5, to: 1.2, spr: 1.6, kind: 'bone' }];
+const SINUS = [{ from: 2.0, to: 2.4, spr: 1.6, kind: 'bone' }, { from: 2.4, to: 4.2, spr: 0.001, kind: 'air' }, { from: 4.2, to: 4.6, spr: 1.6, kind: 'bone' }];
+const LEVELS = [
+  { id: 1, name: 'One perfect peak', depth: 14, brain: 1.2, target: [6.0, 7.0], th: 0.7, stem: [7.6, 9.6], segs: SKULL, single: true,
+    start: [{ E: 85, w: 100 }],
+    solution: [{ E: 98.5, w: 100 }],
+    intro: [
+      { who: 'AI', text: 'Dr. Lim, my friend says radiation goes right through you. Will it hurt the rest of my brain?' },
+      { who: 'DL', text: 'Good question, Aisyah. X-rays do pass right through. Protons are different: they stop. It is my last day before I retire, so let me show my successor, {name}, how it works.' },
+      { who: 'DL', text: 'Pick one energy. Faster protons travel further, and they release most of their energy just before they stop, in the Bragg peak. Put the peak inside the tumour and keep it out of the brainstem just behind.' }
+    ],
+    physics: ['Range depends on energy: in water, R ≈ 0.0022 × E<sup>1.77</sup> cm. Doubling the energy more than triples the range.', 'Protons lose energy faster as they slow down, so most of the dose lands in the Bragg peak, just before they stop.'],
+    card: { role: 'Proton therapy physicist', text: 'Proton physicists choose the energies and check the range of every beam, so the Bragg peak lands exactly where the doctor drew the tumour.' } },
+  { id: 2, name: 'Spread it out', depth: 14, brain: 1.2, target: [5.0, 8.0], th: 1.4, stem: [8.6, 10.6], segs: SKULL,
+    start: [{ E: 107, w: 100 }],
+    solution: [{ E: 107, w: 92 }, { E: 100.5, w: 30 }, { E: 94, w: 20 }, { E: 87, w: 18 }],
+    intro: [
+      { who: 'FA', text: 'Dr. Lim, the full tumour is 3 cm deep. One Bragg peak is only a few millimetres wide.' },
+      { who: 'DL', text: 'So we stack peaks. The deepest layer is already set at the far edge. Add lower energies, each with a smaller weight, until the dose is flat from 95% to 105% across the whole tumour.' },
+      { who: 'DL', text: 'Watch the dose behind the tumour. The brainstem is only 6 mm away, so the deepest layer must not reach too far.' }
+    ],
+    physics: ['Stacking peaks of different energies makes a flat dose region called a spread-out Bragg peak.', 'The deepest layer needs the highest weight, because each shallower layer adds its entrance dose on top of the deeper ones.'],
+    card: { role: 'Research physicist', text: 'Research physicists design new ways to shape and deliver proton beams, such as spot scanning and FLASH therapy, and test them in the lab long before they reach patients.' } },
+  { id: 3, name: 'Through the sinus', depth: 14, brain: 1.2, target: [6.2, 8.2], th: 1.2, stem: [8.9, 10.9], segs: SKULL.concat(SINUS), robust: true,
+    start: [{ E: 106, w: 92 }, { E: 101.5, w: 30 }, { E: 96.5, w: 20 }, { E: 91.5, w: 18 }],
+    solution: [{ E: 101, w: 100 }, { E: 96.5, w: 16 }, { E: 93, w: 13 }, { E: 89.5, w: 18 }, { E: 84.5, w: 20 }],
+    intro: [
+      { who: 'FA', text: 'I drafted Aisyah\'s real plan as if her head were all water. On my ruler it looks perfect!' },
+      { who: 'DL', text: 'Look again. This beam crosses bone and an air-filled sinus. Bone slows protons faster than water, and air hardly slows them at all. Turn on the CT stopping-power view.' },
+      { who: 'DL', text: 'CT numbers are never perfect, so ranges can be off by about 3.5% plus 1 mm. Cover the tumour even if the protons stop short, and keep the brainstem below 50%, the limit Dr. Arjun set.' }
+    ],
+    physics: ['Bone has about 1.6 times the stopping power of water; air has almost none. The same energy reaches a different depth in each patient.', 'Range uncertainty of about 3.5% + 1 mm is why planners add a margin at the far edge, and avoid stopping a beam right in front of a critical organ.'],
+    card: { role: 'Medical physics researcher (PhD)', text: 'Many physicists do a PhD to solve problems like range uncertainty, building tools such as 3D gel dosimeters and prompt-gamma cameras that show where protons really stop.' } }
+];
+LEVELS.forEach(L => { if (L.robust) { const end = PH.wet(L.target[1], L.segs); L.unc = (0.035 * end + 0.1) / end; } });
+const SPEAKERS = {
+  DL: { name: 'Dr. Lim, Head of Physics', init: 'DL', alt: false },
+  FA: { name: 'Farah, MSc student on placement', init: 'FA', alt: false },
+  AI: { name: 'Aisyah, 14', init: 'AI', alt: true },
+  MA: { name: 'Puan Rohana, Aisyah\'s mother', init: 'PR', alt: true }
+};
+
+/* Star rules. Returns {win, stars, fails:[hints]} */
+function judge(L, r, short, long) {
+  const fails = [];
+  if (L.id === 1) {
+    const inside = r.peakZ >= L.target[0] && r.peakZ <= L.target[1];
+    if (r.peakZ < L.target[0]) fails.push('The peak stops before the tumour. Raise the energy so the protons travel further.');
+    else if (r.peakZ > L.target[1]) fails.push('The peak lands beyond the tumour. Lower the energy a little.');
+    if (r.bmax > 20) fails.push(`Too much dose behind the tumour: the brainstem gets ${r.bmax.toFixed(0)}% and sits in the fall-off. Lower the energy.`);
+    if (inside && r.tmin < 60) fails.push(`The peak only clips the tumour: part of it gets just ${r.tmin.toFixed(0)}%. Fine-tune the energy so the peak sits in the middle.`);
+    const win = inside && r.tmin >= 60 && r.bmax <= 20;
+    const stars = !win ? 0 : (r.tmin >= 76 && r.bmax <= 3.5) ? 3 : (r.tmin >= 70 && r.bmax <= 10) ? 2 : 1;
+    return { win, stars, fails };
+  }
+  const where = z => (z - L.target[0]) / (L.target[1] - L.target[0]);
+  const stemLimit = L.id === 2 ? 30 : 50;
+  if (r.bmax > stemLimit) fails.push(L.id === 3 && r.bmax > 90
+    ? `The peak is landing in the brainstem (${r.bmax.toFixed(0)}%). The air sinus lets protons travel further than in water. Turn on the CT stopping-power view and lower the energies.`
+    : `Too much dose behind the tumour: the brainstem gets ${r.bmax.toFixed(0)}% (limit ${stemLimit}%). Lower the deepest layer's energy.`);
+  if (r.tmin < 95) fails.push(where(r.tminZ) > 0.6
+    ? `The far edge of the tumour only gets ${r.tmin.toFixed(0)}%. Raise the deepest layer's energy a little, or its weight.`
+    : `The near side of the tumour only gets ${r.tmin.toFixed(0)}% at ${r.tminZ.toFixed(1)} cm. Add a lower-energy layer there, or raise its weight.`);
+  if (r.tmax > 107) fails.push(`There is a hot spot of ${r.tmax.toFixed(0)}% at ${r.tmaxZ.toFixed(1)} cm. Lower the weight of the layer that peaks there.`);
+  if (L.robust && short && short.tmin < 90) fails.push(`If the protons stop ${(L.unc * 100).toFixed(1)}% short, the far edge gets only ${short.tmin.toFixed(0)}%. Add a margin: push the deepest layer a few millimetres deeper.`);
+  let win = r.tmin >= 95 && r.tmax <= 107 && r.bmax <= stemLimit && (!L.robust || short.tmin >= 90);
+  let stars = 0;
+  if (win) {
+    if (L.id === 2) stars = (r.tmax <= 105 && r.bmax <= 15) ? 3 : (r.tmax <= 105 && r.bmax <= 25) ? 2 : 1;
+    else stars = (r.tmax <= 105 && r.bmax <= 36 && short.tmin >= 91) ? 3 : (short.tmin >= 91 && r.bmax <= 42) ? 2 : 1;
+  }
+  return { win, stars, fails };
+}
+
+/* ======================= State ======================= */
+const $ = FL.$, css = FL.css;
+const S = { level: 0, layers: [], sel: 0, ct: false, xr: false, res: null, short: null, long: null, delivering: false, prog: null, lab: null, usedCT: false };
+const LCOL = ['#e0524a', '#e8833a', '#d9a520', '#4f9e5b', '#2f8f9e', '#3b6fc4', '#7a5cc4', '#b0559a'];
+
+function loadLevel(i) {
+  S.level = i; S.lab = null; S.prog = null; S.usedCT = false;
+  const L = LEVELS[i];
+  S.layers = L.start.map(l => ({ ...l })); S.sel = 0;
+  S.ct = false; S.xr = false;
+  $('ctBtn').setAttribute('aria-pressed', 'false'); $('xrBtn').setAttribute('aria-pressed', 'false');
+  $('ctBtn').hidden = !L.robust; $('ctNote').hidden = true;
+  $('result').hidden = true;
+  say(L.intro);
+  renderLayers(); compute(); renderLevelsNav();
+}
+function renderLevelsNav() { FL.renderLevels($('levels'), LEVELS, S.level, FL.getStars(6), loadLevel); }
+
+/* ---------- Dialogue ---------- */
+let queue = [];
+function say(lines) { queue = Array.isArray(lines) ? lines.slice() : [{ who: 'DL', text: lines }]; showLine(); }
+function showLine() {
+  const ln = queue.shift(); if (!ln) return;
+  const sp = SPEAKERS[ln.who] || SPEAKERS.DL;
+  $('speaker').textContent = sp.name; $('avatar').textContent = sp.init;
+  $('avatar').classList.toggle('alt', sp.alt);
+  $('mentor').textContent = ln.text;
+  $('more').hidden = queue.length === 0;
+}
+$('more').onclick = () => { FL.audio.paper(); showLine(); };
+
+/* ---------- Layer controls ---------- */
+function renderLayers() {
+  const L = LEVELS[S.level], box = $('layers'); box.innerHTML = '';
+  $('layersTitle').textContent = L.single ? 'Proton energy' : 'Energy layers';
+  S.layers.forEach((ly, k) => {
+    const d = document.createElement('div');
+    d.className = 'layer' + (k === S.sel && !L.single ? ' sel' : '');
+    const R = PH.rangeOf(ly.E);
+    d.innerHTML = `<div class="layer-head"><span><span class="swatch-dot" style="background:${LCOL[k % LCOL.length]}"></span><b>${L.single ? 'Proton beam' : 'Layer ' + (k + 1)}</b></span>
+        <span class="num" id="lbl${k}">range ${R.toFixed(2)} cm</span>
+        ${!L.single && S.layers.length > 1 ? `<button class="x" data-k="${k}" aria-label="Remove layer ${k + 1}" title="Remove layer">×</button>` : ''}</div>
+      <div class="fields${L.single ? ' one' : ''}"><div class="field"><label for="e${k}"><span>Energy</span><output id="eo${k}">${ly.E.toFixed(1)} MeV</output></label>
+        <input type="range" id="e${k}" min="70" max="140" step="0.5" value="${ly.E}"></div>
+      ${L.single ? '' : `<div class="field"><label for="w${k}"><span>Weight</span><output id="wo${k}">${ly.w}%</output></label>
+        <input type="range" id="w${k}" min="0" max="100" step="1" value="${ly.w}"></div>`}</div>`;
+    box.appendChild(d);
+    d.addEventListener('pointerdown', () => { if (S.sel !== k) { S.sel = k; box.querySelectorAll('.layer').forEach((el, j) => el.classList.toggle('sel', j === k && !L.single)); draw(); } });
+    d.querySelector(`#e${k}`).addEventListener('input', e => { ly.E = +e.target.value; S.sel = k; updLabel(k); compute(); FL.audio.tick(); });
+    if (!L.single) d.querySelector(`#w${k}`).addEventListener('input', e => { ly.w = +e.target.value; $(`wo${k}`).textContent = ly.w + '%'; compute(); });
+    const x = d.querySelector('.x');
+    if (x) x.onclick = ev => { ev.stopPropagation(); S.layers.splice(k, 1); S.sel = Math.min(S.sel, S.layers.length - 1); FL.audio.remove(); renderLayers(); compute(); };
+  });
+  $('addrow').hidden = L.single;
+  $('layerCount').textContent = `${S.layers.length} of 8 layers`;
+  $('addLayer').disabled = S.layers.length >= 8;
+}
+function updLabel(k) {
+  const ly = S.layers[k];
+  $(`eo${k}`).textContent = ly.E.toFixed(1) + ' MeV';
+  $(`lbl${k}`).textContent = `range ${PH.rangeOf(ly.E).toFixed(2)} cm`;
+  const el = $(`e${k}`); if (+el.value !== ly.E) el.value = ly.E;
+}
+$('addLayer').onclick = () => {
+  if (S.layers.length >= 8) return;
+  const minE = Math.min(...S.layers.map(l => l.E));
+  S.layers.push({ E: Math.max(70, minE - 6), w: 20 });
+  S.sel = S.layers.length - 1;
+  FL.audio.clink(); renderLayers(); compute();
+};
+
+/* ---------- Evaluate and readouts ---------- */
+function compute() {
+  const L = LEVELS[S.level];
+  S.res = PH.evaluate(S.layers, L);
+  S.short = L.robust ? PH.evaluate(S.layers, L, 1 - L.unc) : null;
+  S.long = L.robust ? PH.evaluate(S.layers, L, 1 + L.unc) : null;
+  const r = S.res;
+  const pill = (ok, t) => `<span class="pill ${ok ? 'ok' : 'no'}">${t}</span>`;
+  const deep = S.layers.reduce((a, b) => (b.E > a.E ? b : a), S.layers[0]);
+  const Rw = PH.rangeOf(deep.E), stopPhys = PH.physFor(Rw, L.segs, 30);
+  let rows = '';
+  rows += `<dt>Deepest layer range in water</dt><dd>${Rw.toFixed(2)} cm</dd>`;
+  if (L.robust) rows += `<dt>Stops in Aisyah's head at</dt><dd>${S.ct ? stopPhys.toFixed(2) + ' cm' : '<span title="Turn on the CT view">?</span>'}</dd>`;
+  if (L.single) {
+    const inside = r.peakZ >= L.target[0] && r.peakZ <= L.target[1];
+    rows += `<dt>Bragg peak depth</dt><dd>${r.peakZ.toFixed(2)} cm${pill(inside, inside ? 'in tumour' : 'missed')}</dd>`;
+    rows += `<dt>Tumour (lowest dose)</dt><dd>${r.tmin.toFixed(0)}%${pill(r.tmin >= 60, r.tmin >= 76 ? 'great' : r.tmin >= 60 ? 'ok' : 'low')}</dd>`;
+  } else {
+    const ok = r.tmin >= 95 && r.tmax <= 107;
+    rows += `<dt>Tumour dose (min–max)</dt><dd>${r.tmin.toFixed(0)}–${r.tmax.toFixed(0)}%${pill(ok, ok ? (r.tmax <= 105 ? 'flat' : 'ok') : 'uneven')}</dd>`;
+  }
+  const lim = L.id === 1 ? 20 : L.id === 2 ? 30 : 50;
+  rows += `<dt>Brainstem (highest dose)</dt><dd>${r.bmax.toFixed(1)}%${pill(r.bmax <= lim, 'limit ' + lim + '%')}</dd>`;
+  if (L.robust) rows += `<dt>If protons stop ${(L.unc * 100).toFixed(1)}% short: tumour min</dt><dd>${S.short.tmin.toFixed(0)}%${pill(S.short.tmin >= 90, S.short.tmin >= 90 ? 'covered' : 'cold edge')}</dd>`;
+  rows += `<dt>Skin (entrance) dose</dt><dd>${r.entrance.toFixed(0)}%</dd>`;
+  rows += `<dt>Healthy brain dose vs X-rays</dt><dd>${(r.healthyRatio * 100).toFixed(0)}%</dd>`;
+  if (S.xr) rows += `<dt>X-ray beam: brainstem / exit</dt><dd>${r.phStem.toFixed(0)}% / ${r.phExit.toFixed(0)}%</dd>`;
+  $('readout').innerHTML = rows;
+  $('work').innerHTML = `Your deepest layer: E = ${deep.E.toFixed(1)} MeV<br>R = 0.0022 × ${deep.E.toFixed(1)}<sup>1.77</sup> = ${Rw.toFixed(2)} cm of water` +
+    (L.robust ? `<br>In Aisyah's head (bone and air on the way): ${stopPhys.toFixed(2)} cm` : '') +
+    `<br>Uncertainty: 3.5% × ${Rw.toFixed(2)} + 0.1 = ±${(0.035 * Rw + 0.1).toFixed(2)} cm`;
+  draw();
+}
+
+/* ======================= Drawing ======================= */
+const cv = $('cv');
+let G = null; /* geometry */
+const RAMP = [[0, [43, 108, 176]], [0.3, [47, 158, 110]], [0.6, [227, 195, 65]], [0.82, [232, 131, 58]], [1, [200, 64, 47]]];
+function ramp(v) { v = FL.clamp(v, 0, 1); let i = 0; while (i < RAMP.length - 2 && v > RAMP[i + 1][0]) i++; const [p0, c0] = RAMP[i], [p1, c1] = RAMP[i + 1], t = (v - p0) / (p1 - p0); return c0.map((c, k) => Math.round(c + (c1[k] - c) * t)); }
+const off = document.createElement('canvas'); off.width = 281; off.height = 121;
+
+function layout() {
+  const narrow = cv.parentElement.clientWidth < 620;
+  const f = FL.fitCanvas(cv, narrow ? 0.92 : 1.22);
+  const padL = narrow ? 34 : 46, padR = 14;
+  const Z0 = -1.4, Z1 = 14.4;
+  const sx = (f.w - padL - padR) / (Z1 - Z0);
+  const headH = Math.round(f.h * 0.6);
+  G = { ...f, padL, padR, Z0, Z1, sx, headH, cy: headH / 2, X: z => padL + (z - Z0) * sx, Y: y => headH / 2 + y * sx,
+    c0: headH + 18, c1: f.h - (narrow ? 26 : 30) };
+}
+function draw() {
+  if (!G) return;
+  const { ctx, w, h } = G;
+  ctx.clearRect(0, 0, w, h);
+  if (S.lab) return drawLab();
+  drawHead(); drawChart();
+}
+function headPath(ctx, inset) {
+  const a = 8.6 - inset, b = 6.8 - inset, cx = 8.6;
+  ctx.beginPath(); ctx.ellipse(G.X(cx), G.cy, a * G.sx, b * G.sx, 0, 0, Math.PI * 2);
+}
+function drawHead() {
+  const { ctx, X, Y, sx, headH } = G, L = LEVELS[S.level];
+  const col = { board: css('--board'), paper: css('--paper'), ink: css('--ink'), muted: css('--muted'), line: css('--line'), tissue: css('--tissue'), bone: css('--bone'), organ: css('--organ'), target: css('--target'), accent: css('--accent'), beam: css('--beam') };
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, G.w, headH); ctx.clip();
+  ctx.fillStyle = S.ct ? '#0b0f13' : col.paper; ctx.fillRect(0, 0, G.w, headH);
+  // anatomy
+  const ct = S.ct;
+  const C = ct ? { skin: '#6f757b', bone: '#ecebe4', brain: '#7c8288', air: '#050607' } : null;
+  headPath(ctx, 0); ctx.fillStyle = ct ? C.skin : col.tissue; ctx.fill();
+  headPath(ctx, 0.5); ctx.fillStyle = ct ? C.bone : col.bone; ctx.fill();
+  headPath(ctx, 1.2); ctx.fillStyle = ct ? C.brain : col.board; ctx.fill();
+  if (!ct) { headPath(ctx, 1.2); ctx.globalAlpha = 0.45; ctx.fillStyle = col.tissue; ctx.fill(); ctx.globalAlpha = 1; }
+  // gyri hint lines (decorative, subtle)
+  if (!ct) {
+    ctx.save(); headPath(ctx, 1.3); ctx.clip(); ctx.strokeStyle = col.muted; ctx.globalAlpha = 0.12; ctx.lineWidth = 1.2;
+    for (let k = 0; k < 9; k++) { ctx.beginPath(); const yy = -4.6 + k * 1.15; for (let z = 1; z <= 16.5; z += 0.25) { const yv = yy + 0.25 * Math.sin(z * 2.1 + k); z === 1 ? ctx.moveTo(X(z), Y(yv)) : ctx.lineTo(X(z), Y(yv)); } ctx.stroke(); }
+    ctx.restore();
+  }
+  // sinus (level 3)
+  if (L.robust) {
+    const sy = 1.6;
+    ctx.fillStyle = ct ? C.bone : col.bone; roundRect(ctx, X(2.0), Y(-sy - 0.35), (4.6 - 2.0) * sx, (2 * sy + 0.7) * sx, 0.5 * sx); ctx.fill();
+    ctx.fillStyle = ct ? C.air : col.paper; roundRect(ctx, X(2.4), Y(-sy), (4.2 - 2.4) * sx, 2 * sy * sx, 0.4 * sx); ctx.fill();
+    if (!ct) { ctx.fillStyle = col.muted; ctx.font = `600 ${Math.max(10, Math.round(sx * 0.3))}px ${css('--body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('air sinus', X(3.3), Y(-sy - 0.75)); }
+  }
+  // brainstem
+  ctx.fillStyle = ct ? '#8a8f95' : col.organ; ctx.globalAlpha = ct ? 1 : 0.85;
+  roundRect(ctx, X(L.stem[0]), Y(-1.5), (L.stem[1] - L.stem[0]) * sx, 3.0 * sx, 0.6 * sx); ctx.fill(); ctx.globalAlpha = 1;
+  if (ct) { ctx.strokeStyle = '#b9a6e0'; ctx.lineWidth = 2; roundRect(ctx, X(L.stem[0]), Y(-1.5), (L.stem[1] - L.stem[0]) * sx, 3.0 * sx, 0.6 * sx); ctx.stroke(); }
+  // tumour
+  const tz = (L.target[0] + L.target[1]) / 2, ta = (L.target[1] - L.target[0]) / 2;
+  ctx.beginPath(); ctx.ellipse(X(tz), Y(0), ta * sx, L.th * sx, 0, 0, Math.PI * 2);
+  if (ct) { ctx.fillStyle = '#868b90'; ctx.fill(); }
+  else { ctx.fillStyle = col.target; ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1; }
+  // dose wash
+  drawWash();
+  // outlines on top of dose
+  ctx.lineWidth = 2; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.ellipse(X(tz), Y(0), ta * sx, L.th * sx, 0, 0, Math.PI * 2); ctx.strokeStyle = col.target; ctx.stroke();
+  ctx.setLineDash([5, 4]); ctx.strokeStyle = ct ? '#b9a6e0' : col.organ; roundRect(ctx, X(L.stem[0]), Y(-1.5), (L.stem[1] - L.stem[0]) * sx, 3.0 * sx, 0.6 * sx); ctx.stroke(); ctx.setLineDash([]);
+  // labels
+  const fs = Math.max(10.5, Math.round(sx * 0.3));
+  ctx.font = `700 ${fs}px ${css('--body')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = ct ? '#f3f3ee' : col.ink;
+  ctx.fillText('Tumour', X(tz), Y(-L.th - 0.45));
+  ctx.fillText('Brainstem', X((L.stem[0] + L.stem[1]) / 2), Y(1.95));
+  // nozzle and beam axis
+  ctx.fillStyle = ct ? '#3a434b' : col.muted; roundRect(ctx, X(-1.35), Y(-1.1), 0.9 * sx, 2.2 * sx, 0.15 * sx); ctx.fill();
+  ctx.fillStyle = ct ? '#f3f3ee' : col.board; ctx.font = `700 ${Math.max(9, Math.round(sx * 0.2))}px ${css('--mono')}`;
+  ctx.save(); ctx.translate(X(-0.9), Y(0)); ctx.rotate(-Math.PI / 2); ctx.fillText('NOZZLE', 0, 0); ctx.restore();
+  // layer peak markers (where each layer stops)
+  const r = S.res;
+  S.layers.forEach((ly, k) => {
+    const zPhys = S.ct || !L.robust ? r.peaks[k] : PH.rangeOf(ly.E) - 0.3;
+    const xx = X(zPhys), sel = k === S.sel;
+    ctx.strokeStyle = LCOL[k % LCOL.length]; ctx.lineWidth = sel ? 3 : 1.8;
+    ctx.beginPath(); ctx.moveTo(xx, Y(-3.2)); ctx.lineTo(xx, Y(-2.55)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xx - 5, Y(-3.3) - 6); ctx.lineTo(xx + 5, Y(-3.3) - 6); ctx.lineTo(xx, Y(-3.3)); ctx.closePath(); ctx.fillStyle = LCOL[k % LCOL.length]; ctx.fill();
+  });
+  if (L.robust && !S.ct) {
+    ctx.fillStyle = col.muted; ctx.font = `600 ${Math.max(10, Math.round(sx * 0.24))}px ${css('--body')}`; ctx.textAlign = 'left';
+    ctx.fillText('▼ where the layers would stop in water', X(5.4), Y(-3.9));
+  }
+  // CT: water-equivalent ruler
+  if (S.ct) {
+    ctx.strokeStyle = '#f0ac2e'; ctx.fillStyle = '#f0ac2e'; ctx.lineWidth = 1.5;
+    const yb = Y(3.4);
+    ctx.beginPath(); ctx.moveTo(X(0), yb); ctx.lineTo(X(13.5), yb); ctx.stroke();
+    ctx.font = `600 ${Math.max(10, Math.round(sx * 0.22))}px ${css('--mono')}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let wv = 0; wv <= 12; wv += 2) { const z = PH.physFor(wv, L.segs, 14); if (!isFinite(z)) continue; ctx.beginPath(); ctx.moveTo(X(z), yb - 5); ctx.lineTo(X(z), yb + 5); ctx.stroke(); ctx.fillText(wv + '', X(z), yb + 7); }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('water-equivalent depth (cm)', X(0.2), yb + 14 + Math.max(10, Math.round(sx * 0.22)));
+  }
+  // delivery spot
+  if (S.prog && S.prog.spot) {
+    const sp = S.prog.spot;
+    ctx.strokeStyle = 'rgba(240,172,46,.85)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(-0.45), Y(sp.y * 0.2)); ctx.lineTo(X(sp.z), Y(sp.y)); ctx.stroke();
+    const g = ctx.createRadialGradient(X(sp.z), Y(sp.y), 0, X(sp.z), Y(sp.y), sx * 0.6);
+    g.addColorStop(0, 'rgba(255,240,180,1)'); g.addColorStop(0.4, 'rgba(240,172,46,.8)'); g.addColorStop(1, 'rgba(240,172,46,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(X(sp.z), Y(sp.y), sx * 0.6, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+}
+function roundRect(ctx, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function doseLine() {
+  /* dose along the axis to draw: delivered fraction during animation, or the full plan */
+  const r = S.res;
+  if (S.xr) return r.ph;
+  if (!S.prog) return r.dose;
+  const out = new Float64Array(r.dose.length);
+  r.per.forEach((p, k) => { const f = S.prog.frac[k] || 0; if (f > 0) for (let i = 0; i < out.length; i++) out[i] += p[i] * f; });
+  return out;
+}
+function drawWash() {
+  const { ctx, X, Y, sx } = G, L = LEVELS[S.level], r = S.res;
+  if (!r.ok && !S.xr) return;
+  const line = doseLine(), half = L.th + 0.25;
+  const oc = off.getContext('2d'), img = oc.createImageData(off.width, off.height), d = img.data;
+  const nzc = off.width, nyc = off.height, zMax = 14, yMax = 4.2;
+  for (let i = 0; i < nzc; i++) {
+    const z = i / (nzc - 1) * zMax, idx = Math.min(line.length - 1, Math.round(z / PH.DZ)), v = line[idx];
+    const sl = 0.18 + 0.025 * z;
+    for (let j = 0; j < nyc; j++) {
+      const y = -yMax + j / (nyc - 1) * 2 * yMax;
+      const lat = 0.5 * (erfApprox((half - Math.abs(y)) / (Math.SQRT2 * sl)) + 1);
+      const dv = v * lat, p = (j * nzc + i) * 4;
+      if (dv < 1.5) { d[p + 3] = 0; continue; }
+      const c = ramp(dv / 110);
+      d[p] = c[0]; d[p + 1] = c[1]; d[p + 2] = c[2]; d[p + 3] = Math.round(Math.min(1, dv / 14) * FL.clamp(0.25 + dv / 160, 0.25, 0.82) * 255);
+    }
+  }
+  oc.putImageData(img, 0, 0);
+  ctx.save(); headPath(ctx, 0); ctx.clip();
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(off, X(0), Y(-yMax), 14 * sx, 2 * yMax * sx);
+  ctx.restore();
+}
+function erfApprox(x) { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; }
+
+function drawChart() {
+  const { ctx, X, c0, c1, padL } = G, L = LEVELS[S.level], r = S.res;
+  const col = { ink: css('--ink'), muted: css('--muted'), line: css('--line'), organ: css('--organ'), target: css('--target'), accent: css('--accent'), beam: css('--beam'), board: css('--board') };
+  const Yd = v => c1 - (Math.min(v, 135) / 135) * (c1 - c0);
+  const fs = Math.max(10, Math.round(G.sx * 0.22));
+  // regions
+  ctx.globalAlpha = 0.16; ctx.fillStyle = col.target; ctx.fillRect(X(L.target[0]), c0, (L.target[1] - L.target[0]) * G.sx, c1 - c0);
+  ctx.fillStyle = col.organ; ctx.fillRect(X(L.stem[0]), c0, (L.stem[1] - L.stem[0]) * G.sx, c1 - c0); ctx.globalAlpha = 1;
+  // grid
+  ctx.strokeStyle = col.line; ctx.lineWidth = 1; ctx.font = `500 ${fs}px ${css('--mono')}`; ctx.fillStyle = col.muted;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const v of [0, 50, 100]) { ctx.beginPath(); ctx.moveTo(X(0), Yd(v)); ctx.lineTo(X(14), Yd(v)); ctx.stroke(); ctx.fillText(v + '%', X(0) - 6, Yd(v)); }
+  if (!L.single) { ctx.setLineDash([3, 3]); ctx.strokeStyle = col.muted; for (const v of [95, 105]) { ctx.beginPath(); ctx.moveTo(X(L.target[0] - 0.4), Yd(v)); ctx.lineTo(X(L.target[1] + 0.4), Yd(v)); ctx.stroke(); } ctx.setLineDash([]); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let z = 0; z <= 14; z += 2) ctx.fillText(z === 14 ? '14 cm' : z + '', X(z), c1 + 4);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = col.ink; ctx.font = `700 ${fs}px ${css('--body')}`;
+  ctx.fillText('Dose along the beam', X(0), c0 + fs * 0.4);
+  // curves
+  const path = (arr, stroke, lw, dash) => { ctx.beginPath(); ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.setLineDash(dash || []); let first = true; for (let i = 0; i < arr.length; i += 2) { const x = X(i * PH.DZ), y = Yd(arr[i]); first ? ctx.moveTo(x, y) : ctx.lineTo(x, y); first = false; } ctx.stroke(); ctx.setLineDash([]); };
+  if (!r.ok) return;
+  if (!L.single && !S.prog) r.per.forEach((p, k) => { ctx.globalAlpha = k === S.sel ? 0.9 : 0.55; path(p, LCOL[k % LCOL.length], k === S.sel ? 1.8 : 1.2); ctx.globalAlpha = 1; });
+  if (L.robust && S.short && !S.prog) { ctx.globalAlpha = 0.7; path(S.short.dose, col.muted, 1.2, [4, 3]); ctx.globalAlpha = 1; }
+  if (S.xr) path(r.ph, col.muted, 2.2, [7, 4]);
+  path(S.prog ? doseLine() : r.dose, col.accent, 2.6);
+  // key
+  ctx.font = `600 ${fs}px ${css('--body')}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  let kx = X(9.4); const ky = c0 + fs * 0.4;
+  const key = (txt, c, dash) => { ctx.strokeStyle = c; ctx.lineWidth = 2.4; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(kx + 16, ky); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = col.ink; ctx.fillText(txt, kx + 20, ky); kx += 20 + ctx.measureText(txt).width + 12; };
+  key('protons', col.accent);
+  if (S.xr) key('X-rays', col.muted, [7, 4]);
+  else if (L.robust) key('if short', col.muted, [4, 3]);
+}
+
+/* ---------- Drag on the canvas to move the selected layer's peak ---------- */
+let dragging = false;
+function zAt(e) { const rc = cv.getBoundingClientRect(); return G.Z0 + ((e.clientX - rc.left) * (G.w / rc.width) - G.padL) / G.sx; }
+function dragTo(e) {
+  if (S.delivering || S.lab) return;
+  const L = LEVELS[S.level], k = S.sel, ly = S.layers[k]; if (!ly) return;
+  const z = FL.clamp(zAt(e), 0.5, 13.5);
+  const w = PH.wet(z, L.segs) + 0.3;   // peak sits about 3 mm before the end of range
+  const E = FL.clamp(Math.round(PH.energyFor(w) * 2) / 2, 70, 140);
+  if (E !== ly.E) { ly.E = E; updLabel(k); compute(); FL.audio.tick(); }
+}
+cv.addEventListener('pointerdown', e => { if (S.lab) return; dragging = true; cv.setPointerCapture(e.pointerId); dragTo(e); });
+cv.addEventListener('pointermove', e => { if (dragging) dragTo(e); });
+cv.addEventListener('pointerup', () => { dragging = false; });
+cv.addEventListener('pointercancel', () => { dragging = false; });
+cv.addEventListener('keydown', e => {
+  const ly = S.layers[S.sel]; if (!ly || S.delivering || S.lab) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); ly.E = FL.clamp(ly.E + (e.key === 'ArrowRight' ? 0.5 : -0.5), 70, 140); updLabel(S.sel); compute(); FL.audio.tick(); }
+});
+
+/* ---------- Toggles ---------- */
+$('ctBtn').onclick = () => { S.ct = !S.ct; if (S.ct) S.usedCT = true; $('ctBtn').setAttribute('aria-pressed', S.ct); $('ctNote').hidden = !S.ct; FL.audio.blip(S.ct ? 4 : 0); compute();
+  if (S.ct && LEVELS[S.level].robust) say([{ who: 'DL', text: 'See the orange ruler? Through the air sinus the water-equivalent depth barely grows, so every layer reaches almost 1 cm deeper than it would in water. Lower the energies to bring the far edge back to the tumour.' }]); };
+$('xrBtn').onclick = () => { S.xr = !S.xr; $('xrBtn').setAttribute('aria-pressed', S.xr); FL.audio.blip(S.xr ? 2 : 0); compute();
+  if (S.xr) { const r = S.res; say([{ who: 'DL', text: `This is one X-ray beam aimed at the same tumour. It does not stop: the brainstem would get ${r.phStem.toFixed(0)}% and the dose still leaving the back of the head is ${r.phExit.toFixed(0)}%. Real X-ray plans use many beams to share this out, but protons avoid it.` }]); } };
+
+/* ---------- Delivery ---------- */
+function setBusy(b) {
+  S.delivering = b;
+  for (const id of ['go', 'reset', 'solve', 'addLayer', 'ctBtn', 'xrBtn']) $(id).disabled = b;
+  document.querySelectorAll('#layers input, #layers button').forEach(el => el.disabled = b);
+}
+function deliver() {
+  if (S.delivering || S.lab) return;
+  const L = LEVELS[S.level];
+  if (S.xr) { S.xr = false; $('xrBtn').setAttribute('aria-pressed', 'false'); }
+  $('result').hidden = true;
+  FL.audio.beam();
+  if (FL.reduced) { finish(); return; }
+  setBusy(true);
+  const order = S.layers.map((l, k) => k).sort((a, b) => S.layers[b].E - S.layers[a].E);
+  const per = 520, t0 = performance.now() + 450, half = L.th + 0.1;
+  S.prog = { frac: S.layers.map(() => 0), spot: null };
+  let lastLayer = -1;
+  const stepAnim = t => {
+    const el = t - t0;
+    if (el < 0) { draw(); return requestAnimationFrame(stepAnim); }
+    const li = Math.floor(el / per), f = (el % per) / per;
+    if (li >= order.length) { S.prog = null; setBusy(false); finish(); return; }
+    if (li !== lastLayer) { lastLayer = li; FL.audio.whoosh(); }
+    order.forEach((k, j) => { S.prog.frac[k] = j < li ? 1 : j === li ? f : 0; });
+    const k = order[li];
+    const rows = 5, row = Math.min(rows - 1, Math.floor(f * rows)), fr = (f * rows) % 1;
+    const y = -half + (row + 0.5) * (2 * half / rows), zx = S.res.peaks[k];
+    S.prog.spot = { z: zx, y: y + (row % 2 ? -1 : 1) * (fr - 0.5) * 0.3 };
+    draw();
+    requestAnimationFrame(stepAnim);
+  };
+  requestAnimationFrame(stepAnim);
+}
+function finish() {
+  draw();
+  const L = LEVELS[S.level], r = S.res;
+  const j = judge(L, r, S.short, S.long);
+  const box = $('result');
+  if (!j.win) {
+    FL.showFail(box, { title: 'Not ready for Aisyah yet', issues: j.fails.length ? j.fails : ['Adjust the plan and try again.'] });
+    say([{ who: L.id === 3 && !S.usedCT && r.bmax > 90 ? 'FA' : 'DL', text: j.fails[0] || 'Close. Keep adjusting.' }]);
+    return;
+  }
+  FL.setStars(6, L.id, j.stars); renderLevelsNav();
+  const summary = L.single
+    ? `The Bragg peak sits at ${r.peakZ.toFixed(1)} cm inside the tumour, and the brainstem gets ${r.bmax.toFixed(1)}%. Healthy brain gets ${(r.healthyRatio * 100).toFixed(0)}% of what one X-ray beam would give.`
+    : `The tumour gets ${r.tmin.toFixed(0)}–${r.tmax.toFixed(0)}% from ${S.layers.length} layers, and the brainstem ${r.bmax.toFixed(0)}%.` + (L.robust ? ` Even if the protons stop ${(L.unc * 100).toFixed(1)}% short, the tumour still gets at least ${S.short.tmin.toFixed(0)}%.` : '') + ` Healthy brain gets ${(r.healthyRatio * 100).toFixed(0)}% of the X-ray dose.`;
+  const last = S.level === LEVELS.length - 1;
+  FL.showWin(box, { chapter: 6, stars: j.stars, title: L.id === 3 ? 'Plan approved for treatment' : 'The peak is on the spot', summary, physics: L.physics, card: L.card,
+    nextLabel: last ? 'Measure it in a 3D gel dosimeter' : `Next: Level ${L.id + 1}, ${LEVELS[S.level + 1].name}`,
+    onNext: () => last ? runLab() : loadLevel(S.level + 1) });
+  const lines = {
+    1: [{ who: 'AI', text: 'So the protons just… stop? Before the brainstem?' }, { who: 'DL', text: 'Exactly. That sharp fall-off is why we came all the way to a proton centre.' }],
+    2: [{ who: 'MA', text: 'Will she be able to go back to school after this?' }, { who: 'DL', text: 'That is the hope. With protons, her healthy brain gets a fraction of the dose, and that matters most while it is still growing.' }],
+    3: [{ who: 'DL', text: 'A robust plan. Before any patient is treated, we measure the plan in a phantom. Let me show you one last thing.' }]
+  };
+  say(lines[L.id]);
+}
+$('go').onclick = deliver;
+
+/* ---------- Gel dosimeter lab: PRESAGE-style block read by optical CT ---------- */
+function runLab() {
+  const L = LEVELS[2];
+  const plan = S.layers.map(l => ({ ...l }));
+  const water = { depth: 14, brain: 0, target: [PH.wet(L.target[0], L.segs), PH.wet(L.target[1], L.segs)], stem: [13, 14], segs: [] };
+  S.lab = { t0: performance.now(), res: PH.evaluate(plan, water), water, phase: 0 };
+  $('result').hidden = true; setBusy(true);
+  say([{ who: 'FA', text: 'This clear block is a radiochromic gel dosimeter, like PRESAGE. It darkens wherever it absorbs dose, so we can see the plan in 3D.' }]);
+  FL.audio.beam();
+  const dur = FL.reduced ? 1 : 9000;
+  const tick = t => {
+    const el = t - S.lab.t0, p = FL.clamp(el / dur, 0, 1);
+    const ph = p < 0.38 ? 0 : p < 0.82 ? 1 : 2;
+    if (ph !== S.lab.phase) {
+      S.lab.phase = ph;
+      if (ph === 1) { FL.audio.hum(3); say([{ who: 'FA', text: 'Now the optical CT scanner. It shines light through the gel, slice by slice. Where the gel darkened, less light gets through, and the computer rebuilds the dose in 3D.' }]); }
+      if (ph === 2) { FL.audio.win(); say([{ who: 'DL', text: 'The measured peak lands where we planned it, within a millimetre. Aisyah\'s treatment can begin. And my work here is done.' }]); }
+    }
+    S.lab.p = p; draw();
+    if (p < 1) requestAnimationFrame(tick); else { setBusy(false); showFinale(); }
+  };
+  requestAnimationFrame(tick);
+}
+function drawLab() {
+  const { ctx, w, h } = G, lab = S.lab, p = lab.p || 0;
+  const col = { paper: css('--paper'), ink: css('--ink'), muted: css('--muted'), line: css('--line'), accent: css('--accent'), board: css('--board') };
+  ctx.fillStyle = col.paper; ctx.fillRect(0, 0, w, h);
+  const fs = Math.max(11, Math.round(w / 60));
+  // gel block geometry
+  const bx = w * 0.08, bw = w * 0.5, by = h * 0.16, bh = h * 0.5;
+  const zmax = 11, Zx = z => bx + z / zmax * bw;
+  const line = lab.res.dose, dz = PH.DZ;
+  const deliverP = FL.clamp(p / 0.38, 0, 1), scanP = FL.clamp((p - 0.38) / 0.44, 0, 1);
+  // block
+  ctx.fillStyle = 'rgba(214,232,226,0.55)'; roundRect(ctx, bx, by, bw, bh, 10); ctx.fill();
+  ctx.strokeStyle = col.muted; ctx.lineWidth = 1.5; roundRect(ctx, bx, by, bw, bh, 10); ctx.stroke();
+  // darkening (PRESAGE turns green where irradiated)
+  ctx.save(); roundRect(ctx, bx, by, bw, bh, 10); ctx.clip();
+  const half = bh * 0.22;
+  for (let px = 0; px < bw; px += 2) {
+    const z = px / bw * zmax, v = line[Math.min(line.length - 1, Math.round(z / dz))] || 0;
+    const a = FL.clamp(v / 110, 0, 1) * deliverP * 0.85;
+    if (a < 0.02) continue;
+    const g = ctx.createLinearGradient(0, by + bh / 2 - half - 10, 0, by + bh / 2 + half + 10);
+    g.addColorStop(0, 'rgba(26,110,80,0)'); g.addColorStop(0.15, `rgba(26,110,80,${a})`); g.addColorStop(0.85, `rgba(26,110,80,${a})`); g.addColorStop(1, 'rgba(26,110,80,0)');
+    ctx.fillStyle = g; ctx.fillRect(bx + px, by + bh / 2 - half - 10, 2.2, 2 * half + 20);
+  }
+  ctx.restore();
+  // beam during delivery
+  if (deliverP > 0 && deliverP < 1) { ctx.fillStyle = 'rgba(240,172,46,.25)'; ctx.fillRect(0, by + bh / 2 - half, bx, 2 * half); }
+  ctx.fillStyle = col.ink; ctx.font = `700 ${fs}px ${css('--body')}`; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('Radiochromic gel block (PRESAGE-style)', bx, by - 8);
+  // optical CT scan: red laser sheet sweeping across, light detector on the far side
+  if (scanP > 0) {
+    const sxp = bx + scanP * bw;
+    ctx.strokeStyle = 'rgba(220,40,40,.9)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sxp, by - 2); ctx.lineTo(sxp, by + bh + 8); ctx.stroke();
+    ctx.fillStyle = 'rgba(220,40,40,.15)'; ctx.fillRect(sxp - 6, by, 12, bh);
+    ctx.fillStyle = col.muted; ctx.font = `600 ${fs * 0.9}px ${css('--body')}`; ctx.textBaseline = 'top';
+    ctx.fillText('optical CT: light passes through each slice', bx, by + bh + 18);
+  }
+  // reconstructed depth-dose: planned line vs measured points
+  const gx = w * 0.64, gw = w * 0.32, gy = by, gh = bh;
+  ctx.strokeStyle = col.line; ctx.lineWidth = 1; roundRect(ctx, gx, gy, gw, gh, 8); ctx.stroke();
+  ctx.fillStyle = col.ink; ctx.font = `700 ${fs}px ${css('--body')}`; ctx.textBaseline = 'bottom'; ctx.fillText('Measured vs planned', gx, gy - 8);
+  const Gx = z => gx + 10 + z / zmax * (gw - 20), Gy = v => gy + gh - 10 - Math.min(v, 120) / 120 * (gh - 20);
+  ctx.strokeStyle = css('--accent'); ctx.lineWidth = 2; ctx.beginPath();
+  for (let i = 0; i * dz <= zmax; i += 3) { const x = Gx(i * dz), y = Gy(line[i]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke();
+  ctx.fillStyle = '#dc2828';
+  for (let z = 0.25; z <= zmax; z += 0.5) {
+    if (z / zmax > scanP) break;
+    const v = line[Math.round(z / dz)] * (1 + 0.025 * Math.sin(z * 7.3));
+    ctx.beginPath(); ctx.arc(Gx(z), Gy(v), 3, 0, 7); ctx.fill();
+  }
+  ctx.fillStyle = col.muted; ctx.font = `500 ${fs * 0.85}px ${css('--mono')}`; ctx.textBaseline = 'top'; ctx.fillText('depth (cm of gel)', gx, gy + gh + 6);
+  if (p >= 0.82) { ctx.fillStyle = col.ink; ctx.font = `800 ${fs * 1.4}px ${css('--display')}`; ctx.textBaseline = 'top'; ctx.fillText('Peak confirmed within 1 mm', bx, h * 0.8); }
+}
+function showFinale() {
+  const box = $('result');
+  box.hidden = false; box.className = 'card result win';
+  box.innerHTML = `<h3>Chapter 6 complete</h3>
+    <p>Aisyah finished her treatment and went back to school. Dr. Lim hung up his lab coat and handed you the keys to the department.</p>
+    <div class="career"><span class="eyebrow">Years later</span><p>A new MSc student knocks on your office door for her hospital placement. "Do you remember me? I'm Aisyah. I wanted to know how the protons knew where to stop."</p></div>
+    <h2 style="margin-top:14px">How to become a medical physicist</h2>
+    <ol class="pathway">
+      <li>SPM with Physics and Additional Mathematics</li>
+      <li>Pre-university: STPM, matriculation, foundation or A-levels</li>
+      <li>A degree in Physics or Medical Physics</li>
+      <li>An MSc in Medical Physics</li>
+      <li>Clinical training in a hospital, then work as a medical physicist, with the option of a PhD and research</li>
+    </ol>
+    <p class="yourturn">Your turn, {name}.</p>
+    <button class="primary" type="button" onclick="FL.showFeedback()">Tell us how it went</button>
+    <a class="primary" href="index.html" style="background:transparent;color:var(--ink);border:1px solid var(--line);display:block;text-align:center;text-decoration:none">Back to all chapters</a>`;
+  say([{ who: 'DL', text: 'Look after the patients and the physics. And when a student asks how it all works, take the time to show them. That is how Aisyah found her way here.' }]);
+  S.lab.p = 1; draw();
+  box.scrollIntoView({ behavior: FL.reduced ? 'auto' : 'smooth', block: 'nearest' });
+}
+
+/* ---------- Show solution (teacher password) ---------- */
+FL.setupLock(() => {
+  if (S.delivering || S.lab) return;
+  const L = LEVELS[S.level];
+  $('result').hidden = true;
+  S.layers = []; renderLayers();
+  if (L.robust && !S.ct) { S.ct = true; S.usedCT = true; $('ctBtn').setAttribute('aria-pressed', 'true'); $('ctNote').hidden = false; }
+  say([{ who: 'DL', text: L.id === 1 ? 'Here is one answer: 98.5 MeV puts the peak just inside the far half of the tumour, with almost nothing reaching the brainstem.'
+    : L.id === 2 ? 'Here is one answer: four layers, deepest first with the biggest weight. Each shallower layer fills in the near side of the tumour.'
+    : 'Here is one answer: the CT view shows the sinus adds range, so all energies drop. The deepest layer reaches about 3 mm past the tumour, so the far edge stays covered even if the protons stop short.' }]);
+  let k = 0;
+  const addNext = () => {
+    if (k < L.solution.length) { S.layers.push({ ...L.solution[k] }); S.sel = k; k++; FL.audio.clink(); renderLayers(); compute(); setTimeout(addNext, FL.reduced ? 0 : 280); }
+    else setTimeout(deliver, FL.reduced ? 0 : 400);
+  };
+  addNext();
+});
+
+$('reset').onclick = () => { FL.audio.remove(); loadLevel(S.level); };
+
+/* ---------- Boot ---------- */
+FL.initAudio();
+function resize() { layout(); draw(); }
+new ResizeObserver(resize).observe(cv.parentElement);
+FL.onTheme(draw);
+(function start() {
+  const st = FL.getStars(6); let i = 0;
+  while (i < LEVELS.length - 1 && st[LEVELS[i].id]) i++;
+  layout(); loadLevel(i);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Hit the Target</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+/* Chapter 2: the stage is a treatment-planning monitor, deliberately dark in both themes, like a real CT viewer. */
+:root { --monitor: #05080b; --monitor-edge: #1d2a33;
+  --c-cord: #b8930b; --c-lung: #2f7fd0; --c-heart: #d0457a; --c-eye: #13958d; --c-stem: #3c8f2c; --c-brain: #7c58c9; --c-kidney: #cf7612; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --c-cord: #f5d547; --c-lung: #6fb7ff; --c-heart: #ff86b0; --c-eye: #5fe0d8; --c-stem: #8be27a; --c-brain: #c7a6ff; --c-kidney: #ffb057; } }
+:root[data-theme="dark"] {
+  --c-cord: #f5d547; --c-lung: #6fb7ff; --c-heart: #ff86b0; --c-eye: #5fe0d8; --c-stem: #8be27a; --c-brain: #c7a6ff; --c-kidney: #ffb057; }
+.stage { position: relative; border-radius: 8px; overflow: hidden; background: var(--monitor); box-shadow: inset 0 0 0 1px var(--monitor-edge); }
+.stage canvas { display: block; touch-action: none; cursor: crosshair; border-radius: 8px; }
+.stage canvas.grab { cursor: grabbing; }
+.stage canvas.ring { cursor: pointer; }
+.patient { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 13px; color: var(--muted); }
+.patient b { color: var(--ink); font-family: var(--display); font-weight: 600; font-size: 15px; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
+.goals { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); display: grid; gap: 2px; }
+.goals .stars { font-size: 12px; }
+.dvh { display: block; width: 100%; height: 150px; margin-top: 10px; }
+.beamlist { display: flex; flex-wrap: wrap; gap: 6px; }
+.bchip { border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 6px 10px 6px 6px; font: 600 13px/1 var(--body); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.bchip i { width: 20px; height: 20px; border-radius: 50%; background: var(--beam); color: var(--beam-ink); font: 800 12px/20px var(--display); font-style: normal; text-align: center; }
+.bchip[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.beamtools { display: grid; gap: 10px; margin-top: 12px; }
+.beamtools[hidden] { display: none !important; }
+.empty { font-size: 13px; color: var(--muted); margin: 0; }
+.imrt { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.leafstrip { display: block; width: 100%; height: 120px; cursor: pointer; border-radius: 6px; touch-action: manipulation; }
+.optbtn { width: 100%; border: 0; border-radius: 10px; padding: 11px; background: var(--accent); color: var(--board); font: 700 15px/1 var(--body); cursor: pointer; }
+.optbtn:disabled { opacity: .55; cursor: not-allowed; }
+.tag { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+</style>
+</head>
+<body data-music="1">
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow"><a href="index.html">All chapters</a> · Chapter 2 · First Patient</div>
+      <h1>Hit the Target</h1>
+    </div>
+    <div class="hright">
+      <nav class="levels" id="levels" aria-label="Levels"></nav>
+      <div class="audio" role="group" aria-label="Audio">
+        <button id="musicBtn" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Music</button>
+        <button id="sfxBtn" aria-pressed="true">Sound</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="game">
+    <section class="board" aria-label="Treatment planning monitor: CT slice with beams and dose">
+      <div class="stage" id="stage"><canvas id="cv" aria-label="CT slice. Tap the dashed gantry ring to add a beam, drag a beam head to rotate it, tap inside the body to measure the dose."></canvas></div>
+      <div class="legend" id="legend">
+        <span>Tap the dashed ring to add a beam · Drag a beam head to turn it · Tap inside the patient to measure dose</span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="card mentor">
+        <div class="avatar alt" id="avatar" aria-hidden="true">DA</div>
+        <div><b id="speaker">Dr. Arjun, Radiation Oncologist</b><p id="mentor"></p></div>
+      </div>
+
+      <div class="card">
+        <div class="patient"><b id="pname"></b><span id="psite"></span></div>
+        <h2 style="margin-top:12px">Plan check</h2>
+        <ul class="readings" id="readings"></ul>
+        <canvas class="dvh" id="dvh" aria-label="Dose-volume histogram"></canvas>
+        <div class="goals" id="goals"></div>
+      </div>
+
+      <div class="card" id="beamcard">
+        <h2>Beams <span class="tag" id="beamcount"></span></h2>
+        <div class="beamlist" id="beamlist"></div>
+        <p class="empty" id="nobeams">No beams yet. Tap the dashed ring around the patient, or press Add beam.</p>
+        <div class="row" style="margin-top:10px">
+          <button class="ghost" id="addBeam">Add beam</button>
+          <button class="ghost" id="spread" hidden>Space evenly</button>
+        </div>
+        <div class="beamtools" id="beamtools" hidden>
+          <div class="field"><label for="angle"><span>Gantry angle</span><output id="angleOut"></output></label><input id="angle" type="range" min="0" max="355" step="5"></div>
+          <div class="field"><label for="weight"><span>Beam weight (strength)</span><output id="weightOut"></output></label><input id="weight" type="range" min="0.25" max="2" step="0.05"></div>
+          <button class="ghost" id="delBeam">Remove this beam</button>
+        </div>
+        <div class="imrt" id="imrt" hidden>
+          <div class="field"><label><span><b>Multileaf collimator</b></span><span class="tag" id="leafbeam"></span></label></div>
+          <canvas class="leafstrip" id="leaves" aria-label="Leaf strengths for the selected beam. Tap a leaf to open or close it."></canvas>
+          <p class="fine" style="margin:0">Each bar is one leaf pair. Red marks where the tumour lies across this beam, yellow marks the spinal cord. Tap a leaf to close or open it.</p>
+          <button class="optbtn" id="optimise">Optimise leaves (inverse planning)</button>
+        </div>
+      </div>
+
+      <button class="action" id="go"><span class="lamp" aria-hidden="true"></span>Deliver plan</button>
+      <div class="row">
+        <button class="ghost" id="reset">Reset level</button>
+        <button class="ghost" id="solve">Show solution</button>
+      </div>
+      <form class="card lock" id="lock" hidden>
+        <label for="pw"><b>Teacher password</b><span>The solution is locked so students solve it themselves.</span></label>
+        <div class="lockrow">
+          <input id="pw" type="password" autocomplete="off" placeholder="Password">
+          <button class="primary" type="submit">Unlock</button>
+        </div>
+        <p class="pwerr" id="pwerr" hidden>That password is not right. Check with your teacher and try again.</p>
+      </form>
+
+      <div class="card result" id="result" hidden aria-live="polite"></div>
+
+      <details class="card" id="notebook">
+        <summary>Physicist's notebook</summary>
+        <div class="note">
+          <p>An X-ray beam gets weaker as it passes through the body. Each centimetre removes the same fraction, so the intensity falls exponentially:</p>
+          <div class="formula">I = I₀ × e<sup>−μx</sup></div>
+          <p>Here μ = 0.045 per cm of water, so 1 cm removes about 4.4% of the beam. The half-value layer is ln 2 ÷ μ ≈ 15 cm of water, the same idea as the concrete and lead layers in Chapter 1.</p>
+          <p><b>Water-equivalent depth.</b> Lung is about 0.3 times as dense as water and bone about 1.6 times, so x counts lung as 0.3 cm per cm and bone as 1.6 cm per cm.</p>
+          <p><b>Why crossing beams work.</b> Every beam is strongest where it enters the skin. Where several beams overlap, their doses add up, so the tumour gets far more than any one patch of skin.</p>
+          <div class="work" id="work">Tap inside the patient to see the sum for that point.</div>
+          <p class="fine">Simplified for learning: a 2D slice only, no scattered radiation, no build-up region (real beams deposit their peak about 1.5 cm under the skin, which spares the skin), and one simple μ for all energies. The beam's strength also falls with the inverse square law, using a source 100 cm from the isocentre.</p>
+        </div>
+      </details>
+    </aside>
+  </div>
+  <footer>Part of <a href="index.html">Beam On: First Light</a>. Patients and anatomy are fictional and simplified for learning; see the notebook for what is simplified.</footer>
+</div>
+<script src="common.js"></script>
+<script>
+/* ===== Chapter 2 dose engine (pure functions, no DOM) ===== */
+const ENG = (() => {
+  const NX = 80, NY = 60, CELL = 0.4, X0 = -16, Y0 = -12;   // 32 x 24 cm, 0.4 cm cells; x right, y down (posterior)
+  const MU = 0.045, SAD = 100, SIGMA = 0.32, LEAF = 0.5, NLEAF = 64, MARGIN = 0.6, STEP = 0.2;
+  const cx = i => X0 + (i + 0.5) * CELL, cy = j => Y0 + (j + 0.5) * CELL;
+
+  /* Shapes: ellipse (optionally rotated) and ring sector. */
+  const E = (x, y, rx, ry, rot = 0) => ({ k: 'e', x, y, rx, ry, rot });
+  const R = (x, y, r1, r2, a0 = -180, a1 = 180) => ({ k: 'r', x, y, r1, r2, a0, a1 });
+  function inShape(s, x, y) {
+    if (s.k === 'e') {
+      let dx = x - s.x, dy = y - s.y;
+      if (s.rot) { const c = Math.cos(-s.rot * Math.PI / 180), n = Math.sin(-s.rot * Math.PI / 180); const u = dx * c - dy * n; dy = dx * n + dy * c; dx = u; }
+      return (dx * dx) / (s.rx * s.rx) + (dy * dy) / (s.ry * s.ry) <= 1;
+    }
+    const dx = x - s.x, dy = y - s.y, r = Math.hypot(dx, dy);
+    if (r < s.r1 || r > s.r2) return false;
+    if (s.a1 - s.a0 >= 360) return true;
+    let a = Math.atan2(dy, dx) * 180 / Math.PI;
+    let lo = s.a0, hi = s.a1;
+    while (a < lo) a += 360;
+    while (a > lo + 360) a -= 360;
+    return a <= hi;
+  }
+  const inStruct = (st, x, y) => st.add.some(s => inShape(s, x, y)) && !(st.sub || []).some(s => inShape(s, x, y));
+
+  /* Build grids for a level: density, structure masks, target list, isocentre. */
+  function build(level) {
+    const N = NX * NY, dens = new Float32Array(N), masks = {};
+    for (const st of level.structures) masks[st.id] = new Uint8Array(N);
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+      const x = cx(i), y = cy(j), k = j * NX + i;
+      for (const st of level.structures) {
+        if (!inStruct(st, x, y)) continue;
+        masks[st.id][k] = 1;
+        if (st.density != null) dens[k] = st.density;
+      }
+      if (!masks.body[k]) dens[k] = 0;
+    }
+    const tm = masks[level.target];
+    let sx = 0, sy = 0, n = 0;
+    const tcells = [];
+    for (let k = 0; k < N; k++) if (tm[k]) { tcells.push(k); sx += cx(k % NX); sy += cy((k / NX) | 0); n++; }
+    const iso = level.iso || { x: sx / n, y: sy / n };
+    const body = [];
+    for (let k = 0; k < N; k++) if (masks.body[k]) body.push(k);
+    return { level, dens, masks, tcells: Int32Array.from(tcells), body: Int32Array.from(body), iso, depthCache: new Map() };
+  }
+
+  const dirs = deg => { const t = deg * Math.PI / 180; return { dx: -Math.sin(t), dy: Math.cos(t), nx: Math.cos(t), ny: Math.sin(t) }; };
+
+  /* Water-equivalent depth for every body cell along the beam (march toward the source). Cached per angle. */
+  function depthMap(G, deg) {
+    const key = Math.round(deg * 10);
+    if (G.depthCache.has(key)) return G.depthCache.get(key);
+    const { dx, dy } = dirs(deg), out = new Float32Array(NX * NY);
+    const sx = -dx * STEP, sy = -dy * STEP;
+    for (const k of G.body) {
+      let x = cx(k % NX), y = cy((k / NX) | 0), d = 0;
+      for (let s = 0; s < 400; s++) {
+        x += sx; y += sy;
+        const i = Math.floor((x - X0) / CELL), j = Math.floor((y - Y0) / CELL);
+        if (i < 0 || j < 0 || i >= NX || j >= NY) break;
+        const rho = G.dens[j * NX + i];
+        if (rho === 0) break;
+        d += rho * STEP;
+      }
+      out[k] = d;
+    }
+    if (G.depthCache.size > 80) G.depthCache.delete(G.depthCache.keys().next().value);
+    G.depthCache.set(key, out);
+    return out;
+  }
+
+  const leafLo = k => (k - NLEAF / 2) * LEAF, leafHi = k => (k - NLEAF / 2 + 1) * LEAF;
+  /* Leaves that the target's projection (plus margin) covers: the conformal "beam's eye view" aperture. */
+  function conformal(G, deg) {
+    const { nx, ny } = dirs(deg), L = new Float32Array(NLEAF);
+    for (const k of G.tcells) {
+      const s = (cx(k % NX) - G.iso.x) * nx + (cy((k / NX) | 0) - G.iso.y) * ny;
+      const a = s - CELL / 2 - MARGIN, b = s + CELL / 2 + MARGIN;
+      for (let q = 0; q < NLEAF; q++) if (leafHi(q) > a && leafLo(q) < b) L[q] = 1;
+    }
+    return L;
+  }
+
+  function erf(x) { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; }
+  const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
+  /* Fluence across the beam: leaf intensities blurred by penumbra. Lookup table over s in [-20, 20] cm. */
+  function fluenceTable(leaves) {
+    const T = new Float32Array(801);
+    for (let q = 0; q < NLEAF; q++) {
+      const I = leaves[q]; if (!I) continue;
+      const a = leafLo(q), b = leafHi(q);
+      const i0 = Math.max(0, Math.floor((a - 1.5 + 20) / 0.05)), i1 = Math.min(800, Math.ceil((b + 1.5 + 20) / 0.05));
+      for (let i = i0; i <= i1; i++) { const s = -20 + i * 0.05; T[i] += I * (Phi((s - a) / SIGMA) - Phi((s - b) / SIGMA)); }
+    }
+    return T;
+  }
+
+  /* Dose from one beam, per unit weight: scaled so its mean dose over the target with the conformal aperture is 1. */
+  function beamDose(G, beam) {
+    const deg = beam.angle, { dx, dy, nx, ny } = dirs(deg);
+    const depth = depthMap(G, deg);
+    const leaves = beam.leaves || conformal(G, deg);
+    const F = fluenceTable(leaves);
+    const out = new Float32Array(NX * NY);
+    for (const k of G.body) {
+      const px = cx(k % NX) - G.iso.x, py = cy((k / NX) | 0) - G.iso.y;
+      const s = px * nx + py * ny, t = px * dx + py * dy;
+      let fi = (s + 20) / 0.05; if (fi < 0 || fi > 800) continue;
+      const f = F[Math.round(fi)];
+      if (f < 1e-4) continue;
+      const isq = SAD / (SAD + t);
+      out[k] = f * Math.exp(-MU * depth[k]) * isq * isq;
+    }
+    let norm = beam._norm;
+    if (norm == null) {
+      const Fc = beam.leaves ? fluenceTable(conformal(G, deg)) : F;
+      let sum = 0;
+      for (const k of G.tcells) {
+        const px = cx(k % NX) - G.iso.x, py = cy((k / NX) | 0) - G.iso.y;
+        const s = px * nx + py * ny, t = px * dx + py * dy, isq = SAD / (SAD + t);
+        sum += Fc[Math.round((s + 20) / 0.05)] * Math.exp(-MU * depth[k]) * isq * isq;
+      }
+      norm = sum / G.tcells.length || 1;
+    }
+    for (const k of G.body) out[k] /= norm;
+    return out;
+  }
+
+  /* Sum beams, normalise mean target dose to 100 %, and score against the level's goals. */
+  function plan(G, beams, cache) {
+    const N = NX * NY, dose = new Float32Array(N);
+    const parts = beams.map((b, i) => (cache && cache[i]) || beamDose(G, b));
+    beams.forEach((b, i) => { const p = parts[i], w = b.weight; for (const k of G.body) dose[k] += w * p[k]; });
+    let tm = 0; for (const k of G.tcells) tm += dose[k]; tm /= G.tcells.length;
+    const scale = tm > 0 ? 100 / tm : 0;
+    for (const k of G.body) dose[k] *= scale;
+    return { dose, parts, metrics: evaluate(G, dose, beams) };
+  }
+
+  function evaluate(G, dose, beams) {
+    const L = G.level, tmask = G.masks[L.target];
+    let in95 = 0, tmin = Infinity;
+    for (const k of G.tcells) { if (dose[k] >= 95) in95++; if (dose[k] < tmin) tmin = dose[k]; }
+    const v95 = G.tcells.length ? (100 * in95 / G.tcells.length) : 0;
+    let dmax = 0, at = -1;
+    for (const k of G.body) if (dose[k] > dmax) { dmax = dose[k]; at = k; }
+    const oars = L.oars.map(o => {
+      const m = G.masks[o.id]; let v = 0, n = 0, mx = 0;
+      for (const k of G.body) { if (!m[k] || tmask[k]) continue; n++; v += dose[k]; if (dose[k] > mx) mx = dose[k]; }
+      const val = o.metric === 'max' ? mx : (n ? v / n : 0);
+      return { ...o, value: val, ok: val <= o.limit };
+    });
+    const ok = { v95: v95 >= L.v95, hot: dmax <= L.hot, oars: oars.every(o => o.ok), beams: beams.length > 0 };
+    const win = ok.v95 && ok.hot && ok.oars && ok.beams;
+    let stars = 0;
+    if (win) {
+      stars = 1;
+      if (dmax <= L.s2.hot && v95 >= L.s2.v95) stars = 2;
+      if (stars === 2 && Object.entries(L.s3).every(([id, lim]) => { const o = oars.find(x => x.id === id); return o && o.value <= lim; })) stars = 3;
+    }
+    return { v95, tmin, dmax, hotAt: at, oars, ok, win, stars, nBeams: beams.length };
+  }
+
+  /* Where a beam's central strip crosses an OAR — used for hints. */
+  function beamHitsOAR(G, beam, oarId) {
+    const deg = beam.angle, { nx, ny } = dirs(deg), m = G.masks[oarId];
+    const leaves = beam.leaves || conformal(G, deg);
+    for (let k = 0; k < NX * NY; k++) {
+      if (!m[k]) continue;
+      const s = (cx(k % NX) - G.iso.x) * nx + (cy((k / NX) | 0) - G.iso.y) * ny;
+      const q = Math.floor(s / LEAF + NLEAF / 2);
+      if (q >= 0 && q < NLEAF && leaves[q] > 0.5) return true;
+    }
+    return false;
+  }
+
+  /* Depth (water-equivalent) and attenuation for the notebook's worked example. */
+  function pointInfo(G, beam, x, y) {
+    const i = Math.floor((x - X0) / CELL), j = Math.floor((y - Y0) / CELL);
+    if (i < 0 || j < 0 || i >= NX || j >= NY) return null;
+    const k = j * NX + i; if (!G.masks.body[k]) return null;
+    const d = depthMap(G, beam.angle)[k];
+    let geo = 0; { const { dx, dy } = dirs(beam.angle); let px = cx(i), py = cy(j); for (let s = 0; s < 400; s++) { px -= dx * STEP; py -= dy * STEP; const ii = Math.floor((px - X0) / CELL), jj = Math.floor((py - Y0) / CELL); if (ii < 0 || jj < 0 || ii >= NX || jj >= NY || !G.dens[jj * NX + ii]) break; geo += STEP; } }
+    return { depth: d, geo, att: Math.exp(-MU * d) };
+  }
+
+  return { NX, NY, CELL, X0, Y0, MU, SAD, LEAF, NLEAF, MARGIN, E, R, inShape, inStruct, build, depthMap, conformal, fluenceTable, beamDose, plan, evaluate, beamHitsOAR, pointInfo, dirs, cx, cy, leafLo, leafHi };
+})();
+
+/* ===== Levels ===== */
+const { E: El, R: Rg } = ENG;
+const LEVELS = [
+  {
+    id: 1, name: "Pak Hassan's lung", site: 'Chest (thorax)',
+    patient: 'Pak Hassan, 62', target: 'tumour',
+    structures: [
+      { id: 'body', name: 'Body', add: [El(0, 0.3, 15, 10.4)], density: 1, draw: 'body' },
+      { id: 'lungR', name: 'Right lung', add: [El(-6.9, -0.6, 5.3, 7.3, -6)], density: 0.3, draw: 'lung' },
+      { id: 'lungL', name: 'Left lung', add: [El(6.9, -0.6, 5.3, 7.3, 6)], sub: [El(2.6, 1.2, 4.3, 3.7, -20)], density: 0.3, draw: 'lung' },
+      { id: 'lungs', name: 'Lungs', add: [El(-6.9, -0.6, 5.3, 7.3, -6), El(6.9, -0.6, 5.3, 7.3, 6)], sub: [El(2.6, 1.2, 4.3, 3.7, -20)] },
+      { id: 'heart', name: 'Heart', add: [El(2.6, 1.2, 4.3, 3.7, -20)], density: 1, draw: 'organ' },
+      { id: 'aorta', name: 'Aorta', add: [El(-1.6, 4.0, 1.25, 1.25)], density: 1, draw: 'vessel' },
+      { id: 'vert', name: 'Vertebra', add: [El(0, 5.5, 2.3, 1.9), Rg(0, 7.9, 0.85, 1.75, -180, 180), El(0, 9.4, 0.55, 0.8)], sub: [El(0, 7.9, 0.85, 0.85)], density: 1.6, draw: 'bone' },
+      { id: 'sternum', name: 'Sternum', add: [El(0, -9.1, 1.5, 0.6)], density: 1.6, draw: 'bone' },
+      { id: 'cord', name: 'Spinal cord', add: [El(0, 7.9, 0.7, 0.7)], density: 1, draw: 'cord' },
+      { id: 'tumour', name: 'Tumour', add: [El(-6.6, -2.4, 2.3, 2.1, 20)], density: 1, draw: 'target' }
+    ],
+    ribs: true,
+    oars: [
+      { id: 'cord', name: 'Spinal cord', metric: 'max', limit: 45, why: 'Damage here can affect walking' },
+      { id: 'lungs', name: 'Healthy lungs', metric: 'mean', limit: 33, why: 'Keeps his breathing strong' },
+      { id: 'heart', name: 'Heart', metric: 'mean', limit: 20, why: 'Protects the heart muscle' }
+    ],
+    v95: 95, hot: 112, s2: { v95: 98, hot: 108 }, s3: { lungs: 31, heart: 10, cord: 30 }
+  },
+  {
+    id: 2, name: 'Behind the eyes', site: 'Head (brain)',
+    patient: 'Cik Nurul, 34', target: 'tumour',
+    structures: [
+      { id: 'body', name: 'Head', add: [El(0, 0.4, 8.3, 10.2), El(0, -9.9, 1.0, 1.1)], density: 1, draw: 'body' },
+      { id: 'skull', name: 'Skull', add: [El(0, 0.6, 7.9, 9.7)], sub: [El(0, 0.6, 7.25, 9.05), El(0, -8.6, 6.0, 3.2)], density: 1.6, draw: 'bone' },
+      { id: 'brain', name: 'Brain', add: [El(0, 0.6, 7.25, 9.05)], sub: [El(0, -8.6, 6.0, 3.2)], density: 1, draw: 'brain' },
+      { id: 'eyeR', name: 'Right eye', add: [El(-3.2, -7.6, 1.2, 1.2)], density: 1, draw: 'eye' },
+      { id: 'eyeL', name: 'Left eye', add: [El(3.2, -7.6, 1.2, 1.2)], density: 1, draw: 'eye' },
+      { id: 'eyes', name: 'Eyes', add: [El(-3.2, -7.6, 1.2, 1.2), El(3.2, -7.6, 1.2, 1.2)] },
+      { id: 'brainstem', name: 'Brainstem', add: [El(0, 2.2, 1.6, 1.7)], density: 1, draw: 'organ' },
+      { id: 'tumour', name: 'Tumour', add: [El(-2.4, -3.3, 1.9, 1.7, -25)], density: 1, draw: 'target' }
+    ],
+    oars: [
+      { id: 'eyes', name: 'Eyes', metric: 'max', limit: 25, why: 'Protects her eyesight' },
+      { id: 'brainstem', name: 'Brainstem', metric: 'max', limit: 50, why: 'Controls breathing and heartbeat' },
+      { id: 'brain', name: 'Healthy brain', metric: 'mean', limit: 32, why: 'Protects memory and thinking' }
+    ],
+    v95: 95, hot: 112, s2: { v95: 98, hot: 108 }, s3: { eyes: 20, brainstem: 30 }
+  },
+  {
+    id: 3, name: 'Wrap around the cord', site: 'Spine (vertebra)',
+    patient: 'Encik Tan, 57', target: 'tumour',
+    structures: [
+      { id: 'body', name: 'Body', add: [El(0, 0.4, 14, 10.0)], density: 1, draw: 'body' },
+      { id: 'liver', name: 'Liver', add: [El(-6.5, -1.8, 5.5, 4.6, 12)], density: 1, draw: 'organ2' },
+      { id: 'kidneyR', name: 'Right kidney', add: [El(-6.9, 4.0, 1.7, 2.6, 25)], density: 1, draw: 'organ' },
+      { id: 'kidneyL', name: 'Left kidney', add: [El(6.9, 4.0, 1.7, 2.6, -25)], density: 1, draw: 'organ' },
+      { id: 'kidneys', name: 'Kidneys', add: [El(-6.9, 4.0, 1.7, 2.6, 25), El(6.9, 4.0, 1.7, 2.6, -25)] },
+      { id: 'aorta', name: 'Aorta', add: [El(-1.2, 0.4, 1.0, 1.0)], density: 1, draw: 'vessel' },
+      { id: 'vert', name: 'Vertebra', add: [El(0, 3.8, 2.5, 2.1), Rg(0, 6.4, 0.8, 1.7, -180, 180), El(0, 8.3, 0.55, 0.9)], sub: [El(0, 6.4, 0.8, 0.8)], density: 1.6, draw: 'bone' },
+      { id: 'cord', name: 'Spinal cord', add: [El(0, 6.4, 0.6, 0.6)], density: 1, draw: 'cord' },
+      { id: 'tumour', name: 'Tumour', add: [Rg(0, 6.4, 1.9, 3.9, 130, 410)], density: null, draw: 'target' }
+    ],
+    mlc: true,
+    oars: [
+      { id: 'cord', name: 'Spinal cord', metric: 'max', limit: 45, why: 'The tumour wraps around it' },
+      { id: 'kidneys', name: 'Kidneys', metric: 'mean', limit: 30, why: 'They clean his blood' }
+    ],
+    v95: 90, hot: 115, s2: { v95: 95, hot: 110 }, s3: { cord: 35 }
+  }
+];
+
+
+/* ===== Inverse planning (IMRT): projected gradient descent on leaf intensities ===== */
+function makeOptimiser(ENG, G, beams, goals) {
+  const NL = ENG.NLEAF, L = G.level, tm = G.masks[L.target];
+  const cordM = G.masks.cord, kidM = G.masks.kidneys;
+  // Cells that matter: target, cord, kidneys, and a sample of other tissue for hotspots.
+  const idx = [], role = [];
+  let ns = 0;
+  for (const k of G.body) {
+    if (tm[k]) { idx.push(k); role.push(0); }
+    else if (cordM && cordM[k]) { idx.push(k); role.push(1); }
+    else if (kidM && kidM[k]) { idx.push(k); role.push(2); }
+    else if ((ns++ % 2) === 0) { idx.push(k); role.push(3); }
+  }
+  const M = idx.length, nT = role.filter(r => r === 0).length, nK = role.filter(r => r === 2).length;
+  // Unit dose of each open leaf of each beam, on the cells above, normalised like an open conformal beam.
+  const vars = [];
+  beams.forEach((b, bi) => {
+    const conf = ENG.conformal(G, b.angle);
+    const open = ENG.beamDose(G, { angle: b.angle, weight: 1 });
+    const raw = ENG.beamDose(G, { angle: b.angle, weight: 1, _norm: 1 });
+    let s1 = 0, s2 = 0; for (const k of G.tcells) { s1 += open[k]; s2 += raw[k]; }
+    const norm = s2 / s1;
+    for (let q = 0; q < NL; q++) if (conf[q]) {
+      const lv = new Float32Array(NL); lv[q] = 1;
+      const d = ENG.beamDose(G, { angle: b.angle, weight: 1, leaves: lv, _norm: norm });
+      const c = new Float32Array(M); let ss = 0;
+      for (let m = 0; m < M; m++) { c[m] = d[idx[m]] * 100 / beams.length; ss += c[m] * c[m]; }
+      const x0 = b.leaves ? b.leaves[q] * (b.weight || 1) : 1;
+      vars.push({ bi, q, c, x: Math.min(1.5, x0), ss });
+    }
+  });
+  const D = new Float32Array(M), gD = new Float32Array(M);
+  const rebuild = () => { D.fill(0); for (const v of vars) if (v.x) { const c = v.c, x = v.x; for (let m = 0; m < M; m++) D[m] += x * c[m]; } };
+  const W = { tUnder: 6, tOver: 1.5, cord: 12, kid: 30, hot: 1 };
+  function objective(withGrad) {
+    let o = 0, km = 0;
+    for (let m = 0; m < M; m++) if (role[m] === 2) km += D[m];
+    km /= (nK || 1);
+    const kOver = Math.max(0, km - goals.kid);
+    for (let m = 0; m < M; m++) {
+      const v = D[m]; let g = 0;
+      switch (role[m]) {
+        case 0: if (v < goals.tLo) { o += W.tUnder * (goals.tLo - v) ** 2 / nT; g = -2 * W.tUnder * (goals.tLo - v) / nT; }
+                else if (v > goals.tHi) { o += W.tOver * (v - goals.tHi) ** 2 / nT; g = 2 * W.tOver * (v - goals.tHi) / nT; } break;
+        case 1: if (v > goals.cord) { o += W.cord * (v - goals.cord) ** 2 / 10; g = 2 * W.cord * (v - goals.cord) / 10; } break;
+        case 2: g = kOver ? 2 * W.kid * kOver / (nK || 1) : 0; break;
+        case 3: if (v > goals.hot) { o += W.hot * (v - goals.hot) ** 2 / 50; g = 2 * W.hot * (v - goals.hot) / 50; } break;
+      }
+      if (withGrad) gD[m] = g;
+    }
+    o += W.kid * kOver * kOver;
+    return o;
+  }
+  rebuild();
+  let cur = objective(true), lr = 0.6;
+  /* One iteration: gradient step per leaf (scaled by that leaf's dose footprint), clamp to [0, 1.5]. */
+  function step() {
+    objective(true);
+    const old = vars.map(v => v.x);
+    for (const v of vars) {
+      let g = 0; const c = v.c;
+      for (let m = 0; m < M; m++) if (gD[m]) g += gD[m] * c[m];
+      v.x = Math.max(0, Math.min(1.5, v.x - lr * g / (v.ss / M + 1e-6) * 0.02));
+    }
+    rebuild();
+    const nv = objective(false);
+    if (nv > cur) { vars.forEach((v, i) => { v.x = old[i]; }); rebuild(); lr *= 0.5; }
+    else { cur = nv; lr = Math.min(lr * 1.15, 4); }
+    return cur;
+  }
+  /* Plan in the game's format: per-beam leaf intensities (weight 1). */
+  function result() {
+    const out = beams.map(b => ({ angle: b.angle, weight: 1, leaves: new Float32Array(NL) }));
+    for (const v of vars) out[v.bi].leaves[v.q] = Math.round(v.x * 20) / 20;
+    return out;
+  }
+  return { step, result, value: () => cur };
+}
+
+/* ===== Chapter 2 interface ===== */
+FL.initAudio();
+const $ = FL.$;
+const MAXB = 7;
+
+/* Contour colours: bright on the dark monitor; panel swatches use theme tokens. */
+const OARC = {
+  tumour: { mon: '#ff5a4f', ui: '--target' },
+  cord: { mon: '#f5d547', ui: '--c-cord' }, lungs: { mon: '#6fb7ff', ui: '--c-lung' }, heart: { mon: '#ff86b0', ui: '--c-heart' },
+  eyes: { mon: '#5fe0d8', ui: '--c-eye' }, brainstem: { mon: '#8be27a', ui: '--c-stem' }, brain: { mon: '#c7a6ff', ui: '--c-brain' },
+  kidneys: { mon: '#ffb057', ui: '--c-kidney' }
+};
+const CT = { body: '#6c6c6c', lung: '#131518', organ: '#858585', organ2: '#777777', vessel: '#929292', bone: '#e8e5dd', cord: '#a4a4a4', brain: '#7b7b7b', eye: '#5b5b5b' };
+
+const STORY = {
+  1: {
+    intro: '{name}, meet Pak Hassan, 62. His tumour is in his right lung, outlined in red. He told me he is nervous about "the radiation", so let\'s be kind to his healthy lung, heart and spinal cord. Our goal: at least 95% of the tumour gets 95% of the dose.',
+    win: 'Pak Hassan\'s plan covers the whole tumour and keeps his healthy lung, heart and spinal cord within their limits. Kak Ros says he smiled when she told him the beams will miss his heart.',
+    physics: ['Attenuation: X-ray intensity falls exponentially with depth, I = I₀e<sup>−μx</sup>.', 'Crossfire: where beams overlap, their doses add up, so the tumour gets more than the skin each beam enters through.', 'Lung is about 0.3 times as dense as water, so beams lose less strength crossing it.'],
+    card: { role: 'Treatment planning physicist', text: 'Physicists design each patient\'s plan: where the beams go, how strong each one is, and the dose every organ will get, all checked before treatment starts.' },
+    solution: [{ angle: 225, weight: 1.25 }, { angle: 180, weight: 1 }, { angle: 45, weight: 1.5 }]
+  },
+  2: {
+    intro: 'Cik Nurul, 34, teaches primary school. Her tumour sits just behind her right eye, with the brainstem behind it. Beams from the front pass through her eyes and beams from behind hit the brainstem. Find angles that slip past both, and use the weight slider to balance them.',
+    win: 'Cik Nurul\'s eyes and brainstem are protected. She asked if she can keep reading stories to her class during treatment. Yes, she can.',
+    physics: ['Beam weights: a stronger beam from one side balances the dose across the tumour.', 'Organs decide the angles: the eyes block beams from the front, and the brainstem blocks them from behind.'],
+    card: { role: 'Dosimetry', text: 'Dosimetry is the science of calculating and measuring dose. Physicists check every plan with an independent calculation and a measurement before the first treatment.' },
+    solution: [{ angle: 270, weight: 1 }, { angle: 90, weight: 1.5 }, { angle: 130, weight: 0.25 }, { angle: 230, weight: 1 }]
+  },
+  3: {
+    intro: 'Encik Tan, 57. His tumour wraps around his spinal cord like a horseshoe, so any beam that covers it also hits the cord. Modern linacs solve this with IMRT: the collimator leaves make parts of each beam weaker. Nobody sets hundreds of leaves by hand. You choose the beams, then press Optimise and the computer finds the leaf pattern. This is called inverse planning.',
+    win: 'Encik Tan\'s whole horseshoe is treated while his spinal cord stays under its limit. Before his first treatment, a physicist will measure this plan in a phantom to prove the machine delivers what the computer planned.',
+    physics: ['Intensity modulation: changing the strength across each beam shapes the dose around a sensitive organ.', 'Inverse planning: you set the goals, and a computer finds the leaf pattern that meets them.', 'Opposite beams share the same shadow of the cord, so planners use odd numbers of evenly spaced beams.'],
+    card: { role: 'IMRT and inverse planning', text: 'Modern plans use computer optimisation to shape hundreds of beam segments. Physicists set the goals, check the optimiser\'s work, and measure every plan before treatment.' },
+    solution: [{ angle: 0, weight: 1 }, { angle: 50, weight: 1 }, { angle: 105, weight: 1 }, { angle: 155, weight: 1 }, { angle: 205, weight: 1 }, { angle: 255, weight: 1 }, { angle: 310, weight: 1 }],
+    optimise: true
+  }
+};
+const SPEAKERS = {
+  arjun: { name: 'Dr. Arjun, Radiation Oncologist', init: 'DA', alt: true },
+  lim: { name: 'Dr. Lim, Head of Physics', init: 'DL', alt: false },
+  ros: { name: 'Kak Ros, Radiation Therapist', init: 'KR', alt: true }
+};
+function say(who, text) {
+  const s = SPEAKERS[who];
+  $('speaker').textContent = s.name; $('avatar').textContent = s.init;
+  $('avatar').className = 'avatar' + (s.alt ? ' alt' : '');
+  $('mentor').innerHTML = text;
+}
+
+const S = { li: 0, L: null, G: null, Gs: {}, beams: [], sel: -1, res: null, probe: null, busy: false, tips: {}, anim: null, view: null, nextId: 1 };
+
+/* ---------- Plan state ---------- */
+const leavesKey = b => b.leaves ? Array.from(b.leaves).join(',') : 'c';
+function partOf(b) {
+  const key = b.angle + '|' + leavesKey(b);
+  if (b._key !== key) { b._dose = ENG.beamDose(S.G, { angle: b.angle, weight: 1, leaves: b.leaves || null }); b._key = key; }
+  return b._dose;
+}
+function compute() {
+  if (!S.beams.length) {
+    S.res = { dose: new Float32Array(ENG.NX * ENG.NY), parts: [], metrics: ENG.evaluate(S.G, new Float32Array(ENG.NX * ENG.NY), []) };
+    return;
+  }
+  S.res = ENG.plan(S.G, S.beams, S.beams.map(partOf));
+}
+function save() {
+  FL.store.set('ch2:plan:' + S.L.id, S.beams.map(b => ({ a: b.angle, w: b.weight, l: b.leaves ? Array.from(b.leaves) : null })));
+}
+function mkBeam(angle, weight = 1, leaves = null) { return { id: S.nextId++, angle: ((Math.round(angle / 5) * 5) % 360 + 360) % 360, weight, leaves }; }
+
+function loadLevel(i) {
+  S.li = i; S.L = LEVELS[i];
+  S.G = S.Gs[S.L.id] || (S.Gs[S.L.id] = ENG.build(S.L));
+  const saved = FL.store.get('ch2:plan:' + S.L.id, null);
+  S.beams = Array.isArray(saved) ? saved.slice(0, MAXB).map(p => mkBeam(p.a, p.w, p.l ? Float32Array.from(p.l) : null)) : [];
+  S.sel = S.beams.length ? 0 : -1; S.probe = null; S.tips = {};
+  $('result').hidden = true;
+  $('pname').textContent = S.L.patient;
+  $('psite').textContent = S.L.site;
+  $('imrt').hidden = !S.L.mlc; $('spread').hidden = !S.L.mlc;
+  say('arjun', STORY[S.L.id].intro);
+  S.view = null; S.anat = null;
+  FL.renderLevels($('levels'), LEVELS, i, FL.getStars(2), loadLevel);
+  resize();
+  update();
+}
+
+/* ---------- Panel ---------- */
+const pct = v => (v >= 99.95 && v < 100.05 ? '100' : v.toFixed(v >= 100 ? 0 : 1));
+function renderPanel() {
+  const L = S.L, m = S.res.metrics;
+  const rows = [];
+  const pill = (ok) => `<span class="pill ${ok ? 'ok' : 'no'}">${ok ? 'OK' : 'Over'}`;
+  rows.push(`<li><span class="nm"><span class="sw" style="background:var(--target)"></span>Tumour covered</span><span class="val">${m.nBeams ? pct(m.v95) : '0'}%<span class="pill ${m.ok.v95 && m.nBeams ? 'ok' : 'no'}">${m.ok.v95 && m.nBeams ? 'OK' : 'Low'} · goal ≥${L.v95}%</span></span><span class="who">Share of the tumour getting at least 95% of the dose</span></li>`);
+  rows.push(`<li><span class="nm"><span class="sw" style="background:var(--beam)"></span>Hotspot</span><span class="val">${m.nBeams ? pct(m.dmax) : '0'}%${pill(m.ok.hot)} · limit ${L.hot}%</span></span><span class="who">Highest dose anywhere in the patient</span></li>`);
+  for (const o of m.oars) {
+    rows.push(`<li><span class="nm"><span class="sw" style="background:var(${OARC[o.id].ui})"></span>${o.name}</span><span class="val">${pct(o.value)}%${pill(o.ok)} · ${o.metric} ≤${o.limit}%</span></span><span class="who">${o.why}</span></li>`);
+  }
+  $('readings').innerHTML = rows.join('');
+  const oarName = id => L.oars.find(o => o.id === id).name.toLowerCase();
+  const s3 = Object.entries(L.s3).map(([id, v]) => `${oarName(id)} ≤${v}%`).join(', ');
+  $('goals').innerHTML = `<span><span class="stars">★★</span> coverage ≥${L.s2.v95}% and hotspot ≤${L.s2.hot}%</span><span><span class="stars">★★★</span> also ${s3}</span>`;
+  // beams
+  $('beamcount').textContent = `${S.beams.length} of ${MAXB}`;
+  $('nobeams').hidden = S.beams.length > 0;
+  $('beamlist').innerHTML = S.beams.map((b, i) => `<button class="bchip" data-i="${i}" aria-pressed="${i === S.sel}"><i>${i + 1}</i>${b.angle}°${b.weight !== 1 ? ' · ×' + b.weight.toFixed(2) : ''}</button>`).join('');
+  $('beamlist').querySelectorAll('.bchip').forEach(el => el.onclick = () => { S.sel = +el.dataset.i; FL.audio.click(); update(); });
+  $('addBeam').disabled = S.beams.length >= MAXB || S.busy;
+  $('spread').disabled = S.beams.length < 2 || S.busy;
+  const b = S.beams[S.sel];
+  $('beamtools').hidden = !b;
+  if (b) {
+    $('angle').value = b.angle; $('angleOut').textContent = `${b.angle}° · ${dirName(b.angle)}`;
+    $('weight').value = b.weight; $('weightOut').textContent = '×' + b.weight.toFixed(2);
+  }
+  if (S.L.mlc) {
+    $('leafbeam').textContent = b ? `Beam ${S.sel + 1} · ${b.angle}°` : 'Select a beam';
+    $('optimise').disabled = S.beams.length < 3 || S.busy;
+    $('optimise').textContent = S.beams.length < 3 ? 'Optimise leaves (needs 3+ beams)' : 'Optimise leaves (inverse planning)';
+    drawLeaves();
+  }
+  $('go').disabled = S.busy;
+  $('reset').disabled = S.busy;
+  drawDVH();
+  renderWork();
+}
+function dirName(a) {
+  const n = ['from the front', 'from front-left', 'from the patient\'s left', 'from back-left', 'from behind', 'from back-right', 'from the patient\'s right', 'from front-right'];
+  return n[Math.round(a / 45) % 8];
+}
+
+function renderWork() {
+  const el = $('work');
+  if (!S.probe) { el.textContent = 'Tap inside the patient to see the sum for that point.'; return; }
+  const { x, y } = S.probe, i = Math.floor((x - ENG.X0) / ENG.CELL), j = Math.floor((y - ENG.Y0) / ENG.CELL);
+  const k = j * ENG.NX + i, d = S.res.dose[k] || 0;
+  const b = S.beams[S.sel] || S.beams[0];
+  if (!b) { el.innerHTML = `Dose at this point: ${pct(d)}%. Add a beam to see the attenuation sum.`; return; }
+  const info = ENG.pointInfo(S.G, b, x, y);
+  if (!info) { el.textContent = 'That point is outside the patient.'; return; }
+  el.innerHTML = `Point dose: <b>${pct(d)}%</b> of the prescription.<br>Beam ${S.beams.indexOf(b) + 1} (${b.angle}°) travels ${info.geo.toFixed(1)} cm of tissue to get here,<br>which counts as x = ${info.depth.toFixed(1)} cm of water.<br>e<sup>−0.045 × ${info.depth.toFixed(1)}</sup> = ${info.att.toFixed(2)}, so ${Math.round(info.att * 100)}% of its entry strength is left.`;
+}
+
+/* ---------- Canvas: the planning monitor ---------- */
+const cv = $('cv');
+let ctx, CW = 0, CH = 0;
+function resize() {
+  const r = FL.fitCanvas(cv, 1.2); ctx = r.ctx; CW = r.w; CH = r.h;
+  S.view = null; S.anat = null;
+  draw();
+}
+function computeView() {
+  const G = S.G, iso = G.iso;
+  let rmax = 0, bx0 = 1e9, bx1 = -1e9, by0 = 1e9, by1 = -1e9;
+  for (const k of G.body) {
+    const x = ENG.cx(k % ENG.NX), y = ENG.cy((k / ENG.NX) | 0);
+    rmax = Math.max(rmax, Math.hypot(x - iso.x, y - iso.y) + 0.3);
+    bx0 = Math.min(bx0, x); bx1 = Math.max(bx1, x); by0 = Math.min(by0, y); by1 = Math.max(by1, y);
+  }
+  const R = rmax + 1.4, pad = 3.0;
+  const wx0 = Math.min(bx0, iso.x - R - pad), wx1 = Math.max(bx1, iso.x + R + pad);
+  const wy0 = Math.min(by0, iso.y - R - pad), wy1 = Math.max(by1, iso.y + R + pad);
+  const sc = Math.min(CW / (wx1 - wx0), CH / (wy1 - wy0));
+  const ox = (CW - (wx1 - wx0) * sc) / 2 - wx0 * sc, oy = (CH - (wy1 - wy0) * sc) / 2 - wy0 * sc;
+  S.view = { R, sc, ox, oy };
+}
+const W2P = (x, y) => [S.view.ox + x * S.view.sc, S.view.oy + y * S.view.sc];
+const P2W = (px, py) => [(px - S.view.ox) / S.view.sc, (py - S.view.oy) / S.view.sc];
+
+function shapePath(c, s) {
+  if (s.k === 'e') { c.moveTo(s.x + s.rx * Math.cos(s.rot * Math.PI / 180), s.y + s.rx * Math.sin(s.rot * Math.PI / 180)); c.ellipse(s.x, s.y, s.rx, s.ry, s.rot * Math.PI / 180, 0, Math.PI * 2); return; }
+  const a0 = s.a0 * Math.PI / 180, a1 = s.a1 * Math.PI / 180;
+  if (s.a1 - s.a0 >= 360) { c.moveTo(s.x + s.r2, s.y); c.arc(s.x, s.y, s.r2, 0, Math.PI * 2); c.moveTo(s.x + s.r1, s.y); c.arc(s.x, s.y, s.r1, 0, Math.PI * 2, true); return; }
+  c.moveTo(s.x + s.r2 * Math.cos(a0), s.y + s.r2 * Math.sin(a0));
+  c.arc(s.x, s.y, s.r2, a0, a1); c.arc(s.x, s.y, s.r1, a1, a0, true); c.closePath();
+}
+/* Fill a structure (adds minus subs) on a scratch layer, then composite. */
+let layer = null;
+function fillStruct(c, st, color) {
+  if (!layer || layer.width !== c.canvas.width || layer.height !== c.canvas.height) { layer = document.createElement('canvas'); layer.width = c.canvas.width; layer.height = c.canvas.height; }
+  const l = layer.getContext('2d');
+  l.setTransform(1, 0, 0, 1, 0, 0); l.clearRect(0, 0, layer.width, layer.height);
+  l.setTransform(c.getTransform());
+  l.fillStyle = color; l.beginPath(); for (const s of st.add) shapePath(l, s); l.fill('nonzero');
+  if (st.sub) { l.globalCompositeOperation = 'destination-out'; l.beginPath(); for (const s of st.sub) shapePath(l, s); l.fill(); l.globalCompositeOperation = 'source-over'; }
+  c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(layer, 0, 0); c.restore();
+}
+function strokeStruct(c, st, color, width, dash) {
+  c.save();
+  if (st.sub) { c.beginPath(); c.rect(-100, -100, 200, 200); for (const s of st.sub) shapePath(c, s); c.clip('evenodd'); }
+  c.strokeStyle = color; c.lineWidth = width / S.view.sc; c.setLineDash(dash ? dash.map(v => v / S.view.sc) : []);
+  c.beginPath(); for (const s of st.add) shapePath(c, s); c.stroke();
+  c.restore();
+}
+function rng(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+
+/* Static anatomy image (CT greyscale + texture), cached per size and level. */
+function renderAnatomy() {
+  const dpr = cv.width / CW;
+  const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height;
+  const c = off.getContext('2d');
+  c.setTransform(dpr * S.view.sc, 0, 0, dpr * S.view.sc, dpr * S.view.ox, dpr * S.view.oy);
+  const L = S.L, body = L.structures.find(s => s.id === 'body');
+  fillStruct(c, body, CT.body);
+  // subtle fat layer under the skin
+  c.save(); c.beginPath(); for (const s of body.add) shapePath(c, s); c.clip();
+  c.strokeStyle = 'rgba(30,30,30,.35)'; c.lineWidth = 1.4; c.beginPath(); for (const s of body.add) shapePath(c, { ...s, rx: s.rx - 0.9, ry: s.ry - 0.9 }); c.stroke();
+  c.restore();
+  for (const st of L.structures) {
+    if (!st.draw || st.id === 'body' || st.draw === 'target') continue;
+    fillStruct(c, st, CT[st.draw] || CT.organ);
+  }
+  const R = rng(L.id * 97 + 13);
+  // lung vessels
+  for (const st of L.structures.filter(s => s.draw === 'lung')) {
+    for (let n = 0; n < 70; n++) {
+      const s = st.add[0], a = R() * Math.PI * 2, r = Math.sqrt(R()) * 0.92;
+      const x = s.x + Math.cos(a) * s.rx * r, y = s.y + Math.sin(a) * s.ry * r;
+      if (!ENG.inStruct(st, x, y)) continue;
+      c.fillStyle = `rgba(150,150,150,${0.25 + R() * 0.35})`; c.beginPath(); c.arc(x, y, 0.08 + R() * 0.16, 0, 7); c.fill();
+    }
+  }
+  // ribs (visual only)
+  if (L.ribs) {
+    const s = body.add[0];
+    for (let a = -150; a <= 150; a += 15) {
+      if (Math.abs(a) < 25 || Math.abs(Math.abs(a) - 180) < 25) continue;
+      for (const side of [-1, 1]) {
+        const t = (90 + side * (180 - Math.abs(a))) * Math.PI / 180;
+        const x = s.x + Math.cos(t) * (s.rx - 1.05), y = s.y + Math.sin(t) * (s.ry - 1.05);
+        c.fillStyle = CT.bone; c.beginPath(); c.ellipse(x, y, 0.32, 0.6, t, 0, 7); c.fill();
+      }
+    }
+  }
+  // CT noise texture inside the body
+  const nz = document.createElement('canvas'); nz.width = nz.height = 96;
+  const nc = nz.getContext('2d'), img = nc.createImageData(96, 96);
+  for (let p = 0; p < img.data.length; p += 4) { const v = R() * 255; img.data[p] = img.data[p + 1] = img.data[p + 2] = v; img.data[p + 3] = 16; }
+  nc.putImageData(img, 0, 0);
+  c.save(); c.beginPath(); for (const s of body.add) shapePath(c, s); c.clip();
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = c.createPattern(nz, 'repeat'); c.fillRect(0, 0, off.width, off.height);
+  c.restore();
+  S.anat = off;
+}
+
+/* Dose colour wash on a tiny canvas, scaled up smoothly. */
+const doseCv = document.createElement('canvas'); doseCv.width = ENG.NX; doseCv.height = ENG.NY;
+const RAMP = [[0, [40, 70, 200]], [30, [40, 150, 230]], [55, [40, 200, 140]], [80, [230, 210, 60]], [95, [245, 140, 40]], [105, [235, 60, 45]], [120, [220, 40, 160]]];
+function doseRGB(d) {
+  let i = 0; while (i < RAMP.length - 2 && d > RAMP[i + 1][0]) i++;
+  const [a, ca] = RAMP[i], [b, cb] = RAMP[i + 1], t = FL.clamp((d - a) / (b - a), 0, 1);
+  return ca.map((v, k) => Math.round(v + (cb[k] - v) * t));
+}
+function paintDose() {
+  const c = doseCv.getContext('2d'), img = c.createImageData(ENG.NX, ENG.NY), D = S.res.dose;
+  for (let k = 0; k < D.length; k++) {
+    const d = D[k]; if (d < 12) continue;
+    const [r, g, b] = doseRGB(d);
+    img.data[k * 4] = r; img.data[k * 4 + 1] = g; img.data[k * 4 + 2] = b;
+    img.data[k * 4 + 3] = Math.round(255 * Math.min(0.62, 0.12 + d / 230));
+  }
+  c.putImageData(img, 0, 0);
+}
+/* Isodose line by marching squares. */
+function isoline(c, D, t) {
+  const NX = ENG.NX, NY = ENG.NY, X = i => ENG.cx(i), Y = j => ENG.cy(j);
+  c.beginPath();
+  for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX - 1; i++) {
+    const a = D[j * NX + i], b = D[j * NX + i + 1], d = D[(j + 1) * NX + i], e = D[(j + 1) * NX + i + 1];
+    const code = (a >= t) | ((b >= t) << 1) | ((e >= t) << 2) | ((d >= t) << 3);
+    if (code === 0 || code === 15) continue;
+    const pts = [];
+    const edge = (v1, v2, x1, y1, x2, y2) => { const f = (t - v1) / (v2 - v1); pts.push([x1 + (x2 - x1) * f, y1 + (y2 - y1) * f]); };
+    if ((a >= t) !== (b >= t)) edge(a, b, X(i), Y(j), X(i + 1), Y(j));
+    if ((b >= t) !== (e >= t)) edge(b, e, X(i + 1), Y(j), X(i + 1), Y(j + 1));
+    if ((e >= t) !== (d >= t)) edge(e, d, X(i + 1), Y(j + 1), X(i), Y(j + 1));
+    if ((d >= t) !== (a >= t)) edge(d, a, X(i), Y(j + 1), X(i), Y(j));
+    for (let p = 0; p + 1 < pts.length; p += 2) { c.moveTo(pts[p][0], pts[p][1]); c.lineTo(pts[p + 1][0], pts[p + 1][1]); }
+  }
+  c.stroke();
+}
+function beamLeaves(b) { return b.leaves || (b._conf && b._confA === b.angle ? b._conf : (b._confA = b.angle, b._conf = ENG.conformal(S.G, b.angle))); }
+
+function draw() {
+  if (!ctx || !S.G || !S.res) return;
+  if (!S.view) computeView();
+  if (!S.anat) renderAnatomy();
+  const { sc, ox, oy, R } = S.view, iso = S.G.iso, L = S.L;
+  ctx.setTransform(cv.width / CW, 0, 0, cv.width / CW, 0, 0);
+  ctx.fillStyle = '#05080b'; ctx.fillRect(0, 0, CW, CH);
+  ctx.drawImage(S.anat, 0, 0, CW, CH);
+  const dpr = cv.width / CW;
+  ctx.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * ox, dpr * oy);
+  const body = L.structures.find(s => s.id === 'body');
+  // dose wash
+  if (S.beams.length) {
+    paintDose();
+    ctx.save(); ctx.beginPath(); for (const s of body.add) shapePath(ctx, s); ctx.clip();
+    ctx.imageSmoothingEnabled = true; ctx.globalAlpha = S.anim ? 0.55 + 0.45 * S.anim.glow : 1;
+    ctx.drawImage(doseCv, ENG.X0, ENG.Y0, ENG.NX * ENG.CELL, ENG.NY * ENG.CELL);
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.6 / sc; ctx.strokeStyle = 'rgba(80,210,255,.85)'; ctx.setLineDash([4 / sc, 3 / sc]); isoline(ctx, S.res.dose, 50);
+    ctx.setLineDash([]); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.8 / sc; isoline(ctx, S.res.dose, 95);
+    ctx.restore();
+  }
+  // contours
+  for (const o of L.oars) {
+    const st = L.structures.find(s => s.id === o.id);
+    strokeStruct(ctx, st, OARC[o.id].mon, o.id === 'brain' ? 1.2 : 1.8, o.id === 'brain' ? [5, 4] : null);
+  }
+  const tst = L.structures.find(s => s.id === L.target);
+  ctx.save(); ctx.globalAlpha = 0.16; fillStruct(ctx, tst, OARC.tumour.mon); ctx.restore();
+  strokeStruct(ctx, tst, OARC.tumour.mon, 2.6);
+  // gantry ring
+  ctx.save();
+  ctx.strokeStyle = 'rgba(160,190,210,.55)'; ctx.lineWidth = 1.4 / sc; ctx.setLineDash([6 / sc, 6 / sc]);
+  ctx.beginPath(); ctx.arc(iso.x, iso.y, R, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  for (let a = 0; a < 360; a += 15) {
+    const t = a * Math.PI / 180, ux = Math.sin(t), uy = -Math.cos(t), len = a % 90 === 0 ? 0.9 : 0.45;
+    ctx.strokeStyle = 'rgba(160,190,210,.6)'; ctx.beginPath(); ctx.moveTo(iso.x + ux * (R - len / 2), iso.y + uy * (R - len / 2)); ctx.lineTo(iso.x + ux * (R + len / 2), iso.y + uy * (R + len / 2)); ctx.stroke();
+  }
+  ctx.restore();
+  // beams
+  S.beams.forEach((b, i) => drawBeam(b, i));
+  // isocentre marker
+  ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.2 / sc;
+  ctx.beginPath(); ctx.moveTo(iso.x - 0.5, iso.y); ctx.lineTo(iso.x + 0.5, iso.y); ctx.moveTo(iso.x, iso.y - 0.5); ctx.lineTo(iso.x, iso.y + 0.5); ctx.stroke();
+  // delivery gantry marker
+  if (S.anim && S.anim.head != null) {
+    const t = S.anim.head * Math.PI / 180, hx = iso.x + Math.sin(t) * R, hy = iso.y - Math.cos(t) * R;
+    const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, 2.6); g.addColorStop(0, 'rgba(255,200,80,.9)'); g.addColorStop(1, 'rgba(255,200,80,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, 2.6, 0, 7); ctx.fill();
+  }
+  // probe
+  if (S.probe) {
+    const { x, y } = S.probe; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4 / sc;
+    ctx.beginPath(); ctx.arc(x, y, 0.45, 0, 7); ctx.moveTo(x - 0.9, y); ctx.lineTo(x - 0.25, y); ctx.moveTo(x + 0.25, y); ctx.lineTo(x + 0.9, y); ctx.moveTo(x, y - 0.9); ctx.lineTo(x, y - 0.25); ctx.moveTo(x, y + 0.25); ctx.lineTo(x, y + 0.9); ctx.stroke();
+  }
+  // screen-space labels
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawLabels();
+}
+function drawBeam(b, i) {
+  const { sc, R } = S.view, iso = S.G.iso, { dx, dy, nx, ny } = ENG.dirs(b.angle);
+  const leaves = beamLeaves(b), sel = i === S.sel;
+  // Fill only the beam in focus (selected, or the one being delivered); others are outlines, as on a real planning system.
+  const focus = S.anim ? S.anim.i === i : sel;
+  const fill = S.anim ? (focus ? 0.4 : 0) : (focus ? 0.17 : 0.035);
+  const far = R * 0.85, near = R;
+  const P = (s, t) => [iso.x + nx * s + dx * t, iso.y + ny * s + dy * t];
+  ctx.save();
+  if (fill > 0) for (let q = 0; q < ENG.NLEAF; q++) {
+    const I = leaves[q]; if (I < 0.02) continue;
+    const a = ENG.leafLo(q), c = ENG.leafHi(q);
+    const p1 = P(a, -near), p2 = P(c, -near), p3 = P(c, far), p4 = P(a, far);
+    ctx.fillStyle = `rgba(250,190,70,${Math.min(0.85, fill * Math.min(I, 1.5))})`;
+    ctx.beginPath(); ctx.moveTo(...p1); ctx.lineTo(...p2); ctx.lineTo(...p3); ctx.lineTo(...p4); ctx.closePath(); ctx.fill();
+  }
+  // aperture edges
+  let lo = null, hi = null;
+  for (let q = 0; q < ENG.NLEAF; q++) if (leaves[q] > 0.02) { if (lo == null) lo = ENG.leafLo(q); hi = ENG.leafHi(q); }
+  if (lo != null) {
+    const done = S.anim && S.anim.done > i;
+    ctx.strokeStyle = focus ? 'rgba(255,210,110,.95)' : done ? 'rgba(255,205,100,.5)' : 'rgba(255,205,100,.32)';
+    ctx.lineWidth = (focus ? 1.5 : 1) / sc;
+    for (const s of [lo, hi]) { ctx.beginPath(); ctx.moveTo(...P(s, -near)); ctx.lineTo(...P(s, far)); ctx.stroke(); }
+  }
+  // head: at least 30 x 17 px so it can be grabbed on a phone
+  const w = Math.max(2.6, 30 / sc), h = Math.max(1.5, 17 / sc);
+  const hx = iso.x - dx * (R + 0.2), hy = iso.y - dy * (R + 0.2);
+  ctx.translate(hx, hy); ctx.rotate(b.angle * Math.PI / 180);
+  ctx.fillStyle = sel ? '#ffd26b' : '#f0ac2e'; ctx.strokeStyle = sel ? '#ffffff' : 'rgba(0,0,0,.4)'; ctx.lineWidth = (sel ? 2 : 1) / sc;
+  ctx.beginPath(); ctx.roundRect(-w / 2, -h, w, h, h * 0.2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#3a2500'; ctx.font = `800 ${Math.max(1.0, 11 / sc)}px ${FL.css('--display') || 'sans-serif'}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.translate(0, -h / 2); ctx.rotate(-b.angle * Math.PI / 180); ctx.fillText(String(i + 1), 0, 0.05);
+  ctx.restore();
+}
+function drawLabels() {
+  const iso = S.G.iso, { R } = S.view;
+  ctx.font = `600 12px ${FL.css('--body') || 'sans-serif'}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const lab = (a, txt) => { const t = a * Math.PI / 180, [px, py] = W2P(iso.x + Math.sin(t) * (R + 2.4), iso.y - Math.cos(t) * (R + 2.4)); if (px < 14 || px > CW - 14 || py < 10 || py > CH - 10) return; ctx.fillStyle = 'rgba(170,200,220,.85)'; ctx.fillText(txt, px, py); };
+  if (CW > 320) { lab(0, '0°'); lab(90, '90°'); lab(180, '180°'); lab(270, '270°'); }
+  ctx.font = `500 11px ${FL.css('--mono') || 'monospace'}`; ctx.fillStyle = 'rgba(170,200,220,.75)';
+  ctx.textAlign = 'left'; ctx.fillText('FRONT ↑', 10, 14);
+  if (CW > 480) {
+    ctx.fillText("R = patient's right", 10, 30);
+    ctx.textAlign = 'right'; ctx.fillText(`${S.L.site.toUpperCase()}`, CW - 10, 14);
+  }
+  // dose legend
+  if (S.beams.length && CW > 340) {
+    const x = CW - 22, y0 = CH - 30, hgt = Math.min(150, CH * 0.35);
+    for (let p = 0; p <= hgt; p++) { const d = 120 * p / hgt; const [r, g, b] = doseRGB(d); ctx.fillStyle = `rgb(${r},${g},${b})`; ctx.fillRect(x, y0 - p, 10, 1.5); }
+    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(200,220,235,.9)'; ctx.font = `500 10px ${FL.css('--mono') || 'monospace'}`;
+    for (const d of [0, 50, 95, 120]) { const py = y0 - hgt * d / 120; ctx.fillText(d + '%', x - 4, py); }
+    ctx.fillText('DOSE', x + 10, y0 - hgt - 12);
+  }
+  // probe readout
+  if (S.probe) {
+    const [px, py] = W2P(S.probe.x, S.probe.y);
+    const i = Math.floor((S.probe.x - ENG.X0) / ENG.CELL), j = Math.floor((S.probe.y - ENG.Y0) / ENG.CELL);
+    const d = S.res.dose[j * ENG.NX + i] || 0, txt = pct(d) + '%';
+    ctx.font = `700 13px ${FL.css('--mono') || 'monospace'}`; const w = ctx.measureText(txt).width + 12;
+    const bx = Math.min(CW - w - 4, px + 12), by = Math.max(4, py - 30);
+    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.beginPath(); ctx.roundRect(bx, by, w, 22, 5); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText(txt, bx + 6, by + 11);
+  }
+  // legend for contours, bottom left
+  if (CW > 420) {
+    const items = [['Tumour', OARC.tumour.mon], ...S.L.oars.map(o => [o.name, OARC[o.id].mon]), ['95% line', '#ffffff'], ['50% line', 'rgba(80,210,255,.95)']];
+    ctx.font = `600 11px ${FL.css('--body') || 'sans-serif'}`; ctx.textAlign = 'left';
+    let y = CH - 12 - (items.length - 1) * 16;
+    for (const [n, c] of items) { ctx.strokeStyle = c; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(24, y); ctx.stroke(); ctx.fillStyle = 'rgba(210,225,235,.9)'; ctx.fillText(n, 30, y); y += 16; }
+  }
+}
+
+/* ---------- Pointer interaction on the monitor ---------- */
+let drag = null;
+function ptr(e) { const r = cv.getBoundingClientRect(); return P2W(e.clientX - r.left, e.clientY - r.top); }
+function ringHit(x, y) {
+  const iso = S.G.iso, r = Math.hypot(x - iso.x, y - iso.y), tol = 22 / S.view.sc;
+  if (Math.abs(r - (S.view.R + 0.6)) > tol) return null;
+  let a = Math.atan2(x - iso.x, -(y - iso.y)) * 180 / Math.PI; if (a < 0) a += 360;
+  return a;
+}
+const angDiff = (a, b) => { const d = Math.abs(a - b) % 360; return Math.min(d, 360 - d); };
+cv.addEventListener('pointerdown', e => {
+  if (S.busy || !S.view) return;
+  const [x, y] = ptr(e), a = ringHit(x, y);
+  if (a != null) {
+    let best = -1, bd = 1e9; S.beams.forEach((b, i) => { const d = angDiff(a, b.angle); if (d < bd) { bd = d; best = i; } });
+    if (best >= 0 && bd < 10) { S.sel = best; drag = { i: best }; cv.setPointerCapture(e.pointerId); cv.classList.add('grab'); FL.audio.click(); update(); return; }
+    if (S.beams.length >= MAXB) { say('lim', `Seven beams is our limit for this plan. Drag an existing beam head to move it instead.`); return; }
+    addBeam(a); drag = { i: S.sel }; cv.setPointerCapture(e.pointerId); cv.classList.add('grab');
+    return;
+  }
+  const i = Math.floor((x - ENG.X0) / ENG.CELL), j = Math.floor((y - ENG.Y0) / ENG.CELL);
+  if (i >= 0 && j >= 0 && i < ENG.NX && j < ENG.NY && S.G.masks.body[j * ENG.NX + i]) { S.probe = { x, y }; FL.audio.blip(); renderWork(); draw(); return; }
+  S.probe = null; draw(); renderWork();
+});
+cv.addEventListener('pointermove', e => {
+  if (!S.view) return;
+  const [x, y] = ptr(e);
+  if (drag) {
+    const a = ringHit(x, y) ?? (Math.atan2(x - S.G.iso.x, -(y - S.G.iso.y)) * 180 / Math.PI + 360) % 360;
+    const b = S.beams[drag.i], na = ((Math.round(a / 5) * 5) % 360 + 360) % 360;
+    if (b && na !== b.angle) { b.angle = na; FL.audio.tick(); update(true); }
+    return;
+  }
+  cv.classList.toggle('ring', ringHit(x, y) != null);
+});
+const endDrag = () => { if (drag) { drag = null; cv.classList.remove('grab'); save(); update(); } };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+
+/* ---------- Beam editing ---------- */
+function addBeam(angle) {
+  if (S.beams.length >= MAXB) return;
+  if (angle == null) {
+    let best = 0, bd = -1;
+    for (let a = 0; a < 360; a += 5) { const d = S.beams.length ? Math.min(...S.beams.map(b => angDiff(a, b.angle))) : 180; if (d > bd) { bd = d; best = a; } }
+    angle = best;
+  }
+  S.beams.push(mkBeam(angle)); S.sel = S.beams.length - 1;
+  FL.audio.place(); tipAfterBeam(); save(); update();
+}
+function tipAfterBeam() {
+  const n = S.beams.length;
+  if (n === 1 && !S.tips.one) { S.tips.one = 1; say('lim', 'See the colours? The beam is strongest where it enters the skin and fades as it goes deeper. That is attenuation. Add a beam from another side so the tumour gets dose from both.'); }
+  else if (n === 2 && !S.tips.two) { S.tips.two = 1; say('lim', 'Where the beams cross, their doses add up. Keep an eye on the plan check: the hotspot and every healthy organ need to stay under their limits.'); }
+  else if (S.L.mlc && n === 3 && !S.tips.three) { S.tips.three = 1; say('lim', 'Every beam that covers the horseshoe also covers the yellow spinal cord. When you have your beams, press Optimise leaves. Tip: odd numbers of evenly spaced beams work best.'); }
+}
+$('addBeam').onclick = () => addBeam();
+$('delBeam').onclick = () => { if (S.sel < 0) return; S.beams.splice(S.sel, 1); S.sel = Math.min(S.sel, S.beams.length - 1); FL.audio.remove(); save(); update(); };
+$('angle').oninput = e => { const b = S.beams[S.sel]; if (!b) return; b.angle = +e.target.value; if (b.leaves) b.leaves = null; FL.audio.tick(); update(true); };
+$('angle').onchange = () => { save(); update(); };
+$('weight').oninput = e => { const b = S.beams[S.sel]; if (!b) return; b.weight = +e.target.value; update(true); };
+$('weight').onchange = () => save();
+$('spread').onclick = () => {
+  const n = S.beams.length; if (n < 2) return;
+  const a0 = S.beams[0].angle;
+  S.beams.forEach((b, i) => { b.angle = ((Math.round((a0 + i * 360 / n) / 5) * 5) % 360 + 360) % 360; b.leaves = null; });
+  FL.audio.whoosh(); save(); update();
+};
+
+/* While dragging, skip the heavy panel parts for speed. */
+function update(light) {
+  compute();
+  if (!light) renderPanel();
+  else { const b = S.beams[S.sel]; if (b) { $('angleOut').textContent = `${b.angle}° · ${dirName(b.angle)}`; $('weightOut').textContent = '×' + b.weight.toFixed(2); } renderReadingsOnly(); }
+  draw();
+}
+let rTimer = null;
+function renderReadingsOnly() { clearTimeout(rTimer); rTimer = setTimeout(renderPanel, 60); }
+
+/* ---------- Dose–volume histogram ---------- */
+function drawDVH() {
+  const c = $('dvh'), w = c.clientWidth, h = 150, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (!w) return;
+  c.width = w * dpr; c.height = h * dpr; const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const m = { l: 34, r: 8, t: 8, b: 22 }, pw = w - m.l - m.r, ph = h - m.t - m.b;
+  const X = d => m.l + pw * d / 125, Y = v => m.t + ph * (1 - v / 100);
+  g.font = `500 10px ${FL.css('--mono')}`; g.fillStyle = FL.css('--muted'); g.strokeStyle = FL.css('--line'); g.lineWidth = 1;
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (const v of [0, 50, 100]) { g.beginPath(); g.moveTo(m.l, Y(v)); g.lineTo(w - m.r, Y(v)); g.stroke(); g.fillText(v + '%', m.l - 4, Y(v)); }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  for (const d of [0, 50, 95, 120]) g.fillText(d + '%', X(d), h - m.b + 5);
+  g.save(); g.setLineDash([3, 3]); g.strokeStyle = FL.css('--muted'); g.beginPath(); g.moveTo(X(95), m.t); g.lineTo(X(95), m.t + ph); g.stroke(); g.restore();
+  g.textAlign = 'left'; g.textBaseline = 'top'; g.fillStyle = FL.css('--muted'); g.fillText('volume', m.l + 4, m.t + 2);
+  g.textAlign = 'right'; g.fillText('dose →', w - m.r - 2, m.t + ph - 14);
+  if (!S.beams.length) return;
+  const D = S.res.dose, G = S.G, tm = G.masks[S.L.target];
+  const curve = (cells, col) => {
+    if (!cells.length) return;
+    const hist = new Float32Array(126); for (const k of cells) hist[Math.min(125, Math.floor(D[k]))]++;
+    g.strokeStyle = col; g.lineWidth = 2; g.beginPath();
+    let cum = cells.length;
+    for (let d = 0; d <= 125; d++) { const v = 100 * cum / cells.length; d ? g.lineTo(X(d), Y(v)) : g.moveTo(X(d), Y(v)); cum -= hist[d]; }
+    g.stroke();
+  };
+  for (const o of S.L.oars) { const mk = G.masks[o.id], cells = []; for (const k of G.body) if (mk[k] && !tm[k]) cells.push(k); curve(cells, FL.css(OARC[o.id].ui)); }
+  curve(Array.from(G.tcells), FL.css('--target'));
+}
+
+/* ---------- Leaf strip (Level 3) ---------- */
+let leafRange = null;
+function drawLeaves() {
+  const c = $('leaves'), w = c.clientWidth, h = 120, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (!w) return;
+  c.width = w * dpr; c.height = h * dpr; const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = FL.css('--paper'); g.fillRect(0, 0, w, h);
+  const b = S.beams[S.sel];
+  if (!b) { g.fillStyle = FL.css('--muted'); g.font = `500 12px ${FL.css('--body')}`; g.textAlign = 'center'; g.fillText('Select a beam to see its leaves', w / 2, h / 2); leafRange = null; return; }
+  const conf = ENG.conformal(S.G, b.angle), leaves = b.leaves || conf;
+  let q0 = ENG.NLEAF, q1 = 0; for (let q = 0; q < ENG.NLEAF; q++) if (conf[q] || leaves[q] > 0.02) { q0 = Math.min(q0, q); q1 = Math.max(q1, q); }
+  q0 = Math.max(0, q0 - 1); q1 = Math.min(ENG.NLEAF - 1, q1 + 1);
+  const n = q1 - q0 + 1, bw = w / n; leafRange = { q0, q1, bw };
+  // projections of tumour and cord onto this beam
+  const proj = id => { const { nx, ny } = ENG.dirs(b.angle), m = S.G.masks[id], set = new Set(); for (let k = 0; k < m.length; k++) if (m[k]) { const s = (ENG.cx(k % ENG.NX) - S.G.iso.x) * nx + (ENG.cy((k / ENG.NX) | 0) - S.G.iso.y) * ny; set.add(Math.floor(s / ENG.LEAF + ENG.NLEAF / 2)); } return set; };
+  const tset = proj(S.L.target), cset = proj('cord');
+  for (let q = q0; q <= q1; q++) {
+    const x = (q - q0) * bw;
+    if (tset.has(q)) { g.fillStyle = FL.css('--target'); g.fillRect(x, 4, bw, 6); }
+    if (cset.has(q)) { g.fillStyle = FL.css('--c-cord'); g.fillRect(x, 12, bw, 6); }
+    const I = leaves[q] || 0, hh = (h - 30) * Math.min(I, 1.5) / 1.5;
+    g.fillStyle = FL.css('--beam'); g.globalAlpha = 0.25 + 0.75 * Math.min(1, I);
+    g.fillRect(x + 1, h - 4 - hh, bw - 2, hh); g.globalAlpha = 1;
+    g.strokeStyle = FL.css('--line'); g.strokeRect(x + 0.5, 24, bw - 1, h - 28);
+  }
+  g.strokeStyle = FL.css('--muted'); g.setLineDash([3, 3]); const y100 = h - 4 - (h - 30) / 1.5; g.beginPath(); g.moveTo(0, y100); g.lineTo(w, y100); g.stroke(); g.setLineDash([]);
+  g.fillStyle = FL.css('--muted'); g.font = `500 10px ${FL.css('--mono')}`; g.textAlign = 'right'; g.fillText('100%', w - 3, y100 - 6);
+}
+$('leaves').addEventListener('click', e => {
+  const b = S.beams[S.sel]; if (!b || !leafRange || S.busy) return;
+  const r = e.currentTarget.getBoundingClientRect(), q = leafRange.q0 + Math.floor((e.clientX - r.left) / leafRange.bw);
+  if (q < leafRange.q0 || q > leafRange.q1) return;
+  if (!b.leaves) b.leaves = Float32Array.from(ENG.conformal(S.G, b.angle));
+  b.leaves[q] = b.leaves[q] > 0.02 ? 0 : 1;
+  FL.audio.clink(); save(); update();
+});
+
+/* ---------- Inverse planning (Level 3) ---------- */
+function runOptimiser(done) {
+  if (S.beams.length < 3) return;
+  S.busy = true; renderPanel();
+  say('lim', 'The optimiser is trying thousands of leaf patterns, pushing dose into the tumour and away from the cord…');
+  const O = makeOptimiser(ENG, S.G, S.beams.map(b => ({ angle: b.angle, weight: 1 })), { tLo: 97, tHi: 106, cord: 40, kid: 24, hot: 112 });
+  let it = 0;
+  const frame = () => {
+    for (let k = 0; k < 4 && it < 60; k++, it++) O.step();
+    const res = O.result();
+    S.beams.forEach((b, i) => { b.leaves = res[i].leaves; b.weight = 1; });
+    FL.audio.tick();
+    compute(); draw(); drawLeaves();
+    if (it < 60) requestAnimationFrame(frame);
+    else {
+      S.busy = false; save(); update();
+      const m = S.res.metrics, cord = m.oars.find(o => o.id === 'cord');
+      say('lim', `Done. The cord now gets ${pct(cord.value)}% at most and ${pct(m.v95)}% of the tumour is covered. Look at the leaf strip: leaves in line with the cord are turned down, and their neighbours are turned up to make up for it.`);
+      if (done) done();
+    }
+  };
+  requestAnimationFrame(frame);
+}
+$('optimise').onclick = () => { FL.audio.whoosh(); runOptimiser(); };
+
+/* ---------- Delivery and results ---------- */
+function deliver() {
+  if (S.busy) return;
+  $('result').hidden = true;
+  if (!S.beams.length) { FL.showFail($('result'), { title: 'No beams yet', issues: ['Add at least one beam: tap the dashed ring around the patient.'] }); return; }
+  S.busy = true; renderPanel();
+  say('ros', `Patient is positioned and the lasers line up with the tattoos. ${S.L.patient.split(',')[0]} is lying still. Beam on!`);
+  FL.audio.beam();
+  if (FL.reduced) { S.busy = false; renderPanel(); return showResult(); }
+  const per = 700, n = S.beams.length, t0 = performance.now();
+  S.anim = { i: 0, done: 0, glow: 0, head: S.beams[0].angle };
+  const step = t => {
+    const e = Math.max(0, t - t0), i = Math.min(n - 1, Math.floor(e / per)), f = (e % per) / per;
+    if (i !== S.anim.i) { S.anim.i = i; FL.audio.blip(i * 2); }
+    S.anim.done = i; S.anim.glow = Math.min(1, (i + f) / n);
+    const prev = S.beams[Math.max(0, i - 1)].angle, cur = S.beams[i].angle;
+    let dA = cur - prev; if (dA > 180) dA -= 360; if (dA < -180) dA += 360;
+    S.anim.head = i === 0 ? cur : prev + dA * Math.min(1, f * 2.5);
+    draw();
+    if (e < per * n) requestAnimationFrame(step); else { S.anim = null; S.busy = false; renderPanel(); draw(); showResult(); }
+  };
+  requestAnimationFrame(step);
+}
+function hintFor(m) {
+  const L = S.L, n = S.beams.length;
+  if (n === 1) return 'One beam can\'t do it: it is strongest at the skin and fades with depth, so the tumour gets less than the healthy tissue in front of it. Add beams from other directions so they cross on the tumour.';
+  const badOar = m.oars.find(o => !o.ok);
+  if (L.mlc && badOar && badOar.id === 'cord' && S.beams.every(b => !b.leaves)) return 'Every beam that covers the horseshoe also passes through the spinal cord. Press Optimise leaves and let inverse planning shape each beam.';
+  if (L.mlc) {
+    const opp = []; S.beams.forEach((a, i) => S.beams.forEach((b, j) => { if (j > i && angDiff(a.angle, b.angle) > 170) opp.push(`${i + 1} and ${j + 1}`); }));
+    if (opp.length && !m.ok.v95) return `Beams ${opp[0]} face each other, so they share the same shadow of the cord and both turn down the same part of the tumour. Use an odd number of evenly spaced beams (try 7 with Space evenly), then optimise again.`;
+    if (!m.ok.v95) return 'Some of the tumour is under-dosed. More evenly spaced beams give the optimiser more freedom: try 7 beams, press Space evenly, then Optimise leaves.';
+  }
+  if (badOar) {
+    const hit = S.beams.map((b, i) => [b, i]).filter(([b]) => ENG.beamHitsOAR(S.G, b, badOar.id));
+    if (badOar.metric === 'max' && hit.length) { const [b, i] = hit[0]; return `Beam ${i + 1} at ${b.angle}° passes straight through the ${badOar.name.toLowerCase()}. Turn it so its path misses, or lower its weight.`; }
+    if (badOar.metric === 'mean') return `Too much of the ${badOar.name.toLowerCase()} sits inside the beams. Choose angles that cross less of it, for example beams that enter close to the tumour.`;
+    return `The ${badOar.name.toLowerCase()} gets too much from the edge of a beam. Move the nearest beam a little further away.`;
+  }
+  if (!m.ok.hot) {
+    let bi = 0, bv = -1; S.res.parts.forEach((p, i) => { const v = p[m.hotAt] * S.beams[i].weight; if (v > bv) { bv = v; bi = i; } });
+    return `The hotspot is ${pct(m.dmax)}%, mostly from beam ${bi + 1} where it enters the skin. Lower that beam's weight or add a beam from the opposite side to share the dose.`;
+  }
+  if (!m.ok.v95) return 'Part of the tumour is under-dosed: dose falls off across it. Add a beam from the other side, or raise the weight of the beam that reaches the cold edge.';
+  return 'Check the plan readings for what is over its limit.';
+}
+function showResult() {
+  const m = S.res.metrics, L = S.L, box = $('result'), st = STORY[L.id];
+  if (m.win) {
+    FL.setStars(2, L.id, m.stars);
+    const last = S.li === LEVELS.length - 1;
+    say('arjun', m.stars === 3 ? 'That is a plan I would sign today. Beautiful work.' : `${st.win.split('.')[0]}. Good plan! See the star goals for an even better one.`);
+    FL.showWin(box, {
+      chapter: 2, stars: m.stars, title: 'Plan approved',
+      summary: `${st.win} Coverage ${pct(m.v95)}%, hotspot ${pct(m.dmax)}%, ${m.nBeams} beam${m.nBeams > 1 ? 's' : ''}.${m.stars < 3 ? ' Three stars: meet the ★★★ goals under the plan check.' : ''}`,
+      physics: st.physics, card: st.card,
+      nextLabel: last ? 'Finish Chapter 2' : `Next: Level ${L.id + 1}, ${LEVELS[S.li + 1].name}`,
+      onNext: () => {
+        if (!last) return loadLevel(S.li + 1);
+        FL.chapterComplete(box, { title: 'Chapter 2 complete', text: 'Pak Hassan, Cik Nurul and Encik Tan all start treatment on time, with plans that protect their healthy organs. You used the same tools that treatment planners use every day: beam angles, weights, and IMRT optimisation.', pathway: 'Chapter 3, Morning Check: the linac reads 3% high on its morning test, and Mei Ling\'s first treatment depends on you finding out why.' });
+      }
+    });
+    FL.renderLevels($('levels'), LEVELS, S.li, FL.getStars(2), loadLevel);
+  } else {
+    const issues = [];
+    if (!m.ok.v95) issues.push(`Tumour covered: ${pct(m.v95)}% (goal at least ${L.v95}%).`);
+    if (!m.ok.hot) issues.push(`Hotspot: ${pct(m.dmax)}% (limit ${L.hot}%).`);
+    for (const o of m.oars) if (!o.ok) issues.push(`${o.name}: ${pct(o.value)}% ${o.metric} (limit ${o.limit}%).`);
+    FL.showFail(box, { title: 'Plan not approved yet', issues });
+    say('lim', hintFor(m));
+  }
+}
+$('go').onclick = deliver;
+$('reset').onclick = () => { if (S.busy) return; S.beams = []; S.sel = -1; S.probe = null; save(); FL.audio.remove(); $('result').hidden = true; say('arjun', STORY[S.L.id].intro); update(); };
+
+/* ---------- Teacher solution ---------- */
+FL.setupLock(() => {
+  if (S.busy) return;
+  const sol = STORY[S.L.id].solution;
+  S.beams = []; S.sel = -1; S.probe = null; $('result').hidden = true; S.busy = true; update();
+  say('lim', 'Watch how I build it: beams spread around the tumour, avoiding the organs we need to protect.');
+  let k = 0;
+  const addNext = () => {
+    if (k < sol.length) { S.beams.push(mkBeam(sol[k].angle, sol[k].weight)); S.sel = S.beams.length - 1; k++; FL.audio.place(); update(); setTimeout(addNext, FL.reduced ? 0 : 380); return; }
+    S.busy = false; save(); update();
+    if (STORY[S.L.id].optimise) runOptimiser(() => setTimeout(deliver, 500)); else setTimeout(deliver, 300);
+  };
+  addNext();
+});
+
+/* ---------- Boot ---------- */
+new ResizeObserver(() => { resize(); drawDVH(); if (S.L && S.L.mlc) drawLeaves(); }).observe($('stage'));
+FL.onTheme(() => { drawDVH(); if (S.L && S.L.mlc) drawLeaves(); draw(); });
+(function start() {
+  const stars = FL.getStars(2);
+  let first = 0; while (first < LEVELS.length - 1 && stars[LEVELS[first].id]) first++;
+  loadLevel(first);
+})();
+
+</script>
+</body>
+</html>
