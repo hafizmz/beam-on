@@ -910,7 +910,7 @@ function registerScreen(){
   <form id="regForm" class="regform" novalidate>
     <div class="field"><label for="rgName">Full name</label><input id="rgName" autocomplete="name" value="${esc(p.name||'')}" required></div>
     <div class="field"><label for="rgEmail">Email</label><input id="rgEmail" type="email" autocomplete="email" value="${esc(p.email||'')}" required></div>
-    <div class="field"><label for="rgInst">Institution or school <i>(optional)</i></label><input id="rgInst" autocomplete="organization" value="${esc(p.institution||'')}"></div>
+    <div class="field"><label for="rgInst">Institution or school</label><input id="rgInst" autocomplete="organization" value="${esc(p.institution||'')}" required></div>
     <div class="row2">
       <div class="field"><label for="rgRole">Role</label><select id="rgRole" required><option value="">Choose your role</option>${REG_ROLES.map(r=>`<option${p.role===r?' selected':''}>${r}</option>`).join('')}</select></div>
       <div class="field"><label for="rgCountry">Country</label><input id="rgCountry" autocomplete="country-name" value="${esc(p.country||'')}" required></div>
@@ -931,6 +931,7 @@ document.addEventListener('submit',e=>{
   let msg='';
   if(!p.name)msg='Enter your name.';
   else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email))msg='Enter a valid email address, like name@example.com.';
+  else if(!p.institution)msg='Enter your institution or school.';
   else if(!p.role)msg='Choose your role.';
   else if(!p.country)msg='Enter your country.';
   else if(!p.consent)msg='Tick the consent box to register.';
