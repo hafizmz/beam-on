@@ -251,9 +251,11 @@
     year: 'entry.1791770449', stage: 'entry.200189267', interest: 'entry.519842191', consent: 'entry.1405417863',
     favourite: 'entry.39961460', study: 'entry.1200602730', stars: 'entry.1861690002'
   };
-  FL.YEARS = ['Form 1–3', 'Form 4', 'Form 5', 'Form 6 / STPM', 'Matriculation or foundation', 'University', 'Teacher', 'Other'];
+  FL.YEARS = ['Form 1–3 / Year 7–9', 'Form 4 / Year 10 (SPM, O level, IGCSE)', 'Form 5 / Year 11 (SPM, O level, IGCSE)', 'Form 6 / STPM', 'A level or IB', 'Matriculation or foundation', 'University', 'Teacher', 'Other'];
   FL.STATES = ['Johor', 'Kedah', 'Kelantan', 'Kuala Lumpur', 'Labuan', 'Melaka', 'Negeri Sembilan', 'Pahang', 'Perak', 'Perlis', 'Pulau Pinang', 'Putrajaya', 'Sabah', 'Sarawak', 'Selangor', 'Terengganu', 'Outside Malaysia'];
   FL.profile = () => FL.store.get('profile', null);
+  /* A profile counts as complete when every required field is filled in. */
+  FL.profileComplete = () => { const p = FL.profile(); return !!(p && p.name && p.email && p.school && p.state && p.year && p.interest); };
   FL.playerName = () => { const p = FL.profile(); return (p && p.name) || 'friend'; };
   FL.totalStars = () => FL.CHAPTERS.reduce((s, c) => s + Object.values(FL.getStars(c.id)).reduce((a, b) => a + (b || 0), 0), 0);
 
@@ -345,17 +347,18 @@
   }
 
   /* Step 2 of sign-up and the "Send my details" button: open the organiser's form. */
-  FL.showSend = (stage = 'Before playing', extra = {}) => {
+  FL.showSend = (stage = 'Before playing', extra = {}, required = false) => {
     const href = FL.formLink(stage, extra);
+    const must = required && !!href;
     openDialog(`<span class="fl-kicker">${stage === 'After playing' ? 'Thank you' : 'One more step'}</span>
       <h2 id="fl-dlg-title">${stage === 'After playing' ? 'Send your feedback' : 'Send your details'}</h2>
-      ${href ? `<p>Your answers are ready on the organiser's form. Open it, check them and press <b>Submit</b>. Nothing is sent until you do.</p>`
+      ${href ? `<p>Your answers are ready on the organiser's form. Open it, check them and press <b>Submit</b>.${must ? ' You need to send your details before you start playing.' : ' Nothing is sent until you do.'}</p>`
              : `<p>The organiser has not added their form yet. Your details are saved on this device, and you can send them later from the menu.</p>`}
       <div class="fl-actions">
-        <button class="fl-btn alt" type="button" data-skip>${href ? 'Not now' : 'OK'}</button>
-        ${href ? `<a class="fl-btn" href="${esc(href)}" target="_blank" rel="noopener" data-open>Open the form</a>` : ''}
+        ${must ? '' : `<button class="fl-btn alt" type="button" data-skip>${href ? 'Not now' : 'OK'}</button>`}
+        ${href ? `<a class="fl-btn" href="${esc(href)}" target="_blank" rel="noopener" data-open>${must ? 'Open the form and start playing' : 'Open the form'}</a>` : ''}
       </div>`, (root, close) => {
-      root.querySelector('[data-skip]').onclick = close;
+      const skip = root.querySelector('[data-skip]'); if (skip) skip.onclick = close;
       const a = root.querySelector('[data-open]');
       if (a) a.addEventListener('click', () => { FL.store.set('sent:' + (stage === 'After playing' ? 'after' : 'before'), Date.now()); setTimeout(close, 300); });
     });
@@ -369,7 +372,7 @@
       <form class="fl-grid" novalidate>
         <div class="fl-f wide"><fieldset><legend>Now, how interested are you in a career in medical physics?</legend>${scale('fl-int2', prev.interest)}<div class="fl-ends"><span>1 · Not at all</span><span>5 · Very</span></div></fieldset></div>
         <div class="fl-f wide"><label for="fl-fav">Favourite chapter</label><select id="fl-fav">${opt(FL.CHAPTERS.map(c => c.id + '. ' + c.title), prev.favourite, 'Choose…')}</select></div>
-        <div class="fl-f wide"><label for="fl-study">Would you consider studying physics after SPM?</label><select id="fl-study">${opt(['Yes', 'Maybe', 'No', 'I already am'], prev.study, 'Choose…')}</select></div>
+        <div class="fl-f wide"><label for="fl-study">Would you consider studying physics after SPM, O level or IGCSE?</label><select id="fl-study">${opt(['Yes', 'Maybe', 'No', 'I already am'], prev.study, 'Choose…')}</select></div>
         <p class="fl-err fl-f wide" id="fl-err" hidden>Choose a number from 1 to 5 first.</p>
         <div class="fl-actions fl-f wide"><button class="fl-btn alt" type="button" data-cancel>Cancel</button><button class="fl-btn" type="submit">Next</button></div>
       </form>`, (root, close) => {
@@ -395,13 +398,13 @@
       <p>${editing ? 'Changes are saved on this device.' : 'The team needs a few details before your first day. Your name appears in the game.'}</p>
       <form class="fl-grid" novalidate>
         <div class="fl-f wide"><label for="fl-name">First name or nickname</label><input id="fl-name" maxlength="30" autocomplete="given-name" value="${esc(p.name || '')}" required></div>
-        <div class="fl-f wide"><label for="fl-email">Email <small>(optional)</small></label><input id="fl-email" type="email" maxlength="120" autocomplete="email" value="${esc(p.email || '')}"></div>
-        <div class="fl-f"><label for="fl-school">School</label><input id="fl-school" maxlength="80" autocomplete="organization" value="${esc(p.school || '')}"></div>
-        <div class="fl-f"><label for="fl-state">State</label><select id="fl-state">${opt(FL.STATES, p.state, 'Choose…')}</select></div>
-        <div class="fl-f wide"><label for="fl-year">Form or year</label><select id="fl-year">${opt(FL.YEARS, p.year, 'Choose…')}</select></div>
+        <div class="fl-f wide"><label for="fl-email">Email</label><input id="fl-email" type="email" maxlength="120" autocomplete="email" value="${esc(p.email || '')}" required></div>
+        <div class="fl-f"><label for="fl-school">School</label><input id="fl-school" maxlength="80" autocomplete="organization" value="${esc(p.school || '')}" required></div>
+        <div class="fl-f"><label for="fl-state">State</label><select id="fl-state" required>${opt(FL.STATES, p.state, 'Choose…')}</select></div>
+        <div class="fl-f wide"><label for="fl-year">Form or year</label><select id="fl-year" required>${opt(FL.YEARS, p.year, 'Choose…')}</select></div>
         <div class="fl-f wide"><fieldset><legend>How interested are you in a career in medical physics?</legend>${scale('fl-int', p.interest)}<div class="fl-ends"><span>1 · Not at all</span><span>5 · Very</span></div></fieldset></div>
         <label class="fl-check fl-f wide"><input type="checkbox" id="fl-consent"${p.consent ? ' checked' : ''}><span>Yes, the organiser may email me about medical physics outreach events.</span></label>
-        <p class="fl-privacy fl-f wide">Your details stay on this device. They only reach the organiser if you choose to send them on their form. If you are under 18, check with a parent or guardian before sharing your email.</p>
+        <p class="fl-privacy fl-f wide">All fields are needed to play. Next, you send them to the organiser on their Google Form; they are used only for medical physics outreach. If you are under 18, check with a parent or guardian before sharing your email.</p>
         <p class="fl-err fl-f wide" id="fl-err" hidden></p>
         <div class="fl-actions fl-f wide">${editing ? '<button class="fl-btn alt" type="button" data-cancel>Cancel</button>' : ''}<button class="fl-btn" type="submit">${editing ? 'Save' : 'Start my first day'}</button></div>
       </form>`, (root, close) => {
@@ -414,9 +417,14 @@
         const email = $$('#fl-email').value.trim();
         const consent = $$('#fl-consent').checked;
         let msg = '';
-        if (!name) msg = 'Enter a first name or nickname to start.';
-        else if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) msg = 'That email does not look complete. Check it, or leave it empty.';
-        else if (consent && !email) msg = 'Add an email so the organiser can contact you, or untick the box.';
+        const picked = root.querySelector('input[name="fl-int"]:checked');
+        if (!name) msg = 'Enter a first name or nickname.';
+        else if (!email) msg = 'Enter your email address.';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) msg = 'That email does not look complete. Check it and try again.';
+        else if (!$$('#fl-school').value.trim()) msg = 'Enter the name of your school.';
+        else if (!$$('#fl-state').value) msg = 'Choose your state.';
+        else if (!$$('#fl-year').value) msg = 'Choose your form or year.';
+        else if (!picked) msg = 'Choose how interested you are, from 1 to 5.';
         if (msg) { err.textContent = msg; err.hidden = false; return; }
         const r = root.querySelector('input[name="fl-int"]:checked');
         const prof = { name, email, school: $$('#fl-school').value.trim(), state: $$('#fl-state').value, year: $$('#fl-year').value,
@@ -425,7 +433,7 @@
         close();
         document.querySelectorAll('.fl-chip b').forEach(b => { b.textContent = name; });
         if (onDone) onDone(prof);
-        if (!editing) FL.showSend('Before playing');
+        if (!editing) FL.showSend('Before playing', {}, true);
       });
     });
   };
@@ -439,11 +447,11 @@
       b.className = 'fl-chip'; b.type = 'button'; b.title = 'Edit your details';
       b.innerHTML = 'Physicist <b></b>';
       b.querySelector('b').textContent = (FL.profile() || {}).name || 'Sign up';
-      b.onclick = () => FL.showSignup(() => location.reload(), !!FL.profile());
+      b.onclick = () => FL.showSignup(() => location.reload(), FL.profileComplete());
       group.insertBefore(b, group.firstChild);
     }
     /* Personalise only once a name exists, so {name} tokens wait for the sign-up. */
-    if (FL.profile()) FL.personalize();
+    if (FL.profileComplete()) FL.personalize();
     else FL.showSignup(() => { FL.personalize(); if (FL.onSignedUp) FL.onSignedUp(); });
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', FL.initPlayer); else setTimeout(FL.initPlayer, 0);

@@ -1,6 +1,6 @@
 # Beam On: First Light
 
-A six-chapter medical physics game for secondary school students (ages 15–17, SPM Physics). The player is the new medical physicist at a cancer centre in Malaysia, and every puzzle runs on school physics.
+A six-chapter medical physics game for secondary school students (ages 15–17, SPM, O level or IGCSE Physics). The player is the new medical physicist at a cancer centre in Malaysia, and every puzzle runs on school physics.
 
 **Play it:** https://hafizmz.github.io/beam-on/first-light/
 
@@ -17,7 +17,7 @@ A six-chapter medical physics game for secondary school students (ages 15–17, 
 
 - Each chapter takes 10–15 minutes and stands alone.
 - Every level has a password-locked **Show solution** button for demonstrations. Ask the organiser for the password.
-- Players sign up with a first name or nickname; email and other details are optional. Details stay in the player's browser until the player chooses to send them through the organiser's Google Form, where they press Submit themselves.
+- Players must sign up before playing: name or nickname, email, school, state, Form or year, and interest in medical physics (1–5). The game then opens the organiser's Google Form with these answers filled in for the player to submit. Contact consent is optional.
 - Progress is saved in the browser. Use **Clear progress on this device** on the menu page before the next group plays.
 
 ## Files
