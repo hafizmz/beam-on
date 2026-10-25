@@ -2,9 +2,21 @@
 
 A Theme Hospital-inspired browser game about running a radiotherapy department, built to show the many roles of the clinical medical physicist.
 
-**Play it:** https://hafizmz.github.io/beam-on/
+**Home page:** https://hafizmz.github.io/beam-on/
 
-**New: Beam On: First Light**, a six-chapter story game for secondary school students: https://hafizmz.github.io/beam-on/first-light/
+**Play it:** https://hafizmz.github.io/beam-on/play/
+
+**Beam On: First Light**, a six-chapter story game for secondary school students: https://hafizmz.github.io/beam-on/first-light/
+
+**Beam On! Junior**, mini-games about hospital machines for kindergarten and primary: https://hafizmz.github.io/beam-on/junior/
+
+## Files
+
+- `index.html`: home page linking all three games
+- `play/index.html`: Beam On!
+- `first-light/`: Beam On: First Light
+- `junior/index.html`: Beam On! Junior
+- `qr.svg`: QR code for the home page
 
 ## What you do
 
