@@ -68,6 +68,8 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-
 
 footer{margin-top:34px;padding-top:16px;border-top:3px dashed var(--grey);display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;color:var(--ink-soft);font-size:15px}
 footer p{margin:0;max-width:62ch}
+.credit{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:3px solid var(--ink);border-radius:16px;padding:10px 14px;color:var(--ink)!important;box-shadow:3px 3px 0 var(--ink)}
+.credit svg{width:26px;height:26px;flex:none;margin-top:1px}
 footer a{color:var(--ink);font-weight:700}
 .linkish{background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;color:var(--ink-soft);font-size:15px}
 
@@ -267,6 +269,7 @@ table.recent td.n,table.recent th.n{text-align:right}
     <footer>
       <p id="teach"></p>
       <p id="privacy"></p>
+      <p id="credit" class="credit"></p>
       <p><a href="https://hafizmz.github.io/beam-on" target="_blank" rel="noopener" id="older"></a> · <button class="linkish" id="reset"></button></p>
     </footer>
   </section>
@@ -326,6 +329,7 @@ function save(){try{localStorage.setItem('bojr',JSON.stringify(state))}catch(e){
 /* ---------- words ---------- */
 const S={
  tester:{en:'Tester',ms:'Penguji'},
+ credit:{en:'Thank you to <b>Maya Al-Zahra</b> for the voice-over! Maya was born on 7 November, the same birthday as Marie Curie. That day is celebrated around the world as International Day of Medical Physics.',ms:'Terima kasih kepada <b>Maya Al-Zahra</b> untuk suara latar! Maya lahir pada 7 November, sama dengan tarikh lahir Marie Curie. Hari itu diraikan di seluruh dunia sebagai Hari Fizik Perubatan Antarabangsa.'},
  privacy:{en:'Privacy: to improve the game we count anonymous play data on this site: age, mode, language, room, marks, time taken and device type. Names and pictures stay on this device and are never sent.',ms:'Privasi: untuk menambah baik permainan ini, kami mengira data main tanpa nama: umur, mod, bahasa, bilik, markah, masa dan jenis peranti. Nama dan gambar kekal dalam peranti ini dan tidak pernah dihantar.'},
  sub:{en:'Meet the machines in the hospital',ms:'Jom kenali mesin di hospital'},
  voiceT:{en:'Reading voice',ms:'Suara bacaan'},voiceAuto:{en:'Automatic (best match)',ms:'Automatik (paling sesuai)'},
@@ -615,7 +619,7 @@ function renderTop(){
 function renderHub(){
  renderTop();
  setWords($('#hello'),me()?tm('hello'):t('newT'));
- {const vb=$('#helloVoice'),src=voForHub();vb.hidden=!src||!me();vb.innerHTML=`<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="${INK}"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="${INK}" stroke-width="2" stroke-linecap="round"/></svg><span>${t('listen')}</span>`;vb.setAttribute('aria-label',t('listen'));if(!src)stopVO();setTimeout(maybeAutoVO,0)}
+ {const vb=$('#helloVoice'),src=voForHub();vb.hidden=!src||!me();vb.innerHTML=`<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="${INK}"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="${INK}" stroke-width="2" stroke-linecap="round"/></svg><span>${t('listen')}</span>`;vb.setAttribute('aria-label',t('listen')+' (Maya Al-Zahra)');vb.title=(state.lang==='ms'?'Suara: ':'Voice: ')+'Maya Al-Zahra';if(!src)stopVO();setTimeout(maybeAutoVO,0)}
  const p=me(),b=bestOf(p,state.mode),tot=totalOf(p,state.mode);
  $('#scoreBtn').innerHTML=`<svg viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1" fill="${SKY}" stroke="${INK}" stroke-width="2"/><rect x="10" y="6" width="4" height="15" rx="1" fill="${SUN}" stroke="${INK}" stroke-width="2"/><rect x="17" y="9" width="4" height="12" rx="1" fill="${CORAL}" stroke="${INK}" stroke-width="2"/></svg><span>${t('scoreT')}</span>`;
  $('#totalTag').textContent=`${t('total')}: ${tot} / ${MAXT}`;
@@ -623,7 +627,7 @@ function renderHub(){
  const all=ROOMS.every(r=>(b[r]||0)>0);
  const c=$('#cert');c.hidden=!all;
  if(all)c.innerHTML=`<svg viewBox="0 0 80 96"><path d="M24 56L14 92l14-6 8 10 6-34M56 56l10 36-14-6-8 10-6-34" fill="${CORAL}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="38" r="32" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="40" cy="38" r="24" fill="${SKY}" stroke="${INK}" stroke-width="3"/><path d="M40 22l4.7 9.6 10.5 1.5-7.6 7.4 1.8 10.5L40 46l-9.4 5 1.8-10.5-7.6-7.4 10.5-1.5z" fill="${SUN}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/></svg><div><h2>${esc(t('certT'))}</h2><p><b>${esc(t('certName'))}</b></p><p>${t('certB')} <b>${tot} / ${MAXT}</b></p></div>`;
- $('#teach').textContent=t('teach');$('#privacy').textContent=t('privacy');$('#older').textContent=t('older');$('#reset').textContent=t('resetMine');$('#reset').dataset.arm='';
+ $('#teach').textContent=t('teach');$('#privacy').textContent=t('privacy');$('#credit').innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="${SUN}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/></svg><span>${t('credit')}</span>`;$('#older').textContent=t('older');$('#reset').textContent=t('resetMine');$('#reset').dataset.arm='';
 }
 function showHub(){mMode('hub');if(current){current.stop();current=null}curId=null;closeOverlay();$('#play').hidden=true;$('#scores').hidden=true;$('#hub').hidden=false;renderHub();window.scrollTo(0,0)}
 function openGame(id){
