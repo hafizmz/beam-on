@@ -17,13 +17,15 @@ A six-chapter medical physics game for secondary school students (ages 15–17, 
 
 - Each chapter takes 10–15 minutes and stands alone.
 - Every level has a password-locked **Show solution** button for demonstrations. Ask the organiser for the password.
-- Players must sign up before playing: name or nickname, email, school, state, Form or year, and interest in medical physics (1–5). The game then opens the organiser's Google Form with these answers filled in for the player to submit. Contact consent is optional.
+- Players sign up before playing with a name or nickname, school, state, Form or year, interest in medical physics (1–5) and age group. Players under 18 must confirm that a parent or guardian agrees. Email is optional and asked only from players who want news of outreach events. The game then opens the organiser's Google Form with these answers filled in for the player to submit.
+- Privacy: see the bilingual [privacy notice](privacy.html) (English and Bahasa Malaysia), written for the Personal Data Protection Act 2010 as amended in 2024.
 - Progress is saved in the browser. Use **Clear progress on this device** on the menu page before the next group plays.
 
 ## Files
 
 - `index.html`: chapter menu, career cards, pathway, teacher notes
 - `ch1.html` … `ch6.html`: the chapters
+- `privacy.html`: privacy notice in English and Bahasa Malaysia
 - `common.css`, `common.js`: shared styles, music and sound, progress, sign-up, solution lock
 
 No build step and no server: plain HTML, CSS and JavaScript. Chapter 1 loads three.js from cdnjs for its 3D view. Music and sound effects are generated live with the Web Audio API.
