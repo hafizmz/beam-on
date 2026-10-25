@@ -254,6 +254,7 @@ table.recent td.n,table.recent th.n{text-align:right}
     <div class="cert" id="cert" hidden></div>
     <footer>
       <p id="teach"></p>
+      <p id="privacy"></p>
       <p><a href="https://hafizmz.github.io/beam-on" target="_blank" rel="noopener" id="older"></a> · <button class="linkish" id="reset"></button></p>
     </footer>
   </section>
@@ -288,6 +289,20 @@ const $=s=>document.querySelector(s);
 const state={mode:'little',lang:'en',sound:true,music:true,voice:{en:'',ms:''},players:[],cur:null};
 try{const s=JSON.parse(localStorage.getItem('bojr')||'null');if(s){Object.assign(state,s);if(!Array.isArray(state.players))state.players=[];delete state.stars;state.voice=Object.assign({en:'',ms:''},s.voice||{});}}catch(e){}
 const ROOMS=['xray','us','mri','rt'];
+/* ---------- anonymous play data (no names or pictures are ever sent) ---------- */
+const DATA={sheetUrl:'',goatcounter:'',version:'jr-2026-10-25'};
+const rid=n=>{const a='abcdefghjkmnpqrstuvwxyz23456789';let r='';for(let i=0;i<n;i++)r+=a[Math.floor(Math.random()*a.length)];return r};
+const SESSION=rid(8);
+let DEVICE_ID='';try{DEVICE_ID=localStorage.getItem('bojr-dev')||'';if(!DEVICE_ID){DEVICE_ID=rid(10);localStorage.setItem('bojr-dev',DEVICE_ID)}}catch(e){DEVICE_ID='nostore'}
+function deviceType(){const w=Math.min(screen.width||0,screen.height||0),touch=(navigator.maxTouchPoints||0)>0;if(/Mobi|Android.+Mobile|iPhone/i.test(navigator.userAgent)||(touch&&w<600))return 'phone';if(touch&&w<1100)return 'tablet';return 'computer'}
+function track(event,extra){
+ const p=state.players.find(q=>q.id===state.cur);
+ if(p&&!p.anon){p.anon=rid(8);try{localStorage.setItem('bojr',JSON.stringify(state))}catch(e){}}
+ const row=Object.assign({event,session:SESSION,device_id:DEVICE_ID,player:p?p.anon:'',age:p&&p.age||'',mode:state.mode,lang:state.lang,device:deviceType(),version:DATA.version},extra||{});
+ if(DATA.sheetUrl){try{fetch(DATA.sheetUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(row),keepalive:true}).catch(()=>{})}catch(e){}}
+ if(DATA.goatcounter&&event!=='newplayer'){try{window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:event+(row.room?'/'+row.room:'')+'/'+state.mode,title:event,event:true})}catch(e){}}
+}
+if(DATA.goatcounter){try{const g=document.createElement('script');g.async=true;g.dataset.goatcounter='https://'+DATA.goatcounter+'.goatcounter.com/count';g.src='https://gc.zgo.at/count.js';document.head.appendChild(g)}catch(e){}}
 function me(){return state.players.find(p=>p.id===state.cur)||null}
 function myName(){const p=me();return p?p.name:''}
 function bestOf(p,mode){return Object.assign({xray:0,us:0,mri:0,rt:0},p&&p.best&&p.best[mode]||{})}
@@ -298,6 +313,7 @@ function save(){try{localStorage.setItem('bojr',JSON.stringify(state))}catch(e){
 
 /* ---------- words ---------- */
 const S={
+ privacy:{en:'Privacy: to improve the game we count anonymous play data on this site: age, mode, language, room, marks, time taken and device type. Names and pictures stay on this device and are never sent.',ms:'Privasi: untuk menambah baik permainan ini, kami mengira data main tanpa nama: umur, mod, bahasa, bilik, markah, masa dan jenis peranti. Nama dan gambar kekal dalam peranti ini dan tidak pernah dihantar.'},
  sub:{en:'Meet the machines in the hospital',ms:'Jom kenali mesin di hospital'},
  voiceT:{en:'Reading voice',ms:'Suara bacaan'},voiceAuto:{en:'Automatic (best match)',ms:'Automatik (paling sesuai)'},
  voiceHint:{en:"Voices come from this device. Names with 'Natural' or 'Google' usually sound friendliest.",ms:"Suara datang daripada peranti ini. Nama dengan 'Natural' atau 'Google' biasanya paling mesra."},
@@ -558,7 +574,7 @@ function renderHub(){
  const all=ROOMS.every(r=>(b[r]||0)>0);
  const c=$('#cert');c.hidden=!all;
  if(all)c.innerHTML=`<svg viewBox="0 0 80 96"><path d="M24 56L14 92l14-6 8 10 6-34M56 56l10 36-14-6-8 10-6-34" fill="${CORAL}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="38" r="32" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="40" cy="38" r="24" fill="${SKY}" stroke="${INK}" stroke-width="3"/><path d="M40 22l4.7 9.6 10.5 1.5-7.6 7.4 1.8 10.5L40 46l-9.4 5 1.8-10.5-7.6-7.4 10.5-1.5z" fill="${SUN}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/></svg><div><h2>${esc(t('certT'))}</h2><p>${t('certB')} <b>${tot} / 400</b></p></div>`;
- $('#teach').textContent=t('teach');$('#older').textContent=t('older');$('#reset').textContent=t('resetMine');$('#reset').dataset.arm='';
+ $('#teach').textContent=t('teach');$('#privacy').textContent=t('privacy');$('#older').textContent=t('older');$('#reset').textContent=t('resetMine');$('#reset').dataset.arm='';
 }
 function showHub(){mMode('hub');if(current){current.stop();current=null}curId=null;closeOverlay();$('#play').hidden=true;$('#scores').hidden=true;$('#hub').hidden=false;renderHub();window.scrollTo(0,0)}
 function openGame(id){
@@ -567,7 +583,7 @@ function openGame(id){
  $('#hub').hidden=true;$('#scores').hidden=true;$('#play').hidden=false;gameStart=performance.now();mMode('room');
  $('#gTitle').textContent=t('room.'+id);$('#backTxt').textContent=t('back');
  $('#chips').innerHTML='';$('#controls').innerHTML='';
- current=GAMES[id]($('#stage'));window.scrollTo(0,0);
+ current=GAMES[id]($('#stage'));track('start',{room:id});window.scrollTo(0,0);
 }
 let ov=null;
 function closeOverlay(){if(ov){ov.remove();ov=null}}
@@ -583,6 +599,7 @@ function score(id,acc,secs,quizOk){
  const total=parts.reduce((a,x)=>a+x[1],0);let isBest=false;const p=me();
  if(p){p.best=p.best||{};p.best[state.mode]=p.best[state.mode]||{};const prev=p.best[state.mode][id]||0;if(total>prev){p.best[state.mode][id]=total;isBest=prev>0}
   p.plays=p.plays||[];p.plays.unshift({r:id,m:state.mode,s:total,d:Date.now(),t:Math.round(secs)});p.plays=p.plays.slice(0,40);save()}
+ track('finish',{room:id,marks:total,accuracy:parts[1][1],speed:parts[2][1],question:parts[3]?parts[3][1]:'',seconds:Math.round(secs),stars:starsFor(total)});
  result(id,total,parts,secs,isBest);
 }
 function quiz(id,cb){
@@ -654,7 +671,7 @@ function newPlayer(){
  o.querySelectorAll('input[name=age]').forEach(r=>r.onchange=()=>{sfx('tap');upd()});
  inp.addEventListener('input',upd);inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!go.disabled)go.click()});
  o.querySelectorAll('input[name=av]').forEach(r=>r.onchange=()=>sfx('tap'));
- go.onclick=()=>{const n=clean();if(!n)return;const av=(o.querySelector('input[name=av]:checked')||{}).value||'a1';const id='p'+Date.now().toString(36);const age=ageV();if(!age)return;state.players.push({id,name:n,av,age,best:{little:{},big:{}},plays:[]});state.cur=id;state.mode=modeOf(age);save();sfx('good');closeOverlay();showHub()};
+ go.onclick=()=>{const n=clean();if(!n)return;const av=(o.querySelector('input[name=av]:checked')||{}).value||'a1';const id='p'+Date.now().toString(36);const age=ageV();if(!age)return;state.players.push({id,name:n,av,age,best:{little:{},big:{}},plays:[]});state.cur=id;state.mode=modeOf(age);save();track('newplayer');sfx('good');closeOverlay();showHub()};
  const bk=o.querySelector('#pBack');if(bk)bk.onclick=playerPicker;
  setTimeout(()=>inp.focus(),80);
 }
