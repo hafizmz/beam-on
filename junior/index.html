@@ -290,7 +290,7 @@ const state={mode:'little',lang:'en',sound:true,music:true,voice:{en:'',ms:''},p
 try{const s=JSON.parse(localStorage.getItem('bojr')||'null');if(s){Object.assign(state,s);if(!Array.isArray(state.players))state.players=[];delete state.stars;state.voice=Object.assign({en:'',ms:''},s.voice||{});}}catch(e){}
 const ROOMS=['xray','us','mri','rt'];
 /* ---------- anonymous play data (no names or pictures are ever sent) ---------- */
-const DATA={sheetUrl:'',goatcounter:'',version:'jr-2026-10-25'};
+const DATA={sheetUrl:'https://script.google.com/macros/s/AKfycbyJ9tJpAwTg78FJ465yqfdlCXkbXajhUmhI5c_4MMOO_HhfqQfvsSRxnreGD3d9KBi0zQ/exec',goatcounter:'',version:'jr-2026-10-25'};
 const rid=n=>{const a='abcdefghjkmnpqrstuvwxyz23456789';let r='';for(let i=0;i<n;i++)r+=a[Math.floor(Math.random()*a.length)];return r};
 const SESSION=rid(8);
 let DEVICE_ID='';try{DEVICE_ID=localStorage.getItem('bojr-dev')||'';if(!DEVICE_ID){DEVICE_ID=rid(10);localStorage.setItem('bojr-dev',DEVICE_ID)}}catch(e){DEVICE_ID='nostore'}
