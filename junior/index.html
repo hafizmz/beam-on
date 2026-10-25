@@ -176,6 +176,7 @@ footer a{color:var(--ink);font-weight:700}
 .pbtn.on{background:#FFF2CC}
 .xbtn{border:3px solid var(--ink);border-radius:12px;background:var(--card);min-height:50px;padding:0 12px;cursor:pointer;font:600 14px var(--display);flex:none}
 .xbtn.arm{background:var(--coral);color:var(--card)}
+.thanks{text-align:center;font:600 18px var(--display);margin:-6px 0 0;color:var(--ink-soft);text-wrap:balance}
 .score{text-align:center;font-family:var(--display);font-variant-numeric:tabular-nums;margin:-4px 0 0}
 .score b{font-size:64px;line-height:1}
 .score span{font-size:24px;color:var(--ink-soft)}
@@ -299,7 +300,7 @@ const W=640,H=440,INK='#123C43',SUN='#FFC53D',CORAL='#F26B4F',SKY='#58B6E0',LEAF
 const $=s=>document.querySelector(s);
 const state={mode:'little',lang:'en',sound:true,music:true,voice:{en:'',ms:''},players:[],cur:null};
 try{const s=JSON.parse(localStorage.getItem('bojr')||'null');if(s){Object.assign(state,s);if(!Array.isArray(state.players))state.players=[];delete state.stars;state.voice=Object.assign({en:'',ms:''},s.voice||{});}}catch(e){}
-const ROOMS=['xray','us','mri','rt','nm'];const MAXT=ROOMS.length*100;
+const ROOMS=['xray','us','mri','rt','nm'];const MAXT=100;
 /* ---------- anonymous play data (no names or pictures are ever sent) ---------- */
 const DATA={sheetUrl:'https://script.google.com/macros/s/AKfycbyJ9tJpAwTg78FJ465yqfdlCXkbXajhUmhI5c_4MMOO_HhfqQfvsSRxnreGD3d9KBi0zQ/exec',goatcounter:'',version:'jr-2026-10-25'};
 const rid=n=>{const a='abcdefghjkmnpqrstuvwxyz23456789';let r='';for(let i=0;i<n;i++)r+=a[Math.floor(Math.random()*a.length)];return r};
@@ -317,7 +318,7 @@ if(DATA.goatcounter){try{const g=document.createElement('script');g.async=true;g
 function me(){return state.players.find(p=>p.id===state.cur)||null}
 function myName(){const p=me();return p?p.name:''}
 function bestOf(p,mode){return Object.assign({xray:0,us:0,mri:0,rt:0,nm:0},p&&p.best&&p.best[mode]||{})}
-function totalOf(p,mode){const b=bestOf(p,mode);return ROOMS.reduce((a,r)=>a+(b[r]||0),0)}
+function totalOf(p,mode){const b=bestOf(p,mode);return Math.round(ROOMS.reduce((a,r)=>a+(b[r]||0),0)/ROOMS.length)}
 function starsFor(sc){return sc>=85?3:sc>=60?2:sc>0?1:0}
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function save(){try{localStorage.setItem('bojr',JSON.stringify(state))}catch(e){}}
@@ -334,7 +335,7 @@ const S={
  voiceTest:{en:'Try',ms:'Cuba'},done:{en:'Done',ms:'Selesai'},
  little:{en:'Little · 4–6',ms:'Kecil · 4–6'},big:{en:'Big · 7–12',ms:'Besar · 7–12'},
  'hello.little':{en:"Hi {name}! Today, YOU are the medical physicist! Your job: check the hospital machines so they are safe. Let's pick a room!",ms:'Hai {name}! Hari ini, KAMU jadi ahli fizik perubatan! Tugas kamu: periksa mesin hospital supaya selamat. Jom pilih bilik!'},
- 'hello.big':{en:"Welcome, medical physicist {name}! Medical physicists make sure hospital machines work safely and correctly. Score marks in every room to earn your Junior Machine Checker badge.",ms:'Selamat datang, ahli fizik perubatan {name}! Ahli fizik perubatan memastikan mesin hospital berfungsi dengan selamat dan tepat. Kumpul markah di setiap bilik untuk dapatkan lencana Pemeriksa Mesin Muda.'},
+ 'hello.big':{en:"Welcome, medical physicist {name}! Medical physicists make sure hospital machines work safely and correctly. Score marks in every room to earn your Junior Medical Physicist badge.",ms:'Selamat datang, ahli fizik perubatan {name}! Ahli fizik perubatan memastikan mesin hospital berfungsi dengan selamat dan tepat. Kumpul markah di setiap bilik untuk dapatkan lencana Ahli Fizik Perubatan Junior.'},
  'room.xray':{en:'X-ray',ms:'X-ray'},'tag.xray':{en:'See the bones',ms:'Lihat tulang'},
  'room.us':{en:'Ultrasound',ms:'Ultrabunyi'},'tag.us':{en:'Pictures made of sound',ms:'Gambar daripada bunyi'},
  'room.mri':{en:'MRI',ms:'MRI'},'tag.mri':{en:'A giant magnet',ms:'Magnet gergasi'},
@@ -344,9 +345,9 @@ const S={
  wrongQ:{en:'Good try! The answer is:',ms:'Cubaan yang baik! Jawapannya:'},next:{en:'Next',ms:'Seterusnya'},listen:{en:'Listen',ms:'Dengar'},
  teach:{en:'For teachers and parents: Little mode uses big pictures and short instructions an adult can read out. Big mode adds real facts, a quick question in each room, and a daily machine check.',ms:'Untuk guru dan ibu bapa: Mod Kecil guna gambar besar dan arahan pendek yang boleh dibacakan oleh orang dewasa. Mod Besar menambah fakta sebenar, soalan ringkas di setiap bilik dan pemeriksaan mesin harian.'},
  older:{en:'Age 15+? Play Beam On!',ms:'Umur 15+? Main Beam On!'},reset:{en:'Reset stars',ms:'Set semula bintang'},
- certT:{en:'{name}, Junior Machine Checker',ms:'{name}, Pemeriksa Mesin Muda'},
+ certT:{en:'I am a Junior Medical Physicist!',ms:'Saya ialah ahli fizik perubatan junior!'},certName:{en:'{name}, Junior Medical Physicist',ms:'{name}, Ahli Fizik Perubatan Junior'},
  certB:{en:'You checked every room in the hospital. Total marks:',ms:'Kamu telah memeriksa setiap bilik di hospital. Jumlah markah:'},
- well:{en:'Well done, {name}!',ms:'Syabas, {name}!'},
+ well:{en:'Thank you, {name}!',ms:'Terima kasih, {name}!'},thanks:{en:'You checked the {room} room, Junior Medical Physicist! Here are your marks and stars:',ms:'Kamu telah memeriksa bilik {room}, Ahli Fizik Perubatan Junior! Ini markah dan bintang kamu:'},
  'mk.done':{en:'Finished the job',ms:'Tugas selesai'},'mk.acc':{en:'Accuracy',ms:'Ketepatan'},'mk.speed':{en:'Speed',ms:'Kelajuan'},'mk.quiz':{en:'Question',ms:'Soalan'},
  time:{en:'Time',ms:'Masa'},sec:{en:'s',ms:'s'},newBest:{en:'New best!',ms:'Rekod baharu!'},
  scoreT:{en:'Score chart',ms:'Carta markah'},myBest:{en:"{name}'s best marks",ms:'Markah terbaik {name}'},
@@ -615,7 +616,7 @@ function renderHub(){
  $('#rooms').innerHTML=ROOMS.map(id=>{const sc=b[id]||0,st=starsFor(sc);return `<button class="room" data-room="${id}" style="--c:${ROOMCOL[id]}"><div class="art">${ROOMART[id]}</div><div class="meta"><h2>${t('room.'+id)}</h2><span class="tag">${t('tag.'+id)}</span><div class="stars" aria-label="${st} of 3 stars, ${sc} ${t('marksOf')}">${[1,2,3].map(n=>starSVG(st>=n)).join('')}<span class="mark">${sc?sc+'/100':''}</span></div></div></button>`}).join('');
  const all=ROOMS.every(r=>(b[r]||0)>0);
  const c=$('#cert');c.hidden=!all;
- if(all)c.innerHTML=`<svg viewBox="0 0 80 96"><path d="M24 56L14 92l14-6 8 10 6-34M56 56l10 36-14-6-8 10-6-34" fill="${CORAL}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="38" r="32" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="40" cy="38" r="24" fill="${SKY}" stroke="${INK}" stroke-width="3"/><path d="M40 22l4.7 9.6 10.5 1.5-7.6 7.4 1.8 10.5L40 46l-9.4 5 1.8-10.5-7.6-7.4 10.5-1.5z" fill="${SUN}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/></svg><div><h2>${esc(t('certT'))}</h2><p>${t('certB')} <b>${tot} / ${MAXT}</b></p></div>`;
+ if(all)c.innerHTML=`<svg viewBox="0 0 80 96"><path d="M24 56L14 92l14-6 8 10 6-34M56 56l10 36-14-6-8 10-6-34" fill="${CORAL}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="38" r="32" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="40" cy="38" r="24" fill="${SKY}" stroke="${INK}" stroke-width="3"/><path d="M40 22l4.7 9.6 10.5 1.5-7.6 7.4 1.8 10.5L40 46l-9.4 5 1.8-10.5-7.6-7.4 10.5-1.5z" fill="${SUN}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/></svg><div><h2>${esc(t('certT'))}</h2><p><b>${esc(t('certName'))}</b></p><p>${t('certB')} <b>${tot} / ${MAXT}</b></p></div>`;
  $('#teach').textContent=t('teach');$('#privacy').textContent=t('privacy');$('#older').textContent=t('older');$('#reset').textContent=t('resetMine');$('#reset').dataset.arm='';
 }
 function showHub(){mMode('hub');if(current){current.stop();current=null}curId=null;closeOverlay();$('#play').hidden=true;$('#scores').hidden=true;$('#hub').hidden=false;renderHub();window.scrollTo(0,0)}
@@ -655,7 +656,7 @@ function result(id,total,parts,secs,isBest){
  sfx('win');
  const big=state.mode==='big',st=starsFor(total),p=me();
  const rows=parts.map(([k,v,m])=>`<div class="mrow"><span>${t(k)}</span><i><b style="width:${v/m*100}%"></b></i><span class="v">${v} / ${m}</span></div>`).join('')+`<div class="mrow time"><span>${t('time')}</span><span></span><span class="v">${Math.round(secs)} ${t('sec')}</span></div>`;
- const o=overlay(`<div class="bigstars">${[1,2,3].map((n,i)=>starSVG(st>=n).replace('<svg','<svg style="animation-delay:'+(i*.15)+'s"')).join('')}</div><h2>${esc(t('well'))}</h2><p class="score"><b>${total}</b><span> / 100</span>${isBest?`<span class="best">${t('newBest')}</span>`:''}</p><div class="marks">${rows}</div><p style="font-size:18px;text-align:center" id="rFact"></p>${big?`<div class="tip">${p?avatarSVG(p.av):''}<p>${t('tip.'+id)}</p></div>`:''}<div class="row"><button class="cta" id="rHome">${t('home')}</button><button class="cta alt" id="rAgain">${t('replay')}</button><button class="cta alt" id="rChart">${t('scoreT')}</button></div>`);
+ const o=overlay(`<div class="bigstars">${[1,2,3].map((n,i)=>starSVG(st>=n).replace('<svg','<svg style="animation-delay:'+(i*.15)+'s"')).join('')}</div><h2>${esc(t('well'))}</h2><p class="thanks">${t('thanks').replace('{room}',t('room.'+id))}</p><p class="score"><b>${total}</b><span> / 100</span>${isBest?`<span class="best">${t('newBest')}</span>`:''}</p><div class="marks">${rows}</div><p style="font-size:18px;text-align:center" id="rFact"></p>${big?`<div class="tip">${p?avatarSVG(p.av):''}<p>${t('tip.'+id)}</p></div>`:''}<div class="row"><button class="cta" id="rHome">${t('home')}</button><button class="cta alt" id="rAgain">${t('replay')}</button><button class="cta alt" id="rChart">${t('scoreT')}</button></div>`);
  o.querySelector('#rHome').onclick=()=>{closeOverlay();showHub()};
  o.querySelector('#rAgain').onclick=()=>openGame(id);
  o.querySelector('#rChart').onclick=()=>{closeOverlay();showScores()};
