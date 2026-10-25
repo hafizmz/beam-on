@@ -129,6 +129,19 @@ details.qlog p{margin:6px 0 0;color:var(--ink-2)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .big{padding:10px 18px;font-size:15px}
+.regform{display:grid;gap:12px}
+.field{display:grid;gap:5px;min-width:0}
+.field label{font-size:13px;font-weight:700;color:var(--ink-2)}
+.field label i{font-style:normal;font-weight:400;color:var(--ink-3)}
+.field input,.field select{width:100%;font:inherit;font-size:15px;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.field input:focus,.field select:focus{outline:2px solid var(--phys);outline-offset:1px;border-color:var(--phys)}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.row2{grid-template-columns:minmax(0,1fr)}}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;cursor:pointer}
+.check input{width:18px;height:18px;margin-top:2px;flex:none;accent-color:var(--phys)}
+.err{margin:0;min-height:1.2em;color:var(--danger);font-size:14px;font-weight:700}
+.note{font-size:13px;color:var(--ink-3)}
+.linkbtn{border:0;background:none;padding:0;color:var(--phys);font-weight:700;cursor:pointer;text-decoration:underline}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -138,7 +151,7 @@ details.qlog p{margin:6px 0 0;color:var(--ink-2)}
   <header class="top">
     <div class="brand">
       <div class="lamp" aria-hidden="true"><span></span></div>
-      <div><h1>Beam On!</h1><small>Radiotherapy department</small></div>
+      <div><h1>Beam On!</h1><small id="tPlayer">Radiotherapy department</small></div>
     </div>
     <div class="stat"><b>Bank</b><span id="tCash">RM 15.00M</span></div>
     <div class="stat"><b>Reputation</b><span id="tRep">50%</span><div class="repbar"><i id="tRepBar" style="width:50%"></i></div></div>
@@ -877,9 +890,59 @@ function loadSave(){try{const t=localStorage.getItem(SAVE_KEY);return t?JSON.par
 const modal=document.getElementById('modal'),card=document.getElementById('modalCard');
 function showModal(html){card.innerHTML=html;modal.hidden=false;modalOpen=true}
 function hideModal(){modal.hidden=true;modalOpen=false;curQ=null}
+/* ---------- player registration ---------- */
+const REG_KEY='beam-on-player-v1';
+// To collect registrations centrally, paste a Google Form "formResponse" URL here and each question's entry ID.
+const REG_FORM={url:'',fields:{name:'',email:'',institution:'',role:'',country:'',consent:''}};
+const REG_ROLES=['Student (school)','Student (university)','Medical physicist','Radiation therapist','Radiation oncologist','Teacher or lecturer','Other healthcare worker','Other'];
+function getPlayer(){try{return JSON.parse(localStorage.getItem(REG_KEY)||'null')}catch(e){return null}}
+function savePlayer(p){try{localStorage.setItem(REG_KEY,JSON.stringify(p))}catch(e){}}
+let PLAYER=getPlayer();
+function sendRegistration(p){
+  if(!REG_FORM.url)return;
+  try{const fd=new FormData();for(const k in REG_FORM.fields){if(REG_FORM.fields[k])fd.append(REG_FORM.fields[k],k==='consent'?'Yes':(p[k]||''))}
+    fetch(REG_FORM.url,{method:'POST',mode:'no-cors',body:fd}).catch(()=>{})}catch(e){}
+}
+function registerScreen(){
+  const p=PLAYER||{};
+  showModal(`<p class="eyebrow amber">Player registration</p><h2>Before you open the department</h2>
+  <p>Tell us who is playing. It takes less than a minute.</p>
+  <form id="regForm" class="regform" novalidate>
+    <div class="field"><label for="rgName">Full name</label><input id="rgName" autocomplete="name" value="${esc(p.name||'')}" required></div>
+    <div class="field"><label for="rgEmail">Email</label><input id="rgEmail" type="email" autocomplete="email" value="${esc(p.email||'')}" required></div>
+    <div class="field"><label for="rgInst">Institution or school <i>(optional)</i></label><input id="rgInst" autocomplete="organization" value="${esc(p.institution||'')}"></div>
+    <div class="row2">
+      <div class="field"><label for="rgRole">Role</label><select id="rgRole" required><option value="">Choose your role</option>${REG_ROLES.map(r=>`<option${p.role===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div class="field"><label for="rgCountry">Country</label><input id="rgCountry" autocomplete="country-name" value="${esc(p.country||'')}" required></div>
+    </div>
+    <label class="check" for="rgConsent"><input type="checkbox" id="rgConsent"${p.consent?' checked':''}> <span>I agree that the Beam On! team may store these details and contact me about the game.</span></label>
+    <p class="err" id="rgErr" role="alert"></p>
+    <div class="btnrow"><button class="btn primary big" type="submit" id="rgSubmit">Register and play</button></div>
+  </form>
+  <p class="note">Your details are used only to understand who plays Beam On!. Questions: hafiz.zin@physics.org</p>`);
+  const f=document.getElementById('rgName');f&&f.focus();
+}
+document.addEventListener('submit',e=>{
+  if(e.target.id!=='regForm')return;
+  e.preventDefault();
+  const v=id=>document.getElementById(id).value.trim();
+  const p={name:v('rgName'),email:v('rgEmail'),institution:v('rgInst'),role:document.getElementById('rgRole').value,country:v('rgCountry'),consent:document.getElementById('rgConsent').checked};
+  const err=document.getElementById('rgErr');
+  let msg='';
+  if(!p.name)msg='Enter your name.';
+  else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email))msg='Enter a valid email address, like name@example.com.';
+  else if(!p.role)msg='Choose your role.';
+  else if(!p.country)msg='Enter your country.';
+  else if(!p.consent)msg='Tick the consent box to register.';
+  if(msg){err.textContent=msg;return}
+  p.registeredAt=new Date().toISOString();
+  PLAYER=p;savePlayer(p);sendRegistration(p);
+  updatePlayerTag();intro();
+});
+function updatePlayerTag(){const t=document.getElementById('tPlayer');if(t)t.textContent=PLAYER?`Player: ${PLAYER.name}`:'Radiotherapy department'}
 function intro(){
   const sv=loadSave();
-  showModal(`<p class="eyebrow amber">New contract</p><h2>Run a radiotherapy department where physics keeps everyone safe</h2>
+  showModal(`<p class="eyebrow amber">New contract${PLAYER?` · Welcome, ${esc(PLAYER.name.split(' ')[0])}`:''}</p><h2>Run a radiotherapy department where physics keeps everyone safe</h2>
   <p>Build the patient pathway, hire your team and keep the beams on. Your medical physicists plan every treatment, check every plan, commission the linacs, run morning QA, fix faults and handle radiation safety. When something comes up, you make the physics call.</p>
   <ol class="steps">
    <li><b class="n">1</b><span>Build a <b>Consult Clinic</b>, <b>CT Simulator</b>, <b>Planning Room</b>, <b>Physics Office</b> and a <b>Linac Bunker</b> on the empty plots.</span></li>
@@ -888,7 +951,8 @@ function intro(){
    <li><b class="n">4</b><span>Watch the queues. Hire staff where the work piles up. Patients who wait over 3 hours go home.</span></li>
   </ol>
   <div class="legend"><span><i class="role-dot" style="background:${ROLES.phys.color}">P</i>Physicist</span><span><i class="role-dot" style="background:${ROLES.onc.color}">O</i>Oncologist</span><span><i class="role-dot" style="background:${ROLES.rtt.color}">R</i>Therapist</span></div>
-  <div class="btnrow">${sv?`<button class="btn big" data-act="continue">Continue day ${sv.day}</button>`:''}<button class="btn primary big" data-act="newgame">${sv?'New game':'Open the department'}</button></div>`);
+  <div class="btnrow">${sv?`<button class="btn big" data-act="continue">Continue day ${sv.day}</button>`:''}<button class="btn primary big" data-act="newgame">${sv?'New game':'Open the department'}</button></div>
+  ${PLAYER?`<p class="note">Playing as <b>${esc(PLAYER.name)}</b>${PLAYER.institution?`, ${esc(PLAYER.institution)}`:''}. <button class="linkbtn" data-act="changePlayer">Not you? Change player</button></p>`:''}`);
 }
 function startNew(){
   S=newState();GEO.clear();
@@ -1199,6 +1263,7 @@ document.addEventListener('click',e=>{
   if(['tab','speed','closeSel','cancelBuild','qcontinue','keep'].includes(a))sfx('click');
   switch(a){
     case 'newgame':startNew();break;
+    case 'changePlayer':registerScreen();break;
     case 'continue':{const sv=loadSave();if(sv){sv.staff.forEach(s=>{if(s.role==='dos')s.role='phys'});S=sv;S.started=true;GEO.clear();S.qQueue=[];hideModal();startDay();lastPanel=''}break}
     case 'tab':S.tab=v;break;
     case 'build':S.placing=S.placing===v?null:v;break;
@@ -1244,7 +1309,7 @@ function frame(now){
   if(S&&S.started&&!modalOpen){
     if(S.qQueue.length){
       const it=S.qQueue.shift();
-      if(it.win){sfx('fanfare');showModal(`<p class="eyebrow amber">Contract complete</p><h2>Your department is accredited</h2><p>Day ${S.day}: ${S.completed} courses completed, ${S.fractions} fractions delivered, ${S.correct} of ${S.answered} physics calls correct, ${S.incidents} incident${S.incidents===1?'':'s'}.</p><div class="btnrow"><button class="btn primary big" data-act="keep">Keep playing</button></div>`)}
+      if(it.win){sfx('fanfare');showModal(`<p class="eyebrow amber">Contract complete</p><h2>Your department is accredited</h2><p>${PLAYER?`Well done, ${esc(PLAYER.name)}. `:''}Day ${S.day}: ${S.completed} courses completed, ${S.fractions} fractions delivered, ${S.correct} of ${S.answered} physics calls correct, ${S.incidents} incident${S.incidents===1?'':'s'}.</p><div class="btnrow"><button class="btn primary big" data-act="keep">Keep playing</button></div>`)}
       else openQuestion(it);
     }else if(!S.paused){
       let g=dtR/SEC_PER_MIN*S.speed;
@@ -1258,7 +1323,8 @@ function frame(now){
 function updateAudioBtns(){document.getElementById('auMus').setAttribute('aria-pressed',String(AU.musicOn));document.getElementById('auSfx').setAttribute('aria-pressed',String(AU.sfxOn))}
 updateAudioBtns();
 window.__beam={get S(){return S},tick:d=>tick(d),build,startNew,answer,hideModal};
-intro();
+updatePlayerTag();
+if(PLAYER)intro();else registerScreen();
 requestAnimationFrame(frame);
 })();
 </script>
