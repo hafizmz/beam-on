@@ -893,7 +893,7 @@ function hideModal(){modal.hidden=true;modalOpen=false;curQ=null}
 /* ---------- player registration ---------- */
 const REG_KEY='beam-on-player-v1';
 // To collect registrations centrally, paste a Google Form "formResponse" URL here and each question's entry ID.
-const REG_FORM={url:'https://docs.google.com/forms/d/e/1FAIpQLSdddjNn8t-9GhC1XlKjQRp_etsEShaNJ5B4ugRB3hrzojWmKg/formResponse',fields:{name:'entry.111392938',email:'entry.1147353339',institution:'entry.664941754',role:'entry.1232959800',country:'entry.124692559',consent:'entry.1735158139'}};
+const REG_FORM={url:'https://docs.google.com/forms/d/e/1FAIpQLSciQaAn6Ib-mAZPerTN9ov00wFvYjb6d6Fjt5NKvB810cT-Zw/formResponse',fields:{name:'entry.2026429522',email:'entry.632608282',institution:'entry.2015993584',role:'entry.1893504352',country:'entry.1903062659',consent:'entry.813898789'}};
 const REG_ROLES=['Student (school)','Student (university)','Medical physicist','Radiation therapist','Radiation oncologist','Teacher or lecturer','Other healthcare worker','Other'];
 function getPlayer(){try{return JSON.parse(localStorage.getItem(REG_KEY)||'null')}catch(e){return null}}
 function savePlayer(p){try{localStorage.setItem(REG_KEY,JSON.stringify(p))}catch(e){}}
