@@ -141,6 +141,8 @@ details.qlog p{margin:6px 0 0;color:var(--ink-2)}
 .check input{width:18px;height:18px;margin-top:2px;flex:none;accent-color:var(--phys)}
 .err{margin:0;min-height:1.2em;color:var(--danger);font-size:14px;font-weight:700}
 .note{font-size:13px;color:var(--ink-3)}
+.trialnote{margin:0;background:var(--amber-soft);color:var(--amber-ink);border-radius:10px;padding:10px 13px;font-size:14.5px}
+#tRegBtn{padding:8px 14px}
 .linkbtn{border:0;background:none;padding:0;color:var(--phys);font-weight:700;cursor:pointer;text-decoration:underline}
 .credit{max-width:1440px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left,0px)) 24px;font-size:13px;color:var(--ink-2)}
 .credit a{color:var(--phys);font-weight:700}
@@ -165,6 +167,8 @@ details.qlog p{margin:6px 0 0;color:var(--ink-2)}
       <button id="sp2" data-act="speed" data-v="2" aria-pressed="false">2×</button>
       <button id="sp4" data-act="speed" data-v="4" aria-pressed="false">4×</button>
     </div>
+    <div class="stat" id="tTrialBox" hidden><b>Free trial left</b><span id="tTrial">3:00</span></div>
+    <button class="btn amber" id="tRegBtn" data-act="register" hidden>Register free</button>
     <div class="speed" role="group" aria-label="Audio">
       <button id="auMus" data-act="music" aria-pressed="true" title="Music on or off">♪ Music</button>
       <button id="auSfx" data-act="sound" aria-pressed="true" title="Sound effects on or off">Sound</button>
@@ -907,10 +911,34 @@ function sendRegistration(p){
   try{const fd=new FormData();for(const k in REG_FORM.fields){if(REG_FORM.fields[k])fd.append(REG_FORM.fields[k],k==='consent'?'Yes':(p[k]||''))}
     fetch(REG_FORM.url,{method:'POST',mode:'no-cors',body:fd}).catch(()=>{})}catch(e){}
 }
-function registerScreen(){
+/* ---------- free trial + anonymous play counter ---------- */
+const TRIAL_KEY='beam-on-trial-v1',TRIAL_SECS=180,GAME_VERSION='main-2026-10-26';
+const COUNTER_FORM={url:'https://docs.google.com/forms/d/e/1FAIpQLSe8Lz3oOrh-rzRvHs-wmOtNBw2abnCgvcAWBJKeMC3KoYpBJw/formResponse',fields:{event:'entry.180559950',visitor:'entry.453919640',secs:'entry.1329453806',day:'entry.4292576',version:'entry.148736177'}};
+function loadTrial(){try{const t=JSON.parse(localStorage.getItem(TRIAL_KEY)||'null');if(t&&t.id)return t}catch(e){}return {id:'v'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4),used:0,opened:false,started:false,ended:false,registered:false}}
+let TRIAL=loadTrial(),trialSaveAcc=0;
+function saveTrial(){try{localStorage.setItem(TRIAL_KEY,JSON.stringify(TRIAL))}catch(e){}}
+function track(ev){
+  if(!COUNTER_FORM.url)return;
+  try{const f=COUNTER_FORM.fields,fd=new FormData();fd.append(f.event,ev);fd.append(f.visitor,TRIAL.id);fd.append(f.secs,String(Math.round(TRIAL.used)));fd.append(f.day,S?String(S.day):'0');fd.append(f.version,GAME_VERSION);
+    fetch(COUNTER_FORM.url,{method:'POST',mode:'no-cors',body:fd}).catch(()=>{})}catch(e){}
+}
+function trialLeft(){return Math.max(0,TRIAL_SECS-TRIAL.used)}
+function fmtTrial(sec){sec=Math.ceil(sec);return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`}
+function trialFrame(dtR){
+  if(PLAYER||!S||!S.started||S.paused||modalOpen||document.visibilityState!=='visible')return;
+  TRIAL.used+=dtR;trialSaveAcc+=dtR;
+  if(trialSaveAcc>2){trialSaveAcc=0;saveTrial()}
+  if(trialLeft()<=0)trialWall();
+}
+function trialWall(){
+  if(!TRIAL.ended){TRIAL.ended=true;track('trial_ended')}
+  saveTrial();save();sfx('pager');registerScreen('wall');
+}
+function registerScreen(mode){
   const p=PLAYER||{};
-  showModal(`<p class="eyebrow amber">Player registration</p><h2>Before you open the department</h2>
-  <p>Tell us who is playing. It takes less than a minute.</p>
+  const wall=mode==='wall',inGame=!PLAYER&&S&&S.started;
+  showModal(`<p class="eyebrow amber">${wall?'Free trial complete':'Player registration'}</p><h2>${wall?'Your 3-minute trial is up':'Register free to keep playing'}</h2>
+  <p>${wall?'Register free to carry on. Your department is saved exactly as you left it.':'Tell us who is playing. It takes less than a minute.'}</p>
   <form id="regForm" class="regform" novalidate>
     <div class="field"><label for="rgName">Full name</label><input id="rgName" autocomplete="name" value="${esc(p.name||'')}" required></div>
     <div class="field"><label for="rgEmail">Email</label><input id="rgEmail" type="email" autocomplete="email" value="${esc(p.email||'')}" required></div>
@@ -921,9 +949,9 @@ function registerScreen(){
     </div>
     <label class="check" for="rgConsent"><input type="checkbox" id="rgConsent"${p.consent?' checked':''}> <span>I agree that the Beam On! team may store these details and contact me about the game.</span></label>
     <p class="err" id="rgErr" role="alert"></p>
-    <div class="btnrow"><button class="btn primary big" type="submit" id="rgSubmit">Register and play</button></div>
+    <div class="btnrow">${inGame&&!wall?'<button class="btn big" type="button" data-act="regBack">Back to the game</button>':''}<button class="btn primary big" type="submit" id="rgSubmit">${wall||inGame?'Register and keep playing':'Register and play'}</button></div>
   </form>
-  <p class="note">Your details are used only to understand who plays Beam On!. Questions: hafiz.zin@physics.org</p>`);
+  <p class="note">Your details are used only to understand who plays Beam On!. We also count plays anonymously, with no personal details, to see how many people try the game. Questions: hafiz.zin@physics.org</p>`);
   const f=document.getElementById('rgName');f&&f.focus();
 }
 document.addEventListener('submit',e=>{
@@ -942,7 +970,10 @@ document.addEventListener('submit',e=>{
   if(msg){err.textContent=msg;return}
   p.registeredAt=new Date().toISOString();
   PLAYER=p;savePlayer(p);sendRegistration(p);
-  updatePlayerTag();intro();
+  if(!TRIAL.registered){TRIAL.registered=true;saveTrial();track('registered')}
+  updatePlayerTag();
+  if(S&&S.started){hideModal();S.paused=false;sfx('fanfare');log(`Welcome, ${p.name.split(' ')[0]}. The full game is unlocked.`,'good');renderPanel();updateTop()}
+  else intro();
 });
 function updatePlayerTag(){const t=document.getElementById('tPlayer');if(t)t.textContent=PLAYER?`Player: ${PLAYER.name}`:'Radiotherapy department'}
 function intro(){
@@ -956,10 +987,12 @@ function intro(){
    <li><b class="n">4</b><span>Watch the queues. Hire staff where the work piles up. Patients who wait over 3 hours go home.</span></li>
   </ol>
   <div class="legend"><span><i class="role-dot" style="background:${ROLES.phys.color}">P</i>Physicist</span><span><i class="role-dot" style="background:${ROLES.onc.color}">O</i>Oncologist</span><span><i class="role-dot" style="background:${ROLES.rtt.color}">R</i>Therapist</span></div>
-  <div class="btnrow">${sv?`<button class="btn big" data-act="continue">Continue day ${sv.day}</button>`:''}<button class="btn primary big" data-act="newgame">${sv?'New game':'Open the department'}</button></div>
+  ${PLAYER?'':`<p class="trialnote"><b>Free trial:</b> play for ${fmtTrial(trialLeft())} minutes, then register free to keep going. <button class="linkbtn" data-act="register">Register now</button></p>`}
+  <div class="btnrow">${sv?`<button class="btn big" data-act="continue">Continue day ${sv.day}</button>`:''}<button class="btn primary big" data-act="newgame">${sv?'New game':(PLAYER?'Open the department':'Start free trial')}</button></div>
   ${PLAYER?`<p class="note">Playing as <b>${esc(PLAYER.name)}</b>${PLAYER.institution?`, ${esc(PLAYER.institution)}`:''}. <button class="linkbtn" data-act="changePlayer">Not you? Change player</button></p>`:''}`);
 }
 function startNew(){
+  if(!PLAYER&&!TRIAL.started){TRIAL.started=true;saveTrial();track('trial_started')}
   S=newState();GEO.clear();
   ['onc','phys','phys','rtt','rtt'].forEach(r=>hire(r,true));
   log('Welcome. Start by building a Consult Clinic on an empty plot.');
@@ -1250,6 +1283,8 @@ function renderPanel(){
   const hint=document.getElementById('placeHint');hint.hidden=!S.placing;if(S.placing)document.getElementById('placeText').textContent=`Click an empty plot for the ${RT[S.placing].name}`;
 }
 function updateTop(){
+  const tb=document.getElementById('tTrialBox'),rb=document.getElementById('tRegBtn');
+  if(tb){tb.hidden=!!PLAYER;rb.hidden=!!PLAYER;if(!PLAYER)document.getElementById('tTrial').textContent=fmtTrial(trialLeft())}
   if(!S)return;
   document.getElementById('tCash').textContent=fmtRM(S.cash);
   document.getElementById('tCash').style.color=S.cash<0?'#FF8A8A':'';
@@ -1269,6 +1304,8 @@ document.addEventListener('click',e=>{
   switch(a){
     case 'newgame':startNew();break;
     case 'changePlayer':registerScreen();break;
+    case 'register':registerScreen();break;
+    case 'regBack':hideModal();break;
     case 'continue':{const sv=loadSave();if(sv){sv.staff.forEach(s=>{if(s.role==='dos')s.role='phys'});S=sv;S.started=true;GEO.clear();S.qQueue=[];hideModal();startDay();lastPanel=''}break}
     case 'tab':S.tab=v;break;
     case 'build':S.placing=S.placing===v?null:v;break;
@@ -1321,6 +1358,7 @@ function frame(now){
       while(g>0&&!modalOpen&&S.started){const d=Math.min(g,0.5);tick(d);g-=d;if(S.qQueue.length)break}
     }
   }
+  trialFrame(dtR);
   draw();audioFrame();uiAcc+=dtR;
   if(uiAcc>0.25){uiAcc=0;renderPanel();updateTop()}
   requestAnimationFrame(frame);
@@ -1329,7 +1367,9 @@ function updateAudioBtns(){document.getElementById('auMus').setAttribute('aria-p
 updateAudioBtns();
 window.__beam={get S(){return S},tick:d=>tick(d),build,startNew,answer,hideModal};
 updatePlayerTag();
-if(PLAYER)intro();else registerScreen();
+if(!TRIAL.opened){TRIAL.opened=true;saveTrial();track('opened')}
+updateTop();
+if(PLAYER||trialLeft()>0)intro();else registerScreen('wall');
 requestAnimationFrame(frame);
 })();
 </script>
