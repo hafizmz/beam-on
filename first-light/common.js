@@ -424,13 +424,14 @@
      PDPA design: only what the outreach needs is compulsory. Email is asked only when the player opts in to contact,
      and players under 18 need a parent or guardian's agreement before sending anything. */
   FL.PRIVACY_URL = 'privacy.html';
-  FL.showSignup = (onDone, editing = false, mode = '') => {
+  FL.showSignup = (onDone, editing = false, mode = '', onSkip = null) => {
     const p = FL.profile() || {};
-    const locked = mode === 'locked';
+    const locked = mode === 'locked', first = mode === 'first';
     const kicker = editing ? 'Your details' : locked ? 'Demo over' : 'Beam On: First Light · New staff';
     const title = editing ? 'Edit your details' : locked ? 'Enjoying the job? Sign up to stay' : 'Welcome to the department';
     const lead = editing ? 'Changes are saved on this device.'
       : locked ? 'Your free demo has ended. Sign up free to keep playing; your stars so far are saved. Your name appears in the game, and a nickname is fine.'
+      : first ? 'Sign up free to play all six chapters, or skip this and try a 3-minute demo first. Your name appears in the game, and a nickname is fine.'
       : 'Sign up free to play all six chapters. Your name appears in the game, and a nickname is fine.';
     openDialog(`<span class="fl-kicker">${kicker}</span>
       <h2 id="fl-dlg-title">${title}</h2>
@@ -446,10 +447,10 @@
         <div class="fl-f wide" id="fl-email-row"${p.consent ? '' : ' hidden'}><label for="fl-email">Email <small>(needed only for event news)</small></label><input id="fl-email" type="email" maxlength="120" autocomplete="email" value="${esc(p.email || '')}"></div>
         <p class="fl-privacy fl-f wide">${editing ? 'Saving sends your updated details' : 'Pressing <b>Start my first day</b> sends these details'} to the organiser's Google Form. They are used only for this outreach programme. <a href="${FL.PRIVACY_URL}" target="_blank" rel="noopener">Read the privacy notice</a> · <a href="${FL.PRIVACY_URL}#bm" target="_blank" rel="noopener">Notis privasi (Bahasa Malaysia)</a></p>
         <p class="fl-err fl-f wide" id="fl-err" hidden></p>
-        <div class="fl-actions fl-f wide">${locked ? '<a class="fl-btn alt" href="index.html">Not now</a>' : '<button class="fl-btn alt" type="button" data-cancel>' + (editing ? 'Cancel' : 'Keep playing the demo') + '</button>'}<button class="fl-btn" type="submit">${editing ? 'Save' : 'Start my first day'}</button></div>
+        <div class="fl-actions fl-f wide">${locked ? (FL.isChapterPage() ? '<a class="fl-btn alt" href="index.html">Not now</a>' : '<button class="fl-btn alt" type="button" data-cancel>Not now</button>') : '<button class="fl-btn alt" type="button" data-cancel>' + (editing ? 'Cancel' : first ? 'Skip: play a 3-minute demo' : 'Keep playing the demo') + '</button>'}<button class="fl-btn" type="submit">${editing ? 'Save' : 'Start my first day'}</button></div>
       </form>`, (root, close) => {
       const $$ = s => root.querySelector(s), err = $$('#fl-err');
-      if ($$('[data-cancel]')) $$('[data-cancel]').onclick = close;
+      if ($$('[data-cancel]')) $$('[data-cancel]').onclick = () => { close(); if (onSkip) onSkip(); };
       root.querySelectorAll('input, select').forEach(el => el.addEventListener('input', () => { err.hidden = true; }));
       const sync = () => {
         $$('#fl-guardian-row').hidden = !FL.isUnder18($$('#fl-year').value);
@@ -567,7 +568,12 @@
     }
     FL.flushOutbox(); flushCounts();
     FL.personalize();
-    if (!FL.profileComplete()) runDemo(chip);
+    if (FL.profileComplete()) return;
+    /* New players see the sign-up first. Skipping it starts the 3-minute demo; the form comes back when time runs out. */
+    const d = FL.demo();
+    if (FL.demoLeft() <= 0) { if (FL.isChapterPage()) runDemo(chip); else FL.showSignup(() => { if (FL.onSignedUp) FL.onSignedUp(); }, false, 'locked'); }
+    else if (!d.skipped) FL.showSignup(() => { if (FL.onSignedUp) FL.onSignedUp(); }, false, 'first', () => { const dd = FL.demo(); dd.skipped = Date.now(); FL.store.set('demo', dd); runDemo(chip); });
+    else runDemo(chip);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', FL.initPlayer); else setTimeout(FL.initPlayer, 0);
 
