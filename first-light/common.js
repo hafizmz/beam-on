@@ -260,7 +260,7 @@
   FL.profile = () => FL.store.get('profile', null);
   /* A profile counts as complete when every required field is filled in. */
   FL.profileComplete = () => { const p = FL.profile(); return !!(p && p.name && p.school && p.state && p.year && p.interest && (!FL.isUnder18(p.year) || p.guardian) && (!p.consent || p.email)); };
-  FL.playerName = () => { const p = FL.profile(); return (p && p.name) || 'friend'; };
+  FL.playerName = () => { const p = FL.profile(); return (p && p.name) || 'new physicist'; };
   FL.totalStars = () => FL.CHAPTERS.reduce((s, c) => s + Object.values(FL.getStars(c.id)).reduce((a, b) => a + (b || 0), 0), 0);
 
   /* The answers the organiser's form receives. stage: 'Before playing' | 'After playing' | 'Updated details'. */
@@ -424,11 +424,17 @@
      PDPA design: only what the outreach needs is compulsory. Email is asked only when the player opts in to contact,
      and players under 18 need a parent or guardian's agreement before sending anything. */
   FL.PRIVACY_URL = 'privacy.html';
-  FL.showSignup = (onDone, editing = false) => {
+  FL.showSignup = (onDone, editing = false, mode = '') => {
     const p = FL.profile() || {};
-    openDialog(`<span class="fl-kicker">${editing ? 'Your details' : 'Beam On: First Light · New staff'}</span>
-      <h2 id="fl-dlg-title">${editing ? 'Edit your details' : 'Welcome to the department'}</h2>
-      <p>${editing ? 'Changes are saved on this device.' : 'The team needs a few details before your first day. Your name appears in the game, and a nickname is fine.'}</p>
+    const locked = mode === 'locked';
+    const kicker = editing ? 'Your details' : locked ? 'Demo over' : 'Beam On: First Light · New staff';
+    const title = editing ? 'Edit your details' : locked ? 'Enjoying the job? Sign up to stay' : 'Welcome to the department';
+    const lead = editing ? 'Changes are saved on this device.'
+      : locked ? 'Your free demo has ended. Sign up free to keep playing; your stars so far are saved. Your name appears in the game, and a nickname is fine.'
+      : 'Sign up free to play all six chapters. Your name appears in the game, and a nickname is fine.';
+    openDialog(`<span class="fl-kicker">${kicker}</span>
+      <h2 id="fl-dlg-title">${title}</h2>
+      <p>${lead}</p>
       <form class="fl-grid" novalidate>
         <div class="fl-f wide"><label for="fl-name">First name or nickname</label><input id="fl-name" maxlength="30" autocomplete="nickname" value="${esc(p.name || '')}" required></div>
         <div class="fl-f"><label for="fl-school">School</label><input id="fl-school" maxlength="80" autocomplete="organization" value="${esc(p.school || '')}" required></div>
@@ -440,7 +446,7 @@
         <div class="fl-f wide" id="fl-email-row"${p.consent ? '' : ' hidden'}><label for="fl-email">Email <small>(needed only for event news)</small></label><input id="fl-email" type="email" maxlength="120" autocomplete="email" value="${esc(p.email || '')}"></div>
         <p class="fl-privacy fl-f wide">${editing ? 'Saving sends your updated details' : 'Pressing <b>Start my first day</b> sends these details'} to the organiser's Google Form. They are used only for this outreach programme. <a href="${FL.PRIVACY_URL}" target="_blank" rel="noopener">Read the privacy notice</a> · <a href="${FL.PRIVACY_URL}#bm" target="_blank" rel="noopener">Notis privasi (Bahasa Malaysia)</a></p>
         <p class="fl-err fl-f wide" id="fl-err" hidden></p>
-        <div class="fl-actions fl-f wide">${editing ? '<button class="fl-btn alt" type="button" data-cancel>Cancel</button>' : ''}<button class="fl-btn" type="submit">${editing ? 'Save' : 'Start my first day'}</button></div>
+        <div class="fl-actions fl-f wide">${locked ? '<a class="fl-btn alt" href="index.html">Not now</a>' : '<button class="fl-btn alt" type="button" data-cancel>' + (editing ? 'Cancel' : 'Keep playing the demo') + '</button>'}<button class="fl-btn" type="submit">${editing ? 'Save' : 'Start my first day'}</button></div>
       </form>`, (root, close) => {
       const $$ = s => root.querySelector(s), err = $$('#fl-err');
       if ($$('[data-cancel]')) $$('[data-cancel]').onclick = close;
@@ -474,29 +480,94 @@
         const btn = $$('button[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
         const ok = await FL.submitForm(editing ? 'Updated details' : 'Before playing');
         close();
-        document.querySelectorAll('.fl-chip b').forEach(b => { b.textContent = name; });
+        document.querySelectorAll('.fl-chip').forEach(c => { c.innerHTML = 'Physicist <b></b>'; c.querySelector('b').textContent = name; c.title = 'Edit your details'; c.onclick = () => FL.showSignup(() => location.reload(), true); });
         if (onDone) onDone(prof);
         if (!editing) FL.showSent(ok, 'Before playing');
       });
     });
   };
 
-  /* Name chip in the header + the sign-up gate. Runs on every page that loads common.js. */
+  /* Free demo: unregistered players get DEMO_MS of play on the chapter pages, then the game asks them to sign up.
+     The clock runs only while a chapter page is open and visible. Stars earned in the demo are kept. */
+  FL.DEMO_MS = 3 * 60 * 1000;
+  FL.isChapterPage = () => /\/ch\d\.html$/.test(location.pathname) || /^ch\d\.html$/.test(location.pathname.split('/').pop());
+  FL.demo = () => {
+    let d = FL.store.get('demo', null);
+    if (!d) { d = { ms: 0, sent: {} }; FL.store.set('demo', d); }
+    return d;
+  };
+  FL.demoLeft = () => Math.max(0, FL.DEMO_MS - FL.demo().ms);
+
+  /* Anonymous counts: only the event name (Demo started, Demo time up, Signed up after demo), each sent once per device.
+     No name, school, email or device code. A separate counter form keeps counts apart from sign-up details. */
+  FL.COUNT_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfBdqJquRbxT6SebYfKgJu_bflQQPVCZSNHIWMHR3UZfwm9ZA/viewform';
+  FL.COUNT_ENTRIES = { event: 'entry.541634531' };
+  FL.count = (event, once = true) => {
+    const d = FL.demo();
+    if (once && d.sent[event]) return;
+    d.sent[event] = Date.now(); FL.store.set('demo', d);
+    if (!FL.COUNT_URL) return;
+    const ch = (location.pathname.match(/ch(\d)\.html/) || [])[1] || 'menu';
+    const vals = { event, device: d.id, chapter: ch, seconds: Math.round(d.ms / 1000) }, fields = {};
+    for (const [k, id] of Object.entries(FL.COUNT_ENTRIES)) if (id) fields[id] = String(vals[k]);
+    const url = FL.COUNT_URL.replace(/\/viewform.*$/, '/formResponse');
+    fetch(url, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(fields) }).catch(() => {
+      const box = FL.store.get('countbox', []); box.push({ url, fields }); FL.store.set('countbox', box.slice(-20));
+    });
+  };
+  const flushCounts = () => {
+    const box = FL.store.get('countbox', []); if (!box.length || navigator.onLine === false) return;
+    FL.store.set('countbox', []);
+    box.forEach(it => fetch(it.url, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(it.fields) }).catch(() => {
+      const b = FL.store.get('countbox', []); b.push(it); FL.store.set('countbox', b);
+    }));
+  };
+  window.addEventListener('online', flushCounts);
+
+  const mmss = ms => { const t = Math.ceil(ms / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+  function demoOver() {
+    FL.count('Demo time up');
+    FL.showSignup(() => { FL.count('Signed up after demo'); }, false, 'locked');
+  }
+  function runDemo(chip) {
+    const paint = () => { if (chip) chip.innerHTML = `Demo <b>${mmss(FL.demoLeft())}</b> · Sign up`; };
+    paint();
+    if (!FL.isChapterPage()) return;
+    if (FL.demoLeft() <= 0) { demoOver(); return; }
+    FL.count('Demo started');
+    let last = Date.now();
+    const timer = setInterval(() => {
+      const now = Date.now(), step = Math.min(now - last, 2000); last = now;
+      if (FL.profileComplete()) { clearInterval(timer); return; }
+      if (document.visibilityState !== 'visible' || document.querySelector('.fl-scrim')) return;
+      const d = FL.demo(); d.ms += step; FL.store.set('demo', d);
+      paint();
+      if (FL.demoLeft() <= 0) { clearInterval(timer); demoOver(); }
+    }, 1000);
+  }
+
+  /* Name chip in the header, the free demo, and the sign-up. Runs on every page that loads common.js. */
   FL.initPlayer = () => {
     const group = document.querySelector('.audio');
+    let chip = null;
     if (group && !group.querySelector('.fl-chip')) {
       injectCss();
-      const b = document.createElement('button');
-      b.className = 'fl-chip'; b.type = 'button'; b.title = 'Edit your details';
-      b.innerHTML = 'Physicist <b></b>';
-      b.querySelector('b').textContent = (FL.profile() || {}).name || 'Sign up';
-      b.onclick = () => FL.showSignup(() => location.reload(), FL.profileComplete());
-      group.insertBefore(b, group.firstChild);
+      chip = document.createElement('button');
+      chip.className = 'fl-chip'; chip.type = 'button';
+      if (FL.profileComplete()) {
+        chip.title = 'Edit your details';
+        chip.innerHTML = 'Physicist <b></b>';
+        chip.querySelector('b').textContent = FL.profile().name;
+        chip.onclick = () => FL.showSignup(() => location.reload(), true);
+      } else {
+        chip.title = 'Sign up to keep playing after the demo';
+        chip.onclick = () => FL.showSignup(() => { if (FL.onSignedUp) FL.onSignedUp(); }, false, 'demo');
+      }
+      group.insertBefore(chip, group.firstChild);
     }
-    /* Personalise only once a name exists, so {name} tokens wait for the sign-up. */
-    FL.flushOutbox();
-    if (FL.profileComplete()) FL.personalize();
-    else FL.showSignup(() => { FL.personalize(); if (FL.onSignedUp) FL.onSignedUp(); });
+    FL.flushOutbox(); flushCounts();
+    FL.personalize();
+    if (!FL.profileComplete()) runDemo(chip);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', FL.initPlayer); else setTimeout(FL.initPlayer, 0);
 

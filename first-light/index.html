@@ -129,7 +129,7 @@
 
   <div class="you card">
     <div><span class="eyebrow">You and the organiser</span>
-      <p>Your details went to the outreach team when you signed up. After playing, tell them how it went.</p></div>
+      <p id="youText">Your details went to the outreach team when you signed up. After playing, tell them how it went.</p></div>
     <div class="row">
       <button class="ghost" type="button" id="fbBtn">Tell us how it went</button>
       <button class="ghost" type="button" id="editBtn">Edit my details</button>
@@ -205,6 +205,12 @@ function render() {
   hello.hidden = !prof;
   if (prof) { hello.textContent = 'Welcome back, '; const b = document.createElement('b'); b.textContent = prof.name; hello.append(b, '.'); }
   document.getElementById('progLabel').textContent = prof ? prof.name + "'s progress" : 'Your progress';
+  const reg = FL.profileComplete();
+  document.getElementById('youText').textContent = reg
+    ? 'Your details went to the outreach team when you signed up. After playing, tell them how it went.'
+    : (FL.demoLeft() > 0 ? `Try any chapter free for ${Math.ceil(FL.demoLeft() / 60000)} more minute${FL.demoLeft() > 60000 ? 's' : ''} of play. Sign up free to keep playing; your stars carry over.` : 'Your free demo has ended. Sign up free to keep playing; your stars carry over.');
+  document.getElementById('fbBtn').hidden = !reg;
+  document.getElementById('editBtn').textContent = reg ? 'Edit my details' : 'Sign up free';
   let total = 0, started = 0, finished = 0;
   const rooms = document.getElementById('rooms'), album = document.getElementById('album');
   rooms.innerHTML = ''; album.innerHTML = '';
@@ -254,12 +260,12 @@ function askReset() {
   };
   document.getElementById('noClear').onclick = () => { area.innerHTML = '<button class="danger" id="resetAll">Clear progress on this device</button>'; document.getElementById('resetAll').onclick = askReset;
 document.getElementById('fbBtn').onclick = () => FL.showFeedback();
-document.getElementById('editBtn').onclick = () => FL.showSignup(() => location.reload(), true);
+document.getElementById('editBtn').onclick = () => { const reg = FL.profileComplete(); FL.showSignup(() => reg ? location.reload() : render(), reg, 'demo'); };
 FL.onSignedUp = render; };
 }
 document.getElementById('resetAll').onclick = askReset;
 document.getElementById('fbBtn').onclick = () => FL.showFeedback();
-document.getElementById('editBtn').onclick = () => FL.showSignup(() => location.reload(), true);
+document.getElementById('editBtn').onclick = () => { const reg = FL.profileComplete(); FL.showSignup(() => reg ? location.reload() : render(), reg, 'demo'); };
 FL.onSignedUp = render;
 </script>
 </body>
