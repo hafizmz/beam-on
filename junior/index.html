@@ -191,6 +191,24 @@ footer a{color:var(--ink);font-weight:700}
 .pbtn.on{background:#FFF2CC}
 .xbtn{border:3px solid var(--ink);border-radius:12px;background:var(--card);min-height:50px;padding:0 12px;cursor:pointer;font:600 14px var(--display);flex:none}
 .xbtn.arm{background:var(--coral);color:var(--card)}
+.card.congrats{position:relative;overflow:hidden;border-width:4px;background:linear-gradient(#FFF7D6,#fff 45%)}
+.confetti-rain{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti-rain i{position:absolute;top:-14px;width:9px;height:14px;opacity:.9;animation:fall linear infinite}
+@keyframes fall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(720px) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){.confetti-rain{display:none}}
+.rosette{position:relative;width:110px;margin:0 auto;animation:pop .6s}
+.rosette>svg{width:110px;height:auto;display:block}
+.rosette .rav .head svg{width:100%;height:100%}
+.rosette .rav{position:absolute;right:-26px;bottom:6px}
+.rosette .rav .head{width:52px;height:52px}
+.congrats h2{position:relative}
+.congsub{text-align:center;margin:-4px 0 0;color:var(--ink-soft);font:600 17px var(--display);position:relative}
+.clabel{display:block;font:600 18px var(--display);color:var(--ink-soft)}
+.cgrid{display:grid;gap:4px;background:var(--wall);border-radius:16px;padding:10px 14px;position:relative}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) auto 44px;gap:10px;align-items:center;font:600 16px var(--display)}
+.crow .cst{display:flex;gap:2px}.crow .cst svg{width:20px;height:20px}
+.crow b{text-align:right;font-variant-numeric:tabular-nums}
+.congjmp{text-align:center;margin:0;font:700 22px var(--display);color:var(--coral);text-wrap:balance;position:relative}
 .thanks{text-align:center;font:600 18px var(--display);margin:-6px 0 0;color:var(--ink-soft);text-wrap:balance}
 .score{text-align:center;font-family:var(--display);font-variant-numeric:tabular-nums;margin:-4px 0 0}
 .score b{font-size:64px;line-height:1}
@@ -368,6 +386,7 @@ const S={
  older:{en:'Age 15+? Play Beam On!',ms:'Umur 15+? Main Beam On!'},reset:{en:'Reset stars',ms:'Set semula bintang'},
  certT:{en:'I am a Junior Medical Physicist!',ms:'Saya ialah ahli fizik perubatan junior!'},certName:{en:'{name}, Junior Medical Physicist',ms:'{name}, Ahli Fizik Perubatan Junior'},
  certB:{en:'You checked every room in the hospital. Total marks:',ms:'Kamu telah memeriksa setiap bilik di hospital. Jumlah markah:'},
+ congT:{en:'Congratulations, {name}!',ms:'Tahniah, {name}!'},congSub:{en:'You checked every machine in the hospital.',ms:'Kamu telah memeriksa semua mesin di hospital.'},congScore:{en:'Your score is',ms:'Markah kamu ialah'},congJMP:{en:'You are a Junior Medical Physicist!',ms:'Kamu ialah Ahli Fizik Perubatan Junior!'},
  well:{en:'Thank you, {name}!',ms:'Terima kasih, {name}!'},thanks:{en:'You checked the {room} room, Junior Medical Physicist! Here are your marks and stars:',ms:'Kamu telah memeriksa bilik {room}, Ahli Fizik Perubatan Junior! Ini markah dan bintang kamu:'},
  'mk.done':{en:'Finished the job',ms:'Tugas selesai'},'mk.acc':{en:'Accuracy',ms:'Ketepatan'},'mk.speed':{en:'Speed',ms:'Kelajuan'},'mk.quiz':{en:'Question',ms:'Soalan'},
  time:{en:'Time',ms:'Masa'},sec:{en:'s',ms:'s'},newBest:{en:'New best!',ms:'Rekod baharu!'},
@@ -668,10 +687,11 @@ function score(id,acc,secs,quizOk){
  const big=state.mode==='big',T=TARGET[id][big?1:0],sp=secs<=T?1:Math.max(0,1-(secs-T)/(2*T));acc=Math.max(0,Math.min(1,acc));
  const parts=big?[['mk.done',40,40],['mk.acc',Math.round(acc*20),20],['mk.speed',Math.round(sp*20),20],['mk.quiz',quizOk?20:0,20]]:[['mk.done',50,50],['mk.acc',Math.round(acc*25),25],['mk.speed',Math.round(sp*25),25]];
  const total=parts.reduce((a,x)=>a+x[1],0);let isBest=false;const p=me();
+ const allDone=q=>!!q&&ROOMS.every(r=>(bestOf(q,state.mode)[r]||0)>0),wasAll=allDone(p);
  if(p){p.best=p.best||{};p.best[state.mode]=p.best[state.mode]||{};const prev=p.best[state.mode][id]||0;if(total>prev){p.best[state.mode][id]=total;isBest=prev>0}
   p.plays=p.plays||[];p.plays.unshift({r:id,m:state.mode,s:total,d:Date.now(),t:Math.round(secs)});p.plays=p.plays.slice(0,40);save()}
  track('finish',{room:id,marks:total,accuracy:parts[1][1],speed:parts[2][1],question:parts[3]?parts[3][1]:'',seconds:Math.round(secs),stars:starsFor(total)});
- result(id,total,parts,secs,isBest);
+ result(id,total,parts,secs,isBest,!wasAll&&allDone(p));
 }
 function quiz(id,cb){
  const [q,...opts]=t('q.'+id);const right=opts[0];
@@ -679,15 +699,36 @@ function quiz(id,cb){
  let done=false;
  o.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(done)return;done=true;const ok=b.textContent===right;b.classList.add(ok?'yes':'no');o.querySelectorAll('.opt').forEach(x=>{if(x.textContent===right)x.classList.add('yes')});o.querySelector('#qfb').textContent=ok?t('right'):t('wrongQ')+' '+right;sfx(ok?'good':'bad');const n=o.querySelector('#qnext');n.hidden=false;n.querySelector('button').onclick=()=>cb(ok);n.querySelector('button').focus()});
 }
-function result(id,total,parts,secs,isBest){
+function result(id,total,parts,secs,isBest,newAll){
  sfx('win');
  const big=state.mode==='big',st=starsFor(total),p=me();
  const rows=parts.map(([k,v,m])=>`<div class="mrow"><span>${t(k)}</span><i><b style="width:${v/m*100}%"></b></i><span class="v">${v} / ${m}</span></div>`).join('')+`<div class="mrow time"><span>${t('time')}</span><span></span><span class="v">${Math.round(secs)} ${t('sec')}</span></div>`;
  const o=overlay(`<div class="bigstars">${[1,2,3].map((n,i)=>starSVG(st>=n).replace('<svg','<svg style="animation-delay:'+(i*.15)+'s"')).join('')}</div><h2>${esc(t('well'))}</h2><p class="thanks">${t('thanks').replace('{room}',t('room.'+id))}</p><p class="score"><b>${total}</b><span> / 100</span>${isBest?`<span class="best">${t('newBest')}</span>`:''}</p><div class="marks">${rows}</div><p style="font-size:18px;text-align:center" id="rFact"></p>${big?`<div class="tip">${p?avatarSVG(p.av):''}<p>${t('tip.'+id)}</p></div>`:''}<div class="row"><button class="cta" id="rHome">${t('home')}</button><button class="cta alt" id="rAgain">${t('replay')}</button><button class="cta alt" id="rChart">${t('scoreT')}</button></div>`);
- o.querySelector('#rHome').onclick=()=>{closeOverlay();showHub()};
+ if(newAll){const h=o.querySelector('#rHome');h.textContent=t('next')+' →';h.onclick=()=>congrats()}else o.querySelector('#rHome').onclick=()=>{closeOverlay();showHub()};
  o.querySelector('#rAgain').onclick=()=>openGame(id);
  o.querySelector('#rChart').onclick=()=>{closeOverlay();showScores()};
  const rf=o.querySelector('#rFact');setWords(rf,t('fact.'+id));
+}
+
+/* ---------- all rooms complete ---------- */
+function congrats(){
+ const p=me(),tot=totalOf(p,state.mode),b=bestOf(p,state.mode);
+ sfx('win');setTimeout(()=>sfx('win'),650);
+ const cols=[CORAL,SUN,SKY,LEAF,'#CDBDF2'];
+ const conf=Array.from({length:36},(_,i)=>`<i style="left:${(i*97)%100}%;background:${cols[i%5]};animation-delay:${(i%9)*.18}s;animation-duration:${2.2+(i%5)*.35}s;${i%3?'':'border-radius:50%;'}"></i>`).join('');
+ const rows=ROOMS.map(r=>{const sc=b[r]||0,st=starsFor(sc);return `<div class="crow"><span>${t(S['short.'+r]?'short.'+r:'room.'+r)}</span><span class="cst">${[1,2,3].map(n=>starSVG(st>=n)).join('')}</span><b>${sc}</b></div>`}).join('');
+ const o=overlay(`<div class="confetti-rain" aria-hidden="true">${conf}</div>
+  <div class="rosette"><svg viewBox="0 0 80 96" aria-hidden="true"><path d="M24 56L14 92l14-6 8 10 6-34M56 56l10 36-14-6-8 10-6-34" fill="${CORAL}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="38" r="32" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="40" cy="38" r="24" fill="${SKY}" stroke="${INK}" stroke-width="3"/><path d="M40 22l4.7 9.6 10.5 1.5-7.6 7.4 1.8 10.5L40 46l-9.4 5 1.8-10.5-7.6-7.4 10.5-1.5z" fill="${SUN}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/></svg>${p?`<span class="rav">${headSVG(p.av)}</span>`:''}</div>
+  <h2>${esc(t('congT'))}</h2>
+  <p class="congsub">${t('congSub')}</p>
+  <p class="score"><span class="clabel">${t('congScore')}</span><b>${tot}</b><span> / 100</span></p>
+  <div class="cgrid">${rows}</div>
+  <p class="congjmp">${t('congJMP')}</p>
+  <div class="row"><button class="cta" id="cHome">${t('home')}</button><button class="cta alt" id="cChart">${t('scoreT')}</button></div>`);
+ o.querySelector('.card').classList.add('congrats');
+ o.querySelector('#cHome').onclick=()=>{closeOverlay();showHub()};
+ o.querySelector('#cChart').onclick=()=>{closeOverlay();showScores()};
+ track('complete',{marks:tot});
 }
 
 /* ---------- score chart ---------- */
