@@ -937,8 +937,8 @@ function trialWall(){
 function registerScreen(mode){
   const p=PLAYER||{};
   const wall=mode==='wall',inGame=!PLAYER&&S&&S.started;
-  showModal(`<p class="eyebrow amber">${wall?'Free trial complete':'Player registration'}</p><h2>${wall?'Your 3-minute trial is up':'Register free to keep playing'}</h2>
-  <p>${wall?'Register free to carry on. Your department is saved exactly as you left it.':'Tell us who is playing. It takes less than a minute.'}</p>
+  showModal(`<p class="eyebrow amber">${wall?'Free trial complete':'Player registration'}</p><h2>${wall?'Your 3-minute trial is up':(mode==='start'?'Before you open the department':'Register free to keep playing')}</h2>
+  <p>${wall?'Register free to carry on. Your department is saved exactly as you left it.':(mode==='start'?'Tell us who is playing. It takes less than a minute. Not ready? Skip it and play free for 3 minutes first.':'Tell us who is playing. It takes less than a minute.')}</p>
   <form id="regForm" class="regform" novalidate>
     <div class="field"><label for="rgName">Full name</label><input id="rgName" autocomplete="name" value="${esc(p.name||'')}" required></div>
     <div class="field"><label for="rgEmail">Email</label><input id="rgEmail" type="email" autocomplete="email" value="${esc(p.email||'')}" required></div>
@@ -949,7 +949,7 @@ function registerScreen(mode){
     </div>
     <label class="check" for="rgConsent"><input type="checkbox" id="rgConsent"${p.consent?' checked':''}> <span>I agree that the Beam On! team may store these details and contact me about the game.</span></label>
     <p class="err" id="rgErr" role="alert"></p>
-    <div class="btnrow">${inGame&&!wall?'<button class="btn big" type="button" data-act="regBack">Back to the game</button>':''}<button class="btn primary big" type="submit" id="rgSubmit">${wall||inGame?'Register and keep playing':'Register and play'}</button></div>
+    <div class="btnrow">${mode==='start'?`<button class="btn big" type="button" data-act="skipTrial">Skip, try ${fmtTrial(trialLeft())} free</button>`:''}${inGame&&!wall?'<button class="btn big" type="button" data-act="regBack">Back to the game</button>':''}<button class="btn primary big" type="submit" id="rgSubmit">${wall||inGame?'Register and keep playing':'Register and play'}</button></div>
   </form>
   <p class="note">Your details are used only to understand who plays Beam On!. We also count plays anonymously, with no personal details, to see how many people try the game. Questions: hafiz.zin@physics.org</p>`);
   const f=document.getElementById('rgName');f&&f.focus();
@@ -1306,6 +1306,7 @@ document.addEventListener('click',e=>{
     case 'changePlayer':registerScreen();break;
     case 'register':registerScreen();break;
     case 'regBack':hideModal();break;
+    case 'skipTrial':intro();break;
     case 'continue':{const sv=loadSave();if(sv){sv.staff.forEach(s=>{if(s.role==='dos')s.role='phys'});S=sv;S.started=true;GEO.clear();S.qQueue=[];hideModal();startDay();lastPanel=''}break}
     case 'tab':S.tab=v;break;
     case 'build':S.placing=S.placing===v?null:v;break;
@@ -1369,7 +1370,7 @@ window.__beam={get S(){return S},tick:d=>tick(d),build,startNew,answer,hideModal
 updatePlayerTag();
 if(!TRIAL.opened){TRIAL.opened=true;saveTrial();track('opened')}
 updateTop();
-if(PLAYER||trialLeft()>0)intro();else registerScreen('wall');
+if(PLAYER)intro();else if(trialLeft()>0)registerScreen('start');else registerScreen('wall');
 requestAnimationFrame(frame);
 })();
 </script>
