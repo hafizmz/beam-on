@@ -85,6 +85,19 @@ h2{margin:0 0 8px;font:700 clamp(28px,4vw,40px)/1.1 var(--display)}
 
 footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--muted);font-size:15px}
 footer p{margin:0 0 6px;max-width:80ch}
+
+.player{border:3px solid var(--amber);border-radius:18px;overflow:hidden;background:#000;box-shadow:8px 8px 0 var(--amber);aspect-ratio:16/9}
+.player video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.vtabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:22px}
+@media (max-width:720px){.vtabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.vtabs button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:64px;padding:10px 16px;border-radius:12px;border:2px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;text-align:left;font:inherit}
+.vtabs button b{font:700 19px var(--display)}
+.vtabs button span{font-size:14px;color:var(--muted)}
+.vtabs button[aria-pressed="true"]{border-color:var(--amber);background:#2A2416}
+.vtabs button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+#outreach-games{padding-top:88px}
+.amber{color:var(--amber)}
+footer a{color:var(--amber)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -102,9 +115,10 @@ footer p{margin:0 0 6px;max-width:80ch}
   <div class="wrap">
     <div class="eyebrow"><span class="lamp" aria-hidden="true"></span>Free medical physics games</div>
     <h1>Beam <span>On!</span></h1>
-    <p class="lede">Build and run your own radiotherapy department, and see how medical physicists keep every patient safe.</p>
+    <p class="lede">Build and run your own radiotherapy department, and see how medical physicists keep every cancer patient safe.</p>
     <div class="cta">
       <a class="btn primary" href="play/">Play Beam On!</a>
+      <a class="btn ghost" href="#watch">Watch the games</a>
       <a class="btn ghost" href="#outreach-games">Games for schools</a>
     </div>
   </div>
@@ -136,6 +150,21 @@ footer p{margin:0 0 6px;max-width:80ch}
     </article>
   </section>
 
+
+  <section class="wrap" id="watch" aria-labelledby="watch-h">
+    <h2 id="watch-h">See the games in action</h2>
+    <p class="sub">Real gameplay from all three games. Pick one to watch.</p>
+    <div class="player">
+      <video id="vid" controls playsinline preload="metadata" poster="promo/thumb-all.jpg" src="promo/beam-on-all-games.mp4" aria-label="Gameplay video: all three Beam On! games"></video>
+    </div>
+    <div class="vtabs" role="group" aria-label="Choose a video">
+      <button type="button" aria-pressed="true" data-src="promo/beam-on-all-games.mp4" data-poster="promo/thumb-all.jpg" data-label="all three Beam On! games"><b>All three</b><span>80 s</span></button>
+      <button type="button" aria-pressed="false" data-src="promo/beam-on-gameplay.mp4" data-poster="promo/thumb-main.jpg" data-label="Beam On!"><b>Beam On!</b><span>Main game</span></button>
+      <button type="button" aria-pressed="false" data-src="promo/beam-on-first-light.mp4" data-poster="promo/thumb-fl.jpg" data-label="Beam On: First Light"><b>First Light</b><span>Ages 15–17</span></button>
+      <button type="button" aria-pressed="false" data-src="promo/beam-on-junior.mp4" data-poster="promo/thumb-jr.jpg" data-label="Beam On! Junior"><b>Junior</b><span>Kindergarten &amp; primary</span></button>
+    </div>
+  </section>
+
   <section class="wrap" id="outreach-games" aria-labelledby="outreach-h">
     <h2 id="outreach-h">For schools and outreach</h2>
     <p class="sub">Two spin-off games for younger players.</p>
@@ -149,7 +178,7 @@ footer p{margin:0 0 6px;max-width:80ch}
         </svg>
         <span class="tag">Kindergarten &amp; primary</span>
         <h3>Beam On! Junior</h3>
-        <p>Meet the hospital machines in bite-sized mini-games, in English and Bahasa Melayu.</p>
+        <p>Five hospital machines in bite-sized mini-games, in English and Bahasa Melayu, with a real child's voice-over.</p>
         <span class="go">Play Junior →</span>
       </a>
       <a class="card fl" href="first-light/">
@@ -169,13 +198,13 @@ footer p{margin:0 0 6px;max-width:80ch}
   <section class="outreach" aria-labelledby="bring-h">
     <div class="wrap box">
       <div>
-        <h2 id="bring-h">Bring Beam On! to your community</h2>
+        <h2 id="bring-h">Scan to play. <span class="amber">It's free.</span></h2>
         <p>The games are made for school visits, open days, science fairs and community events. Each First Light chapter takes 10 to 15 minutes, and teachers get session notes and solutions.</p>
-        <p>To run a session at your school, club or event, get in touch: <a href="mailto:hafiz.zin@physics.org">hafiz.zin@physics.org</a></p>
+        <p>Bring Beam On! to your school, club or community event: <a href="mailto:hafiz.zin@physics.org">hafiz.zin@physics.org</a></p>
       </div>
       <div>
         <div class="qr"><img src="qr.svg" alt="QR code linking to hafizmz.github.io/beam-on" width="220" height="220"></div>
-        <p class="qrcap">Scan to share this page</p>
+        <p class="qrcap">hafizmz.github.io/beam-on</p>
       </div>
     </div>
   </section>
@@ -184,9 +213,14 @@ footer p{margin:0 0 6px;max-width:80ch}
 <footer>
   <div class="wrap">
     <p>Beam On! is an original educational game. It uses no assets from any commercial game. Physics is simplified for teaching; always follow your own department's protocols.</p>
-    <p>Progress is saved in your own browser. © 2026 Beam On! · <a href="mailto:hafiz.zin@physics.org">hafiz.zin@physics.org</a></p>
+    <p>Made by <a href="./">Mohd Hafiz Mohd Zin</a>, medical physicist. Progress is saved in your own browser. © 2026 Beam On! · <a href="mailto:hafiz.zin@physics.org">hafiz.zin@physics.org</a></p>
   </div>
 </footer>
 
+<script>
+(()=>{const v=document.getElementById('vid');document.querySelectorAll('.vtabs button').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('.vtabs button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+ v.pause();v.poster=b.dataset.poster;v.src=b.dataset.src;v.setAttribute('aria-label','Gameplay video: '+b.dataset.label);v.load();v.play().catch(()=>{});}))})();
+</script>
 </body>
 </html>
