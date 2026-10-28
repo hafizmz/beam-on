@@ -14,7 +14,7 @@ A Theme Hospital-inspired browser game about running a radiotherapy department, 
 
 ## Files
 
-- `index.html`: home page linking all three games
+- `index.html`: home page linking all the games
 - `play/index.html`: Beam On!
 - `first-light/`: Beam On: First Light
 - `junior/index.html`: Beam On! Junior

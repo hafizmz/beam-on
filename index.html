@@ -100,6 +100,18 @@ footer p{margin:0 0 6px;max-width:80ch}
 #watch .sub{margin-bottom:44px}
 .amber{color:var(--amber)}
 footer a{color:var(--amber)}
+.race{background:var(--amber);color:#16212A;padding-block:48px}
+.race-in{display:grid;grid-template-columns:auto minmax(0,1fr);gap:36px;align-items:center}
+@media (max-width:720px){.race-in{grid-template-columns:minmax(0,1fr)}}
+.race-in svg{width:140px;height:140px}
+.race-txt{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.race-eb{font:600 15px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.race h2{margin:0;font:700 clamp(32px,5vw,48px)/1 var(--display)}
+.race p{margin:0;max-width:62ch;color:#2A1A00}
+.race-note{font-weight:700;background:#16212A;color:#fff!important;padding:10px 16px;border-radius:12px}
+.race-btn{background:#16212A;color:#fff}
+.race-btn:hover{background:#2A3D4A}
+.race-btn:focus-visible{outline:3px solid #16212A;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -207,6 +219,26 @@ footer a{color:var(--amber)}
       <div>
         <div class="qr"><img src="qr.svg" alt="QR code linking to hafizmz.github.io/beam-on" width="220" height="220"></div>
         <p class="qrcap">hafizmz.github.io/beam-on</p>
+      </div>
+    </div>
+  </section>
+  <section class="race" aria-labelledby="race-h">
+    <div class="wrap race-in">
+      <svg role="img" aria-label="Stopwatch and finish flag" viewBox="0 0 150 150">
+        <circle cx="68" cy="84" r="52" fill="#fff" stroke="#16212A" stroke-width="6"/>
+        <rect x="58" y="16" width="20" height="14" rx="3" fill="#16212A"/>
+        <path d="M68 84 L68 50 M68 84 L92 96" stroke="#16212A" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="68" cy="84" r="6" fill="#16212A"/>
+        <path d="M112 20 V70" stroke="#16212A" stroke-width="5"/>
+        <path d="M112 22 h30 v22 h-30 z" fill="#fff" stroke="#16212A" stroke-width="4"/>
+        <path d="M112 22 h10 v11 h-10 z M132 22 h10 v11 h-10 z M122 33 h10 v11 h-10 z" fill="#16212A"/>
+      </svg>
+      <div class="race-txt">
+        <span class="race-eb">New · For science camps · 20 minutes</span>
+        <h2 id="race-h">Beam On! Explorace</h2>
+        <p>Teams race Teddy from clinic to CT, treatment planning and the linac, with a hands-on mission at every station. In English and Bahasa Melayu.</p>
+        <p class="race-note">Run it inside a radiotherapy department, or set up stations in a simulated hospital space with marshals.</p>
+        <a class="btn race-btn" href="race/">Open Explorace</a>
       </div>
     </div>
   </section>
