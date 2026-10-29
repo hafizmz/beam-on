@@ -265,6 +265,18 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .story-dots button{width:32px;height:32px;border-radius:50%;border:2px solid #3A4A55;background:transparent;color:#9FB3BD;font:700 12px var(--font-mono);cursor:pointer}
 .story-dots button[aria-current="true"]{background:var(--amber);border-color:var(--amber);color:#2A1A00}
 .story-ctl .btn{background:transparent;color:#E9F1F4;border-color:#3A4A55;min-height:36px;padding:6px 16px}
+/* final mark */
+.final{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;background:var(--console);color:var(--console-ink);border-radius:14px;padding:16px}
+.final .fhead{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.final .eyebrow{color:var(--amber)}
+.ftotal{font-family:var(--font-display);font-weight:700;font-size:clamp(44px,11vw,64px);line-height:1;color:var(--amber)}
+.ftotal small,.fnum small{font-size:.45em;color:var(--console-dim);margin-left:4px}
+.fpart{display:grid;gap:5px;min-width:0}
+.fpart b{font-family:var(--font-display);font-size:16px}
+.fnum{font-family:var(--font-mono);font-weight:700;font-size:28px;line-height:1}
+.fpart .muted{color:var(--console-dim)}
+.fbar{height:8px;border-radius:4px;background:#2A3D4A;overflow:hidden}
+.fbar i{display:block;height:100%;background:var(--amber);border-radius:4px}
 /* theme tune button */
 .tune{justify-self:start;display:inline-flex;align-items:center;gap:10px;border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--amber-ink);border-radius:999px;padding:8px 18px 8px 12px;min-height:44px;cursor:pointer;font-weight:700;font-size:15px}
 .tune[aria-pressed="true"]{background:var(--amber);color:#2A1A00}
@@ -358,7 +370,7 @@ en:{
  howScore:'How you score',sc1:'Screen challenge at each station',sc2:'Marshal stars for the hands-on task (0–3 stars)',sc3:'Time bonus if Teddy is treated: 1 point per 10 s left',upTo:'up to {0}',
  board:'Camp leaderboard',teamsN:'{0} teams',team1:'1 team',thRank:'#',thTeam:'Team',thTime:'Time',thScore:'Score',notTreated:'not treated',
  copyBtn:'Copy results for a spreadsheet',clearBoard:'Clear leaderboard (marshal)',copied:'Copied. Paste it into a spreadsheet.',
- csvHead:'Rank,Team,School,Members,Score,Time used,Treated,Stations signed off,Finished at',yes:'yes',no:'no',
+ csvHead:'Rank,Team,School,Members,Theory /10,Interactive /10,Mark /20,Race points,Time used,Treated,Stations signed off,Finished at',finalH:'Final mark',theory:'Theory',interactive:'Interactive',theoryNote:'5 questions, 2 marks each',interNote:'Lasers, plan, linac and marshal stars',racePts:'Race points',th20:'/20',sc4:'Final mark: theory /10 + interactive /10',yes:'yes',no:'no',
  signedIn:'Signed in',readyP:'Teddy is waiting in the clinic. The clock starts the moment you tap the button and runs for {0} minutes. Take this device with you to every station.',
  startBtn:'Start the clock',changeSignin:'Change sign-in',
  stationN:'Station {0} of 4',mission:'Hands-on mission',challenge:'Screen challenge · up to {0} points',endRun:'Marshal: end this run early',
@@ -462,7 +474,7 @@ ms:{
  howScore:'Cara mendapat markah',sc1:'Cabaran skrin di setiap stesen',sc2:'Bintang marshal untuk tugasan amali (0–3 bintang)',sc3:'Bonus masa jika Teddy dirawat: 1 mata bagi setiap 10 s yang tinggal',upTo:'hingga {0}',
  board:'Papan markah kem',teamsN:'{0} pasukan',team1:'1 pasukan',thRank:'#',thTeam:'Pasukan',thTime:'Masa',thScore:'Markah',notTreated:'tidak dirawat',
  copyBtn:'Salin keputusan untuk hamparan',clearBoard:'Padam papan markah (marshal)',copied:'Disalin. Tampal ke dalam hamparan.',
- csvHead:'Kedudukan,Pasukan,Sekolah,Ahli,Markah,Masa digunakan,Dirawat,Stesen ditandatangani,Tamat pada',yes:'ya',no:'tidak',
+ csvHead:'Kedudukan,Pasukan,Sekolah,Ahli,Teori /10,Interaktif /10,Markah /20,Mata perlumbaan,Masa digunakan,Dirawat,Stesen ditandatangani,Tamat pada',finalH:'Markah akhir',theory:'Teori',interactive:'Interaktif',theoryNote:'5 soalan, 2 markah setiap satu',interNote:'Laser, pelan, linac dan bintang marshal',racePts:'Mata perlumbaan',th20:'/20',sc4:'Markah akhir: teori /10 + interaktif /10',yes:'ya',no:'tidak',
  signedIn:'Sudah daftar masuk',readyP:'Teddy sedang menunggu di klinik. Masa bermula sebaik sahaja kamu tekan butang dan berjalan selama {0} minit. Bawa peranti ini ke setiap stesen.',
  startBtn:'Mulakan masa',changeSignin:'Tukar maklumat daftar masuk',
  stationN:'Stesen {0} drp 4',mission:'Misi amali',challenge:'Cabaran skrin · hingga {0} mata',endRun:'Marshal: tamatkan larian ini',
@@ -782,15 +794,20 @@ function setupView(){
       <tr><td>${t('sc1')}</td><td class="n">${t('upTo',60)}</td></tr>
       <tr><td>${t('sc2')}</td><td class="n">${t('upTo',30)}</td></tr>
       <tr><td>${t('sc3')}</td><td class="n">${t('upTo',cfg.minutes*6)}</td></tr>
+      <tr><td><b>${t('sc4')}</b></td><td class="n"><b>/20</b></td></tr>
     </tbody></table></div>
   </div>
   ${boardView(board)}`;
 }
+function finalView(){const m=marks();const bar=(v)=>`<div class="fbar"><i style="width:${v*10}%"></i></div>`;
+  return `<div class="final"><div class="fhead"><span class="eyebrow">${t('finalH')}</span><div class="ftotal score">${mk(m.sum)}<small>/20</small></div></div>
+   <div class="fpart"><b>${t('theory')}</b><span class="fnum score">${mk(m.th)}<small>/10</small></span>${bar(m.th)}<span class="small muted">${t('theoryNote')}</span></div>
+   <div class="fpart"><b>${t('interactive')}</b><span class="fnum score">${mk(m.inter)}<small>/10</small></span>${bar(m.inter)}<span class="small muted">${t('interNote')}</span></div></div>`}
 function boardView(board,hi){
   if(!board.length)return '';
   return `<div class="card"><div class="row-h"><h3>${t('board')}</h3><span class="chip">${board.length>1?t('teamsN',board.length):t('team1')}</span></div>
-  <div class="tblwrap"><table class="tbl"><thead><tr><th>${t('thRank')}</th><th>${t('thTeam')}</th><th class="n">${t('thTime')}</th><th class="n">${t('thScore')}</th></tr></thead><tbody>
-    ${board.map((r,i)=>`<tr class="${hi===r.id?'me':''}"><td>${i+1}</td><td><b>${esc(r.team)}</b>${r.done?'':` <span class="chip">${t('notTreated')}</span>`}<br><span class="small muted">${esc(r.school||'')}${r.names&&r.names.length?' · '+esc(r.names.map((n,k)=>mem(n,(r.roles||[])[k])).join(', ')):''}</span></td><td class="n">${fmt(r.used)}</td><td class="n">${r.score}</td></tr>`).join('')}
+  <div class="tblwrap"><table class="tbl"><thead><tr><th>${t('thRank')}</th><th>${t('thTeam')}</th><th class="n">${t('thTime')}</th><th class="n">${t('thScore')}</th><th class="n">${t('th20')}</th></tr></thead><tbody>
+    ${board.map((r,i)=>`<tr class="${hi===r.id?'me':''}"><td>${i+1}</td><td><b>${esc(r.team)}</b>${r.done?'':` <span class="chip">${t('notTreated')}</span>`}<br><span class="small muted">${esc(r.school||'')}${r.names&&r.names.length?' · '+esc(r.names.map((n,k)=>mem(n,(r.roles||[])[k])).join(', ')):''}</span></td><td class="n">${fmt(r.used)}</td><td class="n">${r.score}</td><td class="n"><b>${r.mark20??'–'}</b></td></tr>`).join('')}
   </tbody></table></div>
   <div class="btnrow"><button class="btn" data-act="copyBoard">${t('copyBtn')}</button><button class="linkbtn" data-act="clearBoard">${t('clearBoard')}</button></div>
   <textarea id="csvBox" class="csv" readonly hidden aria-label="CSV"></textarea></div>`;
@@ -1013,8 +1030,8 @@ async function wake(){try{await navigator.wakeLock.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&S.phase==='race')wake()});
 
 function finish(reason){if(S.phase!=='race')return;beamStop();S.phase='done';S.reason=reason;S.end=Date.now();S.runId=String(S.start);
-  const board=load(BOARD,[]);board.push({id:S.runId,team:S.team,school:S.school,names:S.names,roles:S.roles||[],score:total(),used:Math.min(limit(),S.end-S.start),done:reason==='done',stations:IDS.filter(id=>S.st[id].done).length,at:new Date(S.end).toISOString()});
-  board.sort((a,b)=>b.score-a.score||a.used-b.used);save(BOARD,board.slice(0,60));persist();reason==='done'?ok():no();closeModal();render(false)}
+  const board=load(BOARD,[]);board.push({id:S.runId,team:S.team,school:S.school,names:S.names,roles:S.roles||[],score:total(),...(m=>({theory:m.th,inter:m.inter,mark20:m.sum}))(marks()),used:Math.min(limit(),S.end-S.start),done:reason==='done',stations:IDS.filter(id=>S.st[id].done).length,at:new Date(S.end).toISOString()});
+  board.sort((a,b)=>(b.mark20??-1)-(a.mark20??-1)||b.score-a.score||a.used-b.used);save(BOARD,board.slice(0,60));persist();reason==='done'?ok():no();closeModal();render(false)}
 
 document.addEventListener('click',e=>{
   const lb=e.target.closest('[data-lang]');if(lb){LANG=lb.dataset.lang;try{localStorage.setItem(LK,LANG)}catch(err){}
@@ -1054,7 +1071,7 @@ const ACT={
  endRun(){openPin(t('endRunQ'),t('endRunBtn'),()=>finish('stopped'))},
  newTeam(){openPin(t('nextTeamQ'),t('nextTeamBtn'),()=>{S=fresh();persist();render(false)})},
  copyBoard(){const board=load(BOARD,[]);const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-   const csv=[t('csvHead')].concat(board.map((r,i)=>[i+1,q(r.team),q(r.school),q((r.names||[]).map((n,k)=>mem(n,(r.roles||[])[k])).join('; ')),r.score,fmt(r.used),r.done?t('yes'):t('no'),r.stations??'',q(r.at)].join(','))).join('\n');
+   const csv=[t('csvHead')].concat(board.map((r,i)=>[i+1,q(r.team),q(r.school),q((r.names||[]).map((n,k)=>mem(n,(r.roles||[])[k])).join('; ')),r.theory??'',r.inter??'',r.mark20??'',r.score,fmt(r.used),r.done?t('yes'):t('no'),r.stations??'',q(r.at)].join(','))).join('\n');
    const box=$('csvBox');const show=()=>{box.hidden=false;box.value=csv;box.focus();box.select()};
    try{navigator.clipboard.writeText(csv).then(()=>toast(t('copied')),show)}catch(e){show()}}
 };
@@ -1093,6 +1110,16 @@ function openSettings(){openPin(t('settings'),t('unlock'),()=>{
     cfg={pin:p,minutes:m};save(CFG,cfg);closeModal();render()};
   $('modal').hidden=false})}
 
+/* ================= final mark /20 =================
+   Theory /10: the five knowledge questions (3 at the clinic, 2 at CT), 2 marks each.
+   Interactive /10: everything done by hand, scaled from 240 points: CT laser alignment (30),
+   the approved plan (60), linac steps (plan 15, CBCT 25, safety 20) and marshal stars (3 x 30), to the nearest 0.5. */
+function marks(){const qa=(k,A)=>{const c=S.ch[k];return c?A.filter((v,i)=>c.ans[i]===v).length:0};
+  const ct=S.ch.ct,ln=S.ch.linac||{};
+  const earned=(ct&&ct.aligned?ct.alignPts:0)+(S.st.plan.dig||0)+(ln.planPts||0)+(ln.matched?ln.matchPts:0)+(ln.safety||0)+['ct','plan','linac'].reduce((a,id)=>a+(S.st[id].stars||0)*PHYS_STAR,0);
+  const th=(qa('clinic',CLINIC_A)+qa('ctq',CT_A))*2,inter=Math.round(earned/240*20)/2;
+  return {th,inter,sum:th+inter}}
+const mk=n=>String(n);
 /* ================= done ================= */
 function doneView(){
   const treated=S.reason==='done',used=Math.min(limit(),S.end-S.start);
@@ -1102,7 +1129,8 @@ function doneView(){
    <span class="eyebrow ${treated?'':'amber'}">${treated?t('dnTreated'):S.reason==='stopped'?t('dnStopped'):t('dnTime')}</span>
    <h2>${treated?t('dnTreatedH',esc(teamName(S.team)),fmt(used)):t('dnStopH',esc(teamName(S.team)),stFull(IDS[S.idx]))}</h2>
    <p class="muted">${esc(S.school)} · ${esc(S.names.map((n,k)=>mem(n,(S.roles||[])[k])).join(', '))}</p>
-   <div class="big score">${total()} <span class="small muted">${t('points')}</span></div>
+   ${finalView()}
+   <p class="muted">${t('racePts')}: <b class="score">${total()}</b></p>
    ${rank?`<p class="muted">${t('rankN',rank,board.length)}</p>`:''}
    <div class="tblwrap"><table class="tbl"><thead><tr><th>${t('thStation')}</th><th class="n">${t('thScreen')}</th><th class="n">${t('thMarshal')}</th><th class="n">${t('thTotal')}</th></tr></thead><tbody>${rows}
    <tr><td>${t('timeBonus')}</td><td></td><td></td><td class="n">${timeBonus()}</td></tr></tbody></table></div>
