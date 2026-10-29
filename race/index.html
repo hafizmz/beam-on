@@ -277,6 +277,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .fpart .muted{color:var(--console-dim)}
 .fbar{height:8px;border-radius:4px;background:#2A3D4A;overflow:hidden}
 .fbar i{display:block;height:100%;background:var(--amber);border-radius:4px}
+/* demo badge */
+.demotag{display:inline-block;vertical-align:3px;margin-left:6px;font:700 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;background:var(--amber);color:#2A1A00;padding:3px 7px;border-radius:6px}
 /* theme tune button */
 .tune{justify-self:start;display:inline-flex;align-items:center;gap:10px;border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--amber-ink);border-radius:999px;padding:8px 18px 8px 12px;min-height:44px;cursor:pointer;font-weight:700;font-size:15px}
 .tune[aria-pressed="true"]{background:var(--amber);color:#2A1A00}
@@ -333,7 +335,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
   <header class="top">
     <div class="brand">
       <div class="lamp" id="lamp" aria-hidden="true"><span></span></div>
-      <div><h1>Beam On! Explorace</h1><small id="teamLbl"></small></div>
+      <div><h1>Beam On! Explorace <span class="demotag" id="demoTag" hidden>Demo</span></h1><small id="teamLbl"></small></div>
     </div>
     <div class="lang" role="group" aria-label="Language / Bahasa">
       <button type="button" data-lang="en" aria-pressed="true">EN</button>
@@ -363,7 +365,7 @@ en:{
  heroH:'Teddy has a brain tumour. Give him stereotactic radiotherapy before the clock runs out.',
  heroP:'Your team takes Teddy through the same four steps a real cancer patient follows: clinic, CT simulation, treatment planning and the linear accelerator (linac). Do the hands-on task at each station, answer the challenge on this device, then get the marshal to sign you off.',
  kPatient:'Patient',kDob:'Date of birth',kMrn:'MRN',kDx:'Diagnosis',kRx:'Prescription',
- signin:'Team sign-in',fTeam:'Team name',fTeamPh:'e.g. Gamma Gang',fSchool:'School or camp group',fSchoolPh:'e.g. SMK Tasek Gelugor',
+ signin:'Team sign-in',demoEyebrow:'Demo version · no sign-in',demoP:'Try the whole race with a ready-made demo team. Demo results stay on this demo page and never go on the camp leaderboard.',demoGo:'Start the demo',demoPin:'Marshal PIN for the demo: {0}',fTeam:'Team name',fTeamPh:'e.g. Gamma Gang',fSchool:'School or camp group',fSchoolPh:'e.g. SMK Tasek Gelugor',
  fMembers:'Team members',fMembersHint:'(3 to 9 members, first names are fine, and at least one of each role)',member:'Member {0}',rolePick:'Role',eRole:'Choose a role for every member.',eCover:'Your team needs at least one clinical oncologist, one radiation therapist and one medical physicist.',leads:'Leading here',roleN:{onc:'Clinical oncologist',rtt:'Radiation therapist',mp:'Medical physicist'},roleShort:{onc:'Oncologist',rtt:'Radiation therapist',mp:'Medical physicist'},
  signinBtn:'Sign in',settings:'Marshal settings',namesNote:'Names stay on this device only, for today’s leaderboard. A marshal clears them after camp.',
  eNoTeam:'Enter a team name.',eNoSchool:'Enter your school or camp group.',eNoMembers:'Add at least three team members.',eDupe:'That team name is already on the leaderboard. Pick another.',
@@ -467,7 +469,7 @@ ms:{
  heroH:'Teddy ada tumor otak. Beri dia radioterapi stereotaktik sebelum masa tamat.',
  heroP:'Pasukan kamu membawa Teddy melalui empat langkah yang sama seperti pesakit kanser sebenar: klinik, simulasi CT, perancangan rawatan dan pemecut linear (linac). Buat tugasan amali di setiap stesen, jawab cabaran pada peranti ini, kemudian minta marshal menandatangani kamu.',
  kPatient:'Pesakit',kDob:'Tarikh lahir',kMrn:'MRN',kDx:'Diagnosis',kRx:'Preskripsi',
- signin:'Daftar masuk pasukan',fTeam:'Nama pasukan',fTeamPh:'cth. Geng Gamma',fSchool:'Sekolah atau kumpulan kem',fSchoolPh:'cth. SMK Tasek Gelugor',
+ signin:'Daftar masuk pasukan',demoEyebrow:'Versi demo · tanpa daftar masuk',demoP:'Cuba keseluruhan perlumbaan dengan pasukan demo yang sudah sedia. Keputusan demo kekal di halaman demo ini dan tidak masuk ke papan markah kem.',demoGo:'Mulakan demo',demoPin:'PIN marshal untuk demo: {0}',fTeam:'Nama pasukan',fTeamPh:'cth. Geng Gamma',fSchool:'Sekolah atau kumpulan kem',fSchoolPh:'cth. SMK Tasek Gelugor',
  fMembers:'Ahli pasukan',fMembersHint:'(3 hingga 9 ahli, nama pertama sudah cukup, dan sekurang-kurangnya seorang bagi setiap peranan)',member:'Ahli {0}',rolePick:'Peranan',eRole:'Pilih peranan untuk setiap ahli.',eCover:'Pasukan kamu perlukan sekurang-kurangnya seorang pakar onkologi klinikal, seorang juru terapi sinaran dan seorang ahli fizik perubatan.',leads:'Mengetuai di sini',roleN:{onc:'Pakar onkologi klinikal',rtt:'Juru terapi sinaran',mp:'Ahli fizik perubatan'},roleShort:{onc:'Pakar onkologi',rtt:'Juru terapi sinaran',mp:'Ahli fizik perubatan'},
  signinBtn:'Daftar masuk',settings:'Tetapan marshal',namesNote:'Nama disimpan pada peranti ini sahaja untuk papan markah hari ini. Marshal akan memadamnya selepas kem.',
  eNoTeam:'Masukkan nama pasukan.',eNoSchool:'Masukkan sekolah atau kumpulan kem kamu.',eNoMembers:'Tambah sekurang-kurangnya tiga ahli pasukan.',eDupe:'Nama pasukan itu sudah ada dalam papan markah. Pilih nama lain.',
@@ -600,7 +602,11 @@ const ANGLES=[0,30,60,90,120,150,180,210,240,270,300,330];
 OARS.forEach(o=>{o.pts=[];for(let y=-o.r;y<=o.r;y+=2)for(let x=-o.r;x<=o.r;x+=2)if(x*x+y*y<=o.r*o.r)o.pts.push([o.x+x,o.y+y])});
 
 /* ================= state ================= */
-const KEY='beamon-explorace-v1', CFG='beamon-explorace-cfg', BOARD='beamon-explorace-board';
+// demo build: no sign-in, a ready-made team, the PIN shown on screen, and its own storage so demo runs never reach the camp leaderboard
+const DEMO=!!window.EXPLORACE_DEMO||location.hash==='#demo';
+const DEMO_TEAM={team:'Demo',school:'Demo',names:['Aina','Wei Jie','Kumar'],roles:['onc','rtt','mp']};
+const SUF=DEMO?'-demo':'';
+const KEY='beamon-explorace-v1'+SUF, CFG='beamon-explorace-cfg'+SUF, BOARD='beamon-explorace-board'+SUF;
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let cfg=Object.assign({pin:'1895',minutes:20},load(CFG,{}));
@@ -673,7 +679,7 @@ function timeBonus(){return S.reason==='done'?Math.floor(left()/10000):0}
 function total(){return IDS.reduce((a,id)=>a+stationScore(id),0)+(S.phase==='done'?timeBonus():0)}
 
 /* ================= shell ================= */
-function renderTop(){
+function renderTop(){const dt=$('demoTag');if(dt)dt.hidden=!DEMO;
   const tl=S.team&&S.phase!=='setup'?teamName(S.team):'';$('teamLbl').textContent=tl;$('teamLbl').hidden=!tl;
   $('scoreHd').textContent=t('score');$('clockHd').textContent=t('timeLeft');
   $('scoreLbl').textContent=total();
@@ -774,7 +780,13 @@ function setupView(){
     ${tuneHTML()}
     ${storyHTML()}
     <div class="pt">${BEAR}${kv(false)}</div>
-    <form id="setupForm" class="section" novalidate>
+    ${DEMO?`<div class="section">
+      <span class="eyebrow amber">${t('demoEyebrow')}</span>
+      <p>${t('demoP')}</p>
+      <ul class="roster">${DEMO_TEAM.names.map((n,k)=>`<li>${esc(mem(n,DEMO_TEAM.roles[k]))}</li>`).join('')}</ul>
+      <div class="btnrow"><button class="btn amber big" type="button" data-act="demoGo">${t('demoGo')}</button></div>
+      <p class="small muted">${t('demoPin',esc(cfg.pin))}</p>
+    </div>`:`<form id="setupForm" class="section" novalidate>
       <span class="eyebrow amber">${t('signin')}</span>
       <div class="row2">
         <div class="field"><label for="fTeam">${t('fTeam')}</label><input id="fTeam" maxlength="24" autocomplete="off" value="${esc(S.team)}" placeholder="${t('fTeamPh')}"></div>
@@ -786,7 +798,7 @@ function setupView(){
       <div class="btnrow"><button class="btn amber" type="submit">${t('signinBtn')}</button>
       <button class="linkbtn" type="button" data-act="settings">${t('settings')}</button></div>
       <p class="small muted">${t('namesNote')}</p>
-    </form>
+    </form>`}
   </div>
   <div class="card">
     <h3>${t('howScore')}</h3>
@@ -1062,6 +1074,7 @@ const ACT={
  goCT(){const st=S.st.clinic;if(st.dig===null)return;st.done=true;st.at=Date.now();S.idx=1;ok();persist();render(false)},
  startRace(){S.phase='race';S.start=Date.now();persist();tone(880,.2);wake();render(false)},
  pickRole(b){keepForm();const i=+b.dataset.i,r=b.dataset.r;S.roles=S.roles||[];S.roles[i]=S.roles[i]===r?'':r;tone(560,.04,'triangle',.04);persist();render()},
+ demoGo(){S=fresh();Object.assign(S,JSON.parse(JSON.stringify(DEMO_TEAM)));S.phase='ready';tone(660,.12);persist();render(false)},
  editSignin(){S.phase='setup';persist();render(false)},
  briefNav(b){S.briefDir=+b.dataset.d;S.brief=Math.min(5,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
  tune(){if(tuneOn){tuneMuted=true;tuneStop()}else{tuneMuted=false;tuneStart()}},
@@ -1085,7 +1098,7 @@ function openSignoff(){const id=IDS[S.idx];let stars=null;$('modalCard').innerHT
    <p class="small">${t('soModalP')}</p>
    <div class="stars" role="group">${[0,1,2,3].map(n=>`<button type="button" data-n="${n}" aria-pressed="${stars===n}" aria-label="${t('stars',n)}">${n===0?'<b>0</b>':STAR+(n>1?'<b class="small">×'+n+'</b>':'')}</button>`).join('')}</div>
    <div class="field"><label for="pinIn">${t('pin')}</label><input id="pinIn" class="pin" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore name="marshal-check" value="${esc(pin)}"></div>
-   <p class="err" id="pinErr"></p>
+   <p class="err" id="pinErr"></p>${DEMO?`<p class="small muted">${t('demoPin',esc(cfg.pin))}</p>`:''}
    <div class="btnrow end"><button class="btn" type="button" id="mCancel">${t('cancel')}</button><button class="btn amber" type="button" id="mOk">${t('signOff')}</button></div>`;
    $('modalCard').querySelectorAll('.stars button').forEach(b=>b.onclick=()=>{stars=+b.dataset.n;draw()});
    $('mCancel').onclick=closeModal;
@@ -1095,7 +1108,7 @@ function openSignoff(){const id=IDS[S.idx];let stars=null;$('modalCard').innerHT
      if(S.idx===IDS.length-1)finish('done');else{S.idx++;persist();render(false)}}};
   draw();$('modal').hidden=false;setTimeout(()=>{const p=$('pinIn');if(p)p.focus()},50)}
 function openPin(title,label,fn){$('modalCard').innerHTML=`<span class="eyebrow amber">${t('marshalOnly')}</span><h2>${title}</h2>
-  <div class="field"><label for="pinIn">${t('pin')}</label><input id="pinIn" class="pin" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore name="marshal-check"></div><p class="err" id="pinErr"></p>
+  <div class="field"><label for="pinIn">${t('pin')}</label><input id="pinIn" class="pin" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore name="marshal-check"></div><p class="err" id="pinErr"></p>${DEMO?`<p class="small muted">${t('demoPin',esc(cfg.pin))}</p>`:''}
   <div class="btnrow end"><button class="btn" type="button" id="mCancel">${t('cancel')}</button><button class="btn amber" type="button" id="mOk">${label}</button></div>`;
   $('mCancel').onclick=closeModal;$('mOk').onclick=()=>{if($('pinIn').value!==cfg.pin){$('pinErr').textContent=t('eWrongPinShort');return}closeModal();fn()};
   $('modal').hidden=false;setTimeout(()=>$('pinIn').focus(),50)}
