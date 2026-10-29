@@ -265,6 +265,16 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .story-dots button{width:32px;height:32px;border-radius:50%;border:2px solid #3A4A55;background:transparent;color:#9FB3BD;font:700 12px var(--font-mono);cursor:pointer}
 .story-dots button[aria-current="true"]{background:var(--amber);border-color:var(--amber);color:#2A1A00}
 .story-ctl .btn{background:transparent;color:#E9F1F4;border-color:#3A4A55;min-height:36px;padding:6px 16px}
+/* theme tune button */
+.tune{justify-self:start;display:inline-flex;align-items:center;gap:10px;border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--amber-ink);border-radius:999px;padding:8px 18px 8px 12px;min-height:44px;cursor:pointer;font-weight:700;font-size:15px}
+.tune[aria-pressed="true"]{background:var(--amber);color:#2A1A00}
+.tune .eq{display:inline-flex;align-items:flex-end;gap:2px;height:16px;width:18px}
+.tune .eq b{display:block;width:3px;height:30%;background:currentColor;border-radius:1px}
+.tune[aria-pressed="true"] .eq b{animation:eqBar .8s ease-in-out infinite}
+.tune[aria-pressed="true"] .eq b:nth-child(2){animation-delay:-.3s}
+.tune[aria-pressed="true"] .eq b:nth-child(3){animation-delay:-.55s}
+.tune[aria-pressed="true"] .eq b:nth-child(4){animation-delay:-.15s}
+@keyframes eqBar{0%,100%{height:30%}50%{height:100%}}
 .an{animation-duration:.6s;animation-fill-mode:both;animation-timing-function:ease-out;animation-delay:var(--d,0s)}
 .an.pop{animation-name:sPop;transform-box:fill-box;transform-origin:center;animation-timing-function:cubic-bezier(.3,1.6,.5,1)}
 .an.rise{animation-name:sRise}
@@ -388,7 +398,7 @@ en:{
  nextTeam:'Marshal: next team',whoH:'Who did what today',
  roles:[['Clinical oncologist','Diagnoses the cancer and prescribes the dose'],['Radiation therapist','Makes the mask, scans the patient and runs daily treatment'],['Medical physicist','Plans the beams, checks every plan and keeps the linac accurate and safe']],
  stars:'{0} stars',
- storyH:'Teddy’s story',pause:'Pause',play:'Play',
+ storyH:'Teddy’s story',pause:'Pause',play:'Play',tunePlay:'Play the Explorace tune',tuneStop:'Stop the tune',
  storyT:['Clinic','To CT','CT scan','Planning','Treatment','Home'],
  storyC:['Teddy has a small brain tumour. The oncologist prescribes stereotactic radiotherapy: 30 Gy in 5 fractions.',
   'Teddy is wheeled to the CT room on a trolley. Walk, do not run!',
@@ -492,7 +502,7 @@ ms:{
  nextTeam:'Marshal: pasukan seterusnya',whoH:'Siapa buat apa hari ini',
  roles:[['Pakar onkologi klinikal','Mendiagnosis kanser dan menetapkan dos'],['Juru terapi sinaran','Membuat topeng, mengimbas pesakit dan menjalankan rawatan harian'],['Ahli fizik perubatan','Merancang alur, menyemak setiap pelan dan memastikan linac tepat dan selamat']],
  stars:'{0} bintang',
- storyH:'Kisah Teddy',pause:'Jeda',play:'Main',
+ storyH:'Kisah Teddy',pause:'Jeda',play:'Main',tunePlay:'Main lagu Explorace',tuneStop:'Hentikan lagu',
  storyT:['Klinik','Ke CT','Imbasan CT','Perancangan','Rawatan','Pulang'],
  storyC:['Teddy ada tumor otak yang kecil. Pakar onkologi menetapkan radioterapi stereotaktik: 30 Gy dalam 5 fraksi.',
   'Teddy dibawa ke bilik CT dengan troli. Berjalan, jangan berlari!',
@@ -601,6 +611,44 @@ function tone(f,d=.12,type='sine',v=.08){try{AC=AC||new (window.AudioContext||wi
 const ok=()=>{tone(660,.1);setTimeout(()=>tone(990,.14),90)};
 const no=()=>tone(180,.25,'square',.05);
 
+/* ================= Explorace theme tune =================
+   An original 8-bar loop (Am F C G, 132 bpm) played live with Web Audio on the start page:
+   a bright lead, a bass line, kick, snare and hi-hat, and a linac "beep" at the end of each loop.
+   Browsers only allow sound after a tap, so it starts from a button and stops when the team signs in. */
+const TUNE={bpm:132,
+ lead:[76,0,76,79,81,0,79,76, 77,0,77,76,74,0,72,0, 72,74,76,0,79,0,76,74, 74,0,71,0,74,76,79,0,
+       76,0,76,79,81,0,84,81, 84,0,81,0,79,77,76,74, 72,0,76,79,84,0,79,76, 74,0,79,0,83,0,86,0],
+ roots:[45,41,48,43,45,41,48,43]};
+let tuneOn=false,tuneTimer=null,tuneStep=0,tuneNext=0,tuneBus=null;
+const midi=n=>440*Math.pow(2,(n-69)/12);
+function tuneVoice(type,f,t0,dur,vol,cut){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t0);
+  let out=o;if(cut){const fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=cut;o.connect(fl);out=fl}
+  out.connect(g);g.connect(tuneBus);g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(vol,t0+.012);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);o.start(t0);o.stop(t0+dur+.02)}
+let noiseBuf=null;
+function tuneNoise(t0,dur,vol,hp){if(!noiseBuf){noiseBuf=AC.createBuffer(1,AC.sampleRate*.3,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+  const n=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();n.buffer=noiseBuf;f.type='highpass';f.frequency.value=hp;n.connect(f);f.connect(g);g.connect(tuneBus);
+  g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);n.start(t0);n.stop(t0+dur+.02)}
+function tuneKick(t0){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(140,t0);o.frequency.exponentialRampToValueAtTime(45,t0+.14);
+  o.connect(g);g.connect(tuneBus);g.gain.setValueAtTime(.55,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+.18);o.start(t0);o.stop(t0+.2)}
+function tuneSchedule(){const e=60/TUNE.bpm/2;
+  while(tuneNext<AC.currentTime+.12){const i=tuneStep%64,bar=Math.floor(i/8),b=i%8,t0=tuneNext;
+    const n=TUNE.lead[i];if(n){tuneVoice('square',midi(n),t0,e*1.6,.09,2600);tuneVoice('triangle',midi(n+12),t0,e*1.2,.035)}
+    const r=TUNE.roots[bar],bass=[r,0,r,r+12,r,0,r+7,r+12][b];if(bass)tuneVoice('sawtooth',midi(bass),t0,e*.9,.13,700);
+    if(b===0||b===4)tuneKick(t0);
+    if(b===2||b===6)tuneNoise(t0,.12,.22,1800);
+    if(b%2===1)tuneNoise(t0,.04,.08,7000);
+    if(i===62)tuneVoice('sine',1760,t0,.09,.07);if(i===63)tuneVoice('sine',1760,t0,.09,.07);
+    tuneNext+=e;tuneStep++}}
+function tuneStart(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();
+  tuneBus=AC.createGain();tuneBus.connect(AC.destination);tuneBus.gain.setValueAtTime(0.0001,AC.currentTime);tuneBus.gain.exponentialRampToValueAtTime(.55,AC.currentTime+.4);
+  tuneStep=0;tuneNext=AC.currentTime+.08;clearInterval(tuneTimer);tuneTimer=setInterval(tuneSchedule,25);tuneOn=true}catch(e){tuneOn=false}tuneBtn()}
+function tuneStop(){if(!tuneOn)return;tuneOn=false;clearInterval(tuneTimer);
+  try{const b=tuneBus;b.gain.cancelScheduledValues(AC.currentTime);b.gain.setValueAtTime(b.gain.value,AC.currentTime);b.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+.35);setTimeout(()=>b.disconnect(),500)}catch(e){}
+  tuneBtn()}
+function tuneBtn(){const b=$('tuneBtn');if(!b)return;b.setAttribute('aria-pressed',String(tuneOn));b.querySelector('span').textContent=tuneOn?t('tuneStop'):t('tunePlay')}
+function tuneHTML(){return `<button class="tune" id="tuneBtn" type="button" data-act="tune" aria-pressed="${tuneOn}"><i class="eq" aria-hidden="true"><b></b><b></b><b></b><b></b></i><span>${tuneOn?t('tuneStop'):t('tunePlay')}</span></button>`}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')tuneStop()});
+
 /* ================= timing + score ================= */
 const limit=()=>cfg.minutes*60000;
 function left(){if(S.phase==='setup'||S.phase==='ready')return limit();const now=S.phase==='done'?S.end:Date.now();return Math.max(0,S.start+limit()-now)}
@@ -708,6 +756,7 @@ function setupView(){
   return `<div class="card hero">
     <h2>${t('heroH')}</h2>
     <p class="muted">${t('heroP')}</p>
+    ${tuneHTML()}
     ${storyHTML()}
     <div class="pt">${BEAR}${kv(false)}</div>
     <form id="setupForm" class="section" novalidate>
@@ -951,6 +1000,7 @@ function afterRender(){
     S=fresh();S.team=tm;S.school=sc;S.names=names;S.roles=roles;S.phase='ready';persist();tone(660,.12);render(false)});
   if(S.phase==='race'&&IDS[S.idx]==='plan')drawCT();
   if($('storySvg')){storyShow(storyI);storyStart()}
+  if(S.phase!=='setup')tuneStop(); // the tune belongs to the start page only
   const bb=$('beamBtn');if(bb){bb.addEventListener('pointerdown',beamStart);['pointerup','pointerleave','pointercancel'].forEach(ev=>bb.addEventListener(ev,beamStop));
     bb.addEventListener('contextmenu',e=>e.preventDefault());
     bb.addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat)beamStart(e)});bb.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter')beamStop()})}
@@ -993,6 +1043,7 @@ const ACT={
  pickRole(b){keepForm();const i=+b.dataset.i,r=b.dataset.r;S.roles=S.roles||[];S.roles[i]=S.roles[i]===r?'':r;tone(560,.04,'triangle',.04);persist();render()},
  editSignin(){S.phase='setup';persist();render(false)},
  briefNav(b){S.briefDir=+b.dataset.d;S.brief=Math.min(5,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
+ tune(){tuneOn?tuneStop():tuneStart()},
  storyToggle(){storyOn=!storyOn;$('storyPlay').textContent=storyOn?t('pause'):t('play');if(storyOn)storyStart()},
  storyGo(b){storyShow(+b.dataset.i);storyStart()},
  briefSkip(){S.brief=5;persist();render(false)},
