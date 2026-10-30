@@ -373,7 +373,7 @@ en:{
  howScore:'How you score',sc1:'Screen challenge at each station',sc2:'Marshal stars for the hands-on task (0–3 stars)',sc3:'Time bonus if MAX is treated: 1 point per 10 s left',upTo:'up to {0}',
  board:'Camp leaderboard',teamsN:'{0} teams',team1:'1 team',thRank:'#',thTeam:'Team',thTime:'Time',thScore:'Score',notTreated:'not treated',
  copyBtn:'Copy results for a spreadsheet',clearBoard:'Clear leaderboard (marshal)',copied:'Copied. Paste it into a spreadsheet.',
- csvHead:'Rank,Team,School,Members,Theory /10,Interactive /10,Mark /20,Race points,Time used,Treated,Stations signed off,Finished at',finalH:'Final mark',theory:'Theory',interactive:'Interactive',theoryNote:'5 questions, 2 marks each',interNote:'Lasers, plan, linac and marshal stars',racePts:'Race points',th20:'/20',sc4:'Final mark: theory /10 + interactive /10',yes:'yes',no:'no',
+ csvHead:'Rank,Team,School,Members,Theory /10,Interactive /10,Mark /20,Race points,Time used,Treated,Stations signed off,Finished at',finalH:'Final mark',theory:'Theory',interactive:'Interactive',theoryNote:'6 physics questions',interNote:'Lasers, plan, linac and marshal stars',racePts:'Race points',th20:'/20',sc4:'Final mark: theory /10 + interactive /10',yes:'yes',no:'no',
  signedIn:'Signed in',readyP:'MAX is waiting in the clinic. The clock starts the moment you tap the button and runs for {0} minutes. Take this device with you to every station.',
  startBtn:'Start the clock',changeSignin:'Change sign-in',
  stationN:'Station {0} of 4',mission:'Hands-on mission',challenge:'Screen challenge · up to {0} points',endRun:'Marshal: end this run early',
@@ -391,8 +391,8 @@ en:{
  plApprove:'Approve plan',plApproveAnyway:'Approve anyway (lower score)',plApproved:'Plan approved: {0} of 60.',
  plNote:'Real stereotactic plans also use arcs, beams from above the head and tightly shaped fields. Here every beam gives an equal share of the dose.',ctAria:'Axial CT slice of MAX’s head with beams and dose',
  tumour:'Tumour',skin:'Skin hot spot',ant:'ANT',
- lnStep1:'<b>Step 1.</b> Load the right plan. Compare with MAX’s wristband: {0}, {1}, {2}.',dobShort:'DOB',
- lnWrong:'Wrong patient. Check every identifier, not just the name. Pick again.',lnLoaded:'Plan loaded for the right patient. {0} of 15.',
+ lnStep1:'<b>Step 1.</b> Physics check before the beam. Answer it to unlock the treatment.',dobShort:'DOB',
+ lnWrong:'Not quite. Think about how the beam spreads out with distance, then try again.',lnLoaded:'Correct. {0} of 15.',
  lnStep2:'<b>Step 2.</b> Cone-beam CT. The amber outline is the planning CT, the teal image is today. Shift the couch until they match within 1 mm.',
  lnApply:'Apply match',lnMiss:'Still off. The outlines must sit on top of each other in both views.',lnMatched:'Images matched. {0} of 25.',
  lnStep3:'<b>Step 3.</b> Safety checks before beam on. Tick only what must be true.',lnConfirm:'Confirm safety checks',
@@ -440,14 +440,14 @@ en:{
   patient:{dx:'Brain tumour, right side',rx:'30 Gy in 5 fractions (stereotactic)'},
   st:{clinic:['Clinic','Oncology Clinic'],transport:['Transport','Patient Transport'],ct:['CT Sim','CT Simulator'],plan:['Planning','Treatment Planning'],linac:['Linac','Linac Treatment']},
   mission:{
-   clinic:['Collect MAX from the waiting area, read the patient card and put the ID wristband on it.','Ask the marshal (your oncologist) to sign the request for CT planning.','Load MAX onto the trolley, face up, and wheel it to the CT room. Walk, and do not bump into walls, people or other teams.'],
+   clinic:['Collect MAX from the waiting area and read the patient card.','Ask the marshal (your oncologist) to sign the request for CT planning.','Load MAX onto the trolley, face up, and wheel it to the CT room. Walk, and do not bump into walls, people or other teams.'],
    transport:['Load MAX onto the trolley, lying face up.','Push the trolley to the CT room. No bumping into walls, people or other teams.','Park with the brakes on and hand over to the CT radiographer (marshal).'],
    ct:['Lock MAX onto its base so the head cannot move, not even by a millimetre.','Line up the lasers with the marks on MAX.','Scan MAX, then tell the marshal which area you scanned and why.'],
    plan:['Sit at the planning desk. Everyone in the team must agree on the plan.','Choose beam angles that hit the tumour and miss the eyes and brainstem.','Show the approved plan to the medical physicist (marshal).'],
    linac:['Wheel MAX into the bunker and lock it onto the couch on its base.','Line up the lasers again, then everyone leaves the bunker.','Close the door and deliver the beam from the console.']},
   clinicQ:[
-   {ask:'Before any test or treatment, how do staff confirm this is the right patient?',opts:['Ask "Are you MAX?" and wait for a yes','Check full name and date of birth against the wristband','Look at the bed number','Recognise the patient from last week'],
-    why:'Two identifiers, checked against the wristband every time. A yes/no question is not enough because a confused or scared patient may just say yes.'},
+   {ask:'MAX is treated with 6 MV X-rays from a linac, not the low-energy X-rays used for a chest X-ray. Why?',opts:['They are cheaper to make','They reach deep into the head and give less dose to the skin','They make the tumour glow so it is easier to see','They are not ionising radiation'],
+    why:'Megavoltage X-rays penetrate deeply, and their dose builds up a little below the surface. The tumour deep in the head gets the dose while the skin is spared.'},
    {ask:'The prescription is 30 Gy in 5 fractions. How much dose does MAX get at each treatment?',opts:['3 Gy','6 Gy','10 Gy','30 Gy'],
     why:'30 Gy divided by 5 treatments is 6 Gy each time, three times the usual 2 Gy. The gray (Gy) is one joule of energy absorbed per kilogram of tissue.'},
    {ask:'Stereotactic treatment gives a big dose in only 5 treatments instead of 30 small ones. What makes that safe?',opts:['The linac uses a weaker beam','The tumour is small and the beams are aimed to within 1 mm, so very little healthy brain gets the high dose','MAX is made of plastic, so nothing can go wrong','Each treatment is shorter'],
@@ -458,6 +458,8 @@ en:{
     why:'Each CT voxel has a Hounsfield number linked to electron density. The planning system uses it to work out how the beam is absorbed. MRI is often added to see the tumour better.'},
    {ask:'How much of MAX should you scan?',opts:['Only the tumour, to keep the dose low','The whole head with a margin above and below','The whole body','Just one slice through the middle'],
     why:'The planner needs the tumour, every nearby organ at risk and the outline of the head so beams entering and leaving can be calculated.'}],
+  linacQ:{ask:'MAX is normally 100 cm from the linac source. If MAX were moved to 200 cm, what would happen to the dose rate at the tumour?',opts:['It doubles','It stays the same','It halves','It drops to a quarter'],
+   why:'Inverse square law: at twice the distance the same beam spreads over four times the area, so the dose rate falls to a quarter. That is why the distance to the patient is fixed and checked before every treatment.'},
   sites:['Brain SRT, right · 30 Gy / 5#','Brain SRT, right · 30 Gy / 5#','Breast, left · 40 Gy / 15#'],
   safety:['MAX is locked to the couch on its base','Everyone has left the bunker','One person stays inside to keep MAX company','Bunker door is closed and the door light shows green','Patient camera is on so you can watch MAX'],
   oar:{eyeL:'Left eye',eyeR:'Right eye',stem:'Brainstem'}
@@ -477,7 +479,7 @@ ms:{
  howScore:'Cara mendapat markah',sc1:'Cabaran skrin di setiap stesen',sc2:'Bintang marshal untuk tugasan amali (0–3 bintang)',sc3:'Bonus masa jika MAX dirawat: 1 mata bagi setiap 10 s yang tinggal',upTo:'hingga {0}',
  board:'Papan markah kem',teamsN:'{0} pasukan',team1:'1 pasukan',thRank:'#',thTeam:'Pasukan',thTime:'Masa',thScore:'Markah',notTreated:'tidak dirawat',
  copyBtn:'Salin keputusan untuk hamparan',clearBoard:'Padam papan markah (marshal)',copied:'Disalin. Tampal ke dalam hamparan.',
- csvHead:'Kedudukan,Pasukan,Sekolah,Ahli,Teori /10,Interaktif /10,Markah /20,Mata perlumbaan,Masa digunakan,Dirawat,Stesen ditandatangani,Tamat pada',finalH:'Markah akhir',theory:'Teori',interactive:'Interaktif',theoryNote:'5 soalan, 2 markah setiap satu',interNote:'Laser, pelan, linac dan bintang marshal',racePts:'Mata perlumbaan',th20:'/20',sc4:'Markah akhir: teori /10 + interaktif /10',yes:'ya',no:'tidak',
+ csvHead:'Kedudukan,Pasukan,Sekolah,Ahli,Teori /10,Interaktif /10,Markah /20,Mata perlumbaan,Masa digunakan,Dirawat,Stesen ditandatangani,Tamat pada',finalH:'Markah akhir',theory:'Teori',interactive:'Interaktif',theoryNote:'6 soalan fizik',interNote:'Laser, pelan, linac dan bintang marshal',racePts:'Mata perlumbaan',th20:'/20',sc4:'Markah akhir: teori /10 + interaktif /10',yes:'ya',no:'tidak',
  signedIn:'Sudah daftar masuk',readyP:'MAX sedang menunggu di klinik. Masa bermula sebaik sahaja kamu tekan butang dan berjalan selama {0} minit. Bawa peranti ini ke setiap stesen.',
  startBtn:'Mulakan masa',changeSignin:'Tukar maklumat daftar masuk',
  stationN:'Stesen {0} drp 4',mission:'Misi amali',challenge:'Cabaran skrin · hingga {0} mata',endRun:'Marshal: tamatkan larian ini',
@@ -495,8 +497,8 @@ ms:{
  plApprove:'Luluskan pelan',plApproveAnyway:'Luluskan juga (markah lebih rendah)',plApproved:'Pelan diluluskan: {0} drp 60.',
  plNote:'Pelan stereotaktik sebenar juga menggunakan arka, alur dari atas kepala dan medan yang dibentuk rapat. Di sini setiap alur memberi bahagian dos yang sama.',ctAria:'Hirisan CT aksial kepala MAX dengan alur dan dos',
  tumour:'Tumor',skin:'Titik panas kulit',ant:'ANT',
- lnStep1:'<b>Langkah 1.</b> Muatkan pelan yang betul. Bandingkan dengan gelang MAX: {0}, {1}, {2}.',dobShort:'TL',
- lnWrong:'Pesakit salah. Semak setiap pengenal, bukan nama sahaja. Pilih semula.',lnLoaded:'Pelan dimuatkan untuk pesakit yang betul. {0} drp 15.',
+ lnStep1:'<b>Langkah 1.</b> Semakan fizik sebelum alur. Jawab untuk membuka rawatan.',dobShort:'TL',
+ lnWrong:'Belum tepat. Fikirkan bagaimana alur tersebar mengikut jarak, kemudian cuba lagi.',lnLoaded:'Betul. {0} drp 15.',
  lnStep2:'<b>Langkah 2.</b> CT alur kon. Garis jingga ialah CT perancangan, imej biru kehijauan ialah hari ini. Anjakkan katil sehingga kedua-duanya sepadan dalam 1 mm.',
  lnApply:'Guna padanan',lnMiss:'Masih tersasar. Garis luar mesti bertindih dalam kedua-dua pandangan.',lnMatched:'Imej sepadan. {0} drp 25.',
  lnStep3:'<b>Langkah 3.</b> Semakan keselamatan sebelum alur dihidupkan. Tandakan hanya perkara yang mesti benar.',lnConfirm:'Sahkan semakan keselamatan',
@@ -544,14 +546,14 @@ ms:{
   patient:{dx:'Tumor otak, sebelah kanan',rx:'30 Gy dalam 5 fraksi (stereotaktik)'},
   st:{clinic:['Klinik','Klinik Onkologi'],transport:['Pengangkutan','Pengangkutan Pesakit'],ct:['CT Sim','Simulator CT'],plan:['Perancangan','Perancangan Rawatan'],linac:['Linac','Rawatan Linac']},
   mission:{
-   clinic:['Ambil MAX dari ruang menunggu, baca kad pesakit dan pakaikan gelang pengenalan padanya.','Minta marshal (pakar onkologi kamu) menandatangani permohonan perancangan CT.','Letakkan MAX di atas troli, menghadap ke atas, dan tolak ke bilik CT. Berjalan, dan jangan langgar dinding, orang atau pasukan lain.'],
+   clinic:['Ambil MAX dari ruang menunggu dan baca kad pesakit.','Minta marshal (pakar onkologi kamu) menandatangani permohonan perancangan CT.','Letakkan MAX di atas troli, menghadap ke atas, dan tolak ke bilik CT. Berjalan, dan jangan langgar dinding, orang atau pasukan lain.'],
    transport:['Letakkan MAX di atas troli, berbaring menghadap ke atas.','Tolak troli ke bilik CT. Jangan langgar dinding, orang atau pasukan lain.','Parkir dengan brek dipasang dan serahkan kepada juru radiografi CT (marshal).'],
    ct:['Kunci MAX pada tapaknya supaya kepalanya tidak bergerak, walaupun satu milimeter.','Selaraskan laser dengan tanda pada MAX.','Imbas MAX, kemudian beritahu marshal kawasan yang kamu imbas dan sebabnya.'],
    plan:['Duduk di meja perancangan. Semua ahli pasukan mesti bersetuju dengan pelan.','Pilih sudut alur yang mengenai tumor dan mengelak mata serta batang otak.','Tunjukkan pelan yang diluluskan kepada ahli fizik perubatan (marshal).'],
    linac:['Bawa MAX masuk ke bunker dan kunci di atas katil rawatan pada tapaknya.','Selaraskan laser sekali lagi, kemudian semua orang keluar dari bunker.','Tutup pintu dan hidupkan alur dari konsol.']},
   clinicQ:[
-   {ask:'Sebelum sebarang ujian atau rawatan, bagaimana kakitangan memastikan ini pesakit yang betul?',opts:['Tanya "Kamu MAX?" dan tunggu jawapan ya','Semak nama penuh dan tarikh lahir dengan gelang pengenalan','Lihat nombor katil','Cam pesakit dari minggu lepas'],
-    why:'Dua pengenal, disemak dengan gelang setiap kali. Soalan ya/tidak tidak cukup kerana pesakit yang keliru atau takut mungkin hanya menjawab ya.'},
+   {ask:'MAX dirawat dengan sinar-X 6 MV dari linac, bukan sinar-X tenaga rendah seperti untuk X-ray dada. Mengapa?',opts:['Lebih murah dihasilkan','Ia menembusi jauh ke dalam kepala dan memberi dos lebih rendah kepada kulit','Ia membuat tumor bercahaya supaya mudah dilihat','Ia bukan sinaran mengion'],
+    why:'Sinar-X megavolt menembusi jauh, dan dosnya terbina sedikit di bawah permukaan. Tumor yang jauh di dalam kepala menerima dos manakala kulit terlindung.'},
    {ask:'Preskripsi ialah 30 Gy dalam 5 fraksi. Berapakah dos yang MAX terima setiap kali rawatan?',opts:['3 Gy','6 Gy','10 Gy','30 Gy'],
     why:'30 Gy dibahagi 5 rawatan ialah 6 Gy setiap kali, tiga kali ganda dos biasa 2 Gy. Gray (Gy) ialah satu joule tenaga yang diserap oleh setiap kilogram tisu.'},
    {ask:'Rawatan stereotaktik memberi dos yang tinggi dalam 5 rawatan sahaja, bukan 30 rawatan kecil. Apakah yang menjadikannya selamat?',opts:['Linac menggunakan alur yang lebih lemah','Tumornya kecil dan alur dihalakan dengan ketepatan 1 mm, jadi sangat sedikit otak sihat yang menerima dos tinggi','MAX diperbuat daripada plastik, jadi tiada risiko','Setiap rawatan lebih singkat'],
@@ -562,6 +564,8 @@ ms:{
     why:'Setiap voksel CT mempunyai nombor Hounsfield yang berkait dengan ketumpatan elektron. Sistem perancangan menggunakannya untuk mengira bagaimana alur diserap. MRI selalunya ditambah untuk melihat tumor dengan lebih jelas.'},
    {ask:'Berapa banyak bahagian MAX yang perlu kamu imbas?',opts:['Tumor sahaja, supaya dos rendah','Seluruh kepala dengan margin di atas dan di bawah','Seluruh badan','Satu hirisan di tengah sahaja'],
     why:'Perancang memerlukan tumor, setiap organ berisiko yang berdekatan dan garis luar kepala supaya alur yang masuk dan keluar dapat dikira.'}],
+  linacQ:{ask:'MAX biasanya berada 100 cm dari sumber linac. Jika MAX dialihkan ke 200 cm, apakah yang berlaku kepada kadar dos pada tumor?',opts:['Berganda dua','Tidak berubah','Menjadi separuh','Menjadi satu perempat'],
+   why:'Hukum kuasa dua songsang: pada jarak dua kali ganda, alur yang sama tersebar ke kawasan empat kali lebih luas, jadi kadar dos jatuh kepada satu perempat. Sebab itu jarak ke pesakit ditetapkan dan disemak sebelum setiap rawatan.'},
   sites:['SRT otak, kanan · 30 Gy / 5#','SRT otak, kanan · 30 Gy / 5#','Payudara, kiri · 40 Gy / 15#'],
   safety:['MAX dikunci pada katil di atas tapaknya','Semua orang telah keluar dari bunker','Seorang tinggal di dalam untuk menemani MAX','Pintu bunker ditutup dan lampu pintu menyala hijau','Kamera pesakit dihidupkan supaya kamu boleh memerhati MAX'],
   oar:{eyeL:'Mata kiri',eyeR:'Mata kanan',stem:'Batang otak'}
@@ -589,9 +593,8 @@ const ROLES=['onc','rtt','mp'], NMAX=9;
 const LEAD={clinic:['onc'],ct:['rtt'],plan:['mp'],linac:['rtt','mp']};
 const roleName=r=>(t('roleN')||{})[r]||'';
 const mem=(n,r)=>r?`${n} (${roleName(r)})`:n;
-const CLINIC_A=[1,1,1], CT_A=[1,1];
+const CLINIC_A=[1,1,1], CT_A=[1,1], LIN_A=3;
 const TRANSPORT_OK=[true,false,true,true,false,true];
-const PLANS=[{name:'MAX',dob:'01/06/2019',mrn:'RT-1895-07',ok:true},{name:'MAX',dob:'10/06/2019',mrn:'RT-1895-70',ok:false},{name:'MAKS',dob:'01/06/2019',mrn:'RT-1859-07',ok:false}];
 const SAFETY_OK=[true,true,false,true,true];
 const MU_TARGET=600; // stereotactic fractions need more monitor units
 
@@ -932,12 +935,12 @@ const CH={
    ${locked?`<p class="flag good">${t('plApproved',S.st.plan.dig)}</p>`:(r?`<div class="btnrow"><button class="btn ${r.pass?'good':''}" data-act="approve">${r.pass?t('plApprove'):t('plApproveAnyway')}</button></div>`:'')}
    <p class="small muted">${t('plNote')}</p>`},
  linac(){const c=ch('linac',()=>({plan:null,planPts:null,wrongs:0,off:{x:nz(),y:nz(),z:nz()},tries:0,matched:false,sel:[],safety:null,safeTries:0,mu:0}));
-   let h=`<p>${t('lnStep1',PATIENT.name,PATIENT.dob,PATIENT.mrn)}</p>
-   <div class="plans">${PLANS.map((p,i)=>{let cls='';if(c.plan===i)cls=p.ok?'right':'wrong';
-     return `<button class="plan ${cls}" data-act="loadplan" data-i="${i}" ${c.planPts!==null?'disabled':''}><b>${p.name}</b><span>${t('dobShort')} ${p.dob} · MRN ${p.mrn} · ${C().sites[i]}</span></button>`}).join('')}</div>`;
-   if(c.plan!==null&&!PLANS[c.plan].ok)h+=`<p class="flag bad">${t('lnWrong')}</p>`;
+   const LQ=C().linacQ;
+   let h=`<p>${t('lnStep1')}</p><div class="q"><p class="ask">${LQ.ask}</p><div class="opts">${LQ.opts.map((o,i)=>{let cls='';if(c.planPts!==null&&i===LIN_A)cls='right';else if(c.plan===i&&i!==LIN_A)cls='wrong';
+     return `<button class="opt ${cls}" data-act="loadplan" data-i="${i}" ${c.planPts!==null?'disabled':''}>${o}</button>`}).join('')}</div></div>`;
+   if(c.plan!==null&&c.plan!==LIN_A&&c.planPts===null)h+=`<p class="flag bad">${t('lnWrong')}</p>`;
    if(c.planPts===null)return h;
-   h+=`<p class="flag ${c.planPts===15?'good':'warn'}">${t('lnLoaded',c.planPts)}</p><p>${t('lnStep2')}</p>${alignViews(c.off,'cbct')}`;
+   h+=`<p class="why"><b>${t('lnLoaded',c.planPts)}</b> ${LQ.why}</p><p>${t('lnStep2')}</p>${alignViews(c.off,'cbct')}`;
    if(!c.matched)return h+`${padView('linac')}<div class="btnrow"><button class="btn primary" data-act="cbcheck">${t('lnApply')}</button><span class="readout">${t('checksUsed',c.tries)}</span></div>${c.msg?`<p class="flag bad">${t('lnMiss')}</p>`:''}`;
    h+=`<p class="flag good">${t('lnMatched',c.matchPts)}</p><p>${t('lnStep3')}</p>
    <div class="checks">${C().safety.map((x,i)=>{const on=c.sel.includes(i),good=SAFETY_OK[i];let cls='';if(c.safety!==null)cls=good&&on?'right':'';
@@ -1063,7 +1066,7 @@ const ACT={
  nudge(b){const c=S.ch[b.dataset.k];c.off[b.dataset.a]+= +b.dataset.d;c.msg=false;tone(520,.04,'triangle',.04);persist();render()},
  ctcheck(){const c=S.ch.ct;c.tries++;const o=c.off;if(Math.abs(o.x)<=1&&Math.abs(o.y)<=1&&Math.abs(o.z)<=1){c.aligned=true;c.alignPts=Math.max(10,30-(c.tries-1)*5);ok()}else{c.msg=true;no()}persist();render()},
  cbcheck(){const c=S.ch.linac;c.tries++;const o=c.off;if(Math.abs(o.x)<=1&&Math.abs(o.y)<=1&&Math.abs(o.z)<=1){c.matched=true;c.matchPts=Math.max(10,25-(c.tries-1)*5);ok()}else{c.msg=true;no()}persist();render()},
- loadplan(b){const c=S.ch.linac,i=+b.dataset.i;c.plan=i;if(PLANS[i].ok){c.planPts=Math.max(0,15-(c.wrongs||0)*10);ok()}else{c.wrongs=(c.wrongs||0)+1;no()}persist();render()},
+ loadplan(b){const c=S.ch.linac,i=+b.dataset.i;if(c.planPts!==null)return;c.plan=i;if(i===LIN_A){c.planPts=Math.max(0,15-(c.wrongs||0)*10);ok()}else{c.wrongs=(c.wrongs||0)+1;no()}persist();render()},
  ssubmit(){const c=S.ch.linac;c.safeTries++;const good=SAFETY_OK.every((v,i)=>v===c.sel.includes(i));
    if(good){c.safety=c.safeTries===1?20:10;ok()}else{c.smsg=SAFETY_OK.some((v,i)=>!v&&c.sel.includes(i))?'lnInterlockIn':'lnInterlockMiss';no()}persist();render()},
  beam(b){const c=S.ch.plan,a=+b.dataset.a;c.beams=c.beams.includes(a)?c.beams.filter(x=>x!==a):[...c.beams,a].sort((x,y)=>x-y);c.calc=null;persist();render()},
@@ -1125,13 +1128,14 @@ function openSettings(){openPin(t('settings'),t('unlock'),()=>{
   $('modal').hidden=false})}
 
 /* ================= final mark /20 =================
-   Theory /10: the five knowledge questions (3 at the clinic, 2 at CT), 2 marks each.
-   Interactive /10: everything done by hand, scaled from 240 points: CT laser alignment (30),
-   the approved plan (60), linac steps (plan 15, CBCT 25, safety 20) and marshal stars (3 x 30), to the nearest 0.5. */
+   Theory /10: the six physics questions (3 at the clinic, 2 at CT, 1 at the linac, right first time), to the nearest 0.5.
+   Interactive /10: everything done by hand, scaled from 225 points: CT laser alignment (30),
+   the approved plan (60), linac steps (CBCT 25, safety 20) and marshal stars (3 x 30), to the nearest 0.5. */
 function marks(){const qa=(k,A)=>{const c=S.ch[k];return c?A.filter((v,i)=>c.ans[i]===v).length:0};
   const ct=S.ch.ct,ln=S.ch.linac||{};
-  const earned=(ct&&ct.aligned?ct.alignPts:0)+(S.st.plan.dig||0)+(ln.planPts||0)+(ln.matched?ln.matchPts:0)+(ln.safety||0)+['ct','plan','linac'].reduce((a,id)=>a+(S.st[id].stars||0)*PHYS_STAR,0);
-  const th=(qa('clinic',CLINIC_A)+qa('ctq',CT_A))*2,inter=Math.round(earned/240*20)/2;
+  const earned=(ct&&ct.aligned?ct.alignPts:0)+(S.st.plan.dig||0)+(ln.matched?ln.matchPts:0)+(ln.safety||0)+['ct','plan','linac'].reduce((a,id)=>a+(S.st[id].stars||0)*PHYS_STAR,0);
+  const right=qa('clinic',CLINIC_A)+qa('ctq',CT_A)+(ln.planPts!=null&&!ln.wrongs?1:0);
+  const th=Math.round(right/6*20)/2,inter=Math.round(earned/225*20)/2;
   return {th,inter,sum:th+inter}}
 const mk=n=>String(n);
 /* ================= done ================= */
