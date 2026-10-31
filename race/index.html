@@ -495,7 +495,7 @@ en:{
  ],
  fig:{kv:'Low energy · chest X-ray',mv:'High energy · 6 MV linac',skin:'skin',deep:'deep',tum:'tumour',total:'MAX: 30 Gy in total',day:'Day',jkg:'1 Gy = 1 joule per kg',air:'air',tissue:'tissue',bone:'bone',range:'scan range',slice:'one slice',m1:'1 m',m3:'3 m',same:'same 9 X-rays',src:'linac'},
  useAt:'You will need this at:',
- demoH:'Staff demo',demoP:'Staff: show the team how this station works. The race clock stops while the demo runs, so the team loses no time.',demoStart:'Start the {0}-minute staff demo',demoSkip:'Skip the demo',demoRun:'Staff demo running',demoEnd:'End the demo, start the challenge',demoPausedClock:'Race clock paused',paused:'Paused',autoNote:'The briefing lasts 3 minutes and the slides move on by themselves. Staff can pause to explain.',qFrom:'From the briefing:',close:'Close',q:'Q',
+ demoH:'Staff demo',sdP:'Staff: show the hands-on mission below, step by step, while the team watches. The race clock stops while you demonstrate.',sdPClinic:'Staff: show the team how to read the patient card and how to answer a question on this device. The race clock stops while you demonstrate.',sdWatch:'Watch the staff do this',yourTurn:'Your turn: repeat what the staff showed you',demoStart:'Start the {0}-minute staff demo',demoSkip:'Skip the demo',demoRun:'Staff demo running',demoEnd:'End the demo, start the challenge',demoPausedClock:'Race clock paused',paused:'Paused',autoNote:'The briefing lasts 3 minutes and the slides move on by themselves. Staff can pause to explain.',qFrom:'From the briefing:',close:'Close',q:'Q',
  C:{
   patient:{dx:'Brain tumour, right side',rx:'30 Gy in 5 fractions (stereotactic)'},
   st:{clinic:['Clinic','Oncology Clinic'],transport:['Transport','Patient Transport'],ct:['CT Sim','CT Simulator'],plan:['Planning','Treatment Planning'],linac:['Linac','Linac Treatment']},
@@ -618,7 +618,7 @@ ms:{
  ],
  fig:{kv:'Tenaga rendah · X-ray dada',mv:'Tenaga tinggi · linac 6 MV',skin:'kulit',deep:'dalam',tum:'tumor',total:'MAX: jumlah 30 Gy',day:'Hari',jkg:'1 Gy = 1 joule setiap kg',air:'udara',tissue:'tisu',bone:'tulang',range:'julat imbasan',slice:'satu hirisan',m1:'1 m',m3:'3 m',same:'9 sinar-X yang sama',src:'linac'},
  useAt:'Kamu akan perlukan ini di:',
- demoH:'Demo staf',demoP:'Staf: tunjukkan kepada pasukan cara stesen ini berfungsi. Masa perlumbaan berhenti semasa demo, jadi pasukan tidak rugi masa.',demoStart:'Mula demo staf {0} minit',demoSkip:'Langkau demo',demoRun:'Demo staf sedang berjalan',demoEnd:'Tamatkan demo, mula cabaran',demoPausedClock:'Masa perlumbaan dijeda',paused:'Dijeda',autoNote:'Taklimat ini 3 minit dan slaid bertukar sendiri. Staf boleh jeda untuk menerangkan.',qFrom:'Daripada taklimat:',close:'Tutup',q:'S',
+ demoH:'Demo staf',sdP:'Staf: tunjukkan misi amali di bawah langkah demi langkah sementara pasukan memerhati. Masa perlumbaan berhenti semasa demo.',sdPClinic:'Staf: tunjukkan kepada pasukan cara membaca kad pesakit dan cara menjawab soalan pada peranti ini. Masa perlumbaan berhenti semasa demo.',sdWatch:'Perhatikan staf melakukan ini',yourTurn:'Giliran kamu: ulang apa yang staf tunjukkan',demoStart:'Mula demo staf {0} minit',demoSkip:'Langkau demo',demoRun:'Demo staf sedang berjalan',demoEnd:'Tamatkan demo, mula cabaran',demoPausedClock:'Masa perlumbaan dijeda',paused:'Dijeda',autoNote:'Taklimat ini 3 minit dan slaid bertukar sendiri. Staf boleh jeda untuk menerangkan.',qFrom:'Daripada taklimat:',close:'Tutup',q:'S',
  C:{
   patient:{dx:'Tumor otak, sebelah kanan',rx:'30 Gy dalam 5 fraksi (stereotaktik)'},
   st:{clinic:['Klinik','Klinik Onkologi'],transport:['Pengangkutan','Pengangkutan Pesakit'],ct:['CT Sim','Simulator CT'],plan:['Perancangan','Perancangan Rawatan'],linac:['Linac','Rawatan Linac']},
@@ -1041,15 +1041,16 @@ function stationView(){
     <div class="btnrow end"><button class="linkbtn" data-act="endRun">${t('endRun')}</button></div></div>`;
   return `<div class="card">
     <div><span class="eyebrow">${t('stationN',S.idx+1)}</span><h2>${stFull(id)}</h2>${leadLine(id)}</div>
-    ${id==='clinic'?'':`<div class="mission"><span class="eyebrow">${t('mission')}</span><ol>${C().mission[id].map(x=>`<li>${x}</li>`).join('')}</ol></div>`}
+    ${id==='clinic'?'':`<div class="mission"><span class="eyebrow">${t('yourTurn')}</span><ol>${C().mission[id].map(x=>`<li>${x}</li>`).join('')}</ol></div>`}
     <div class="section"><span class="eyebrow">${t('challenge',60)}</span>${CH[id]()}</div>
     <div class="section">${id==='clinic'?walkView(st):signoffView(id,st)}</div>
     <div class="btnrow end"><button class="linkbtn" data-act="endRun">${t('endRun')}</button></div>
   </div>`;
 }
-function demoView(){const run=!!S.demoAt,m=DEMO_MS/60000;
+function demoView(){const id=IDS[S.idx],run=!!S.demoAt,m=DEMO_MS/60000;
   return `<div class="sdemo ${run?'run':''}"><span class="eyebrow amber">${run?t('demoRun'):t('demoH')}</span>
-    <p>${t('demoP')}</p>
+    <p>${id==='clinic'?t('sdPClinic'):t('sdP')}</p>
+    ${id==='clinic'?'':`<div class="mission"><span class="eyebrow">${t('sdWatch')}</span><ol>${C().mission[id].map(x=>`<li>${x}</li>`).join('')}</ol></div>`}
     <div class="sdemo-clock"><span id="demoClock">${fmt(demoLeft())}</span>${run?`<small>${t('demoPausedClock')}</small>`:''}</div>
     <div class="sdemo-bar"><i id="demoBar" style="width:${run?100-demoLeft()/DEMO_MS*100:0}%"></i></div>
     <div class="btnrow">${run?`<button class="btn primary" data-act="demoEndBtn">${t('demoEnd')}</button>`
