@@ -254,6 +254,34 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .cf .cf-gantry{transform-box:view-box;transform-origin:156px 100px;animation:cfOrbit 7s linear infinite}
 @keyframes cfOrbit{to{transform:rotate(360deg)}}
 .dots i{transition:width .3s,background .3s}
+/* physics lessons */
+.ltag{display:inline-block;justify-self:start;background:var(--amber);color:#2A1A00;border-radius:999px;padding:3px 12px;font:700 12.5px var(--font-mono);letter-spacing:.02em}
+.uselink{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;color:var(--ink-2)}
+.chip{display:inline-block;background:var(--amber-soft);color:var(--amber-ink);border:1.5px solid var(--amber);border-radius:999px;padding:2px 10px;font:700 12.5px var(--font-mono)}
+.qlink{margin:0;font-size:14px;color:var(--ink-2)}
+.lfig text{font-family:var(--font-mono);fill:#C8D5DB}
+.lfig .ph{transform-box:fill-box;animation:phKv 2.8s ease-in infinite both;animation-delay:calc(var(--i) * .45s)}
+.lfig .ph.mv{animation-name:phMv;animation-timing-function:linear}
+@keyframes phKv{0%{transform:translateX(0);opacity:0}8%{opacity:1}38%{transform:translateX(78px);opacity:.9}55%,100%{transform:translateX(104px);opacity:0}}
+@keyframes phMv{0%{transform:translateX(0);opacity:0}8%{opacity:1}86%{transform:translateX(236px);opacity:1}100%{transform:translateX(236px);opacity:0}}
+.lfig .glow{transform-box:fill-box;transform-origin:center;animation:lGlow 1.4s ease-in-out infinite}
+@keyframes lGlow{50%{transform:scale(1.3);fill:#FF7A45}}
+.lfig .curve{transform-box:fill-box;transform-origin:left bottom;animation:lGrow 1.2s .4s ease-out both}
+@keyframes lGrow{from{transform:scaleX(0)}}
+.lfig .blk{animation:lDrop 6s ease-out infinite both;animation-delay:calc(var(--i) * .6s)}
+@keyframes lDrop{0%{opacity:0;transform:translateY(-36px)}9%,88%{opacity:1;transform:none}100%{opacity:0}}
+.lfig .tot{animation:lTot 6s infinite both}
+@keyframes lTot{0%,50%{opacity:.25}58%,90%{opacity:1}100%{opacity:.25}}
+.lfig .zap{animation:lZap 1.6s ease-in infinite both;animation-delay:calc(var(--i) * .4s)}
+@keyframes lZap{0%{opacity:0;transform:translateX(-14px)}40%{opacity:1}80%,100%{opacity:0;transform:none}}
+.lfig .sweep{animation:lSweep 3.2s ease-in-out infinite alternate}
+@keyframes lSweep{to{transform:translateY(122px)}}
+.lfig .spin{transform-box:view-box;transform-origin:195px 82px;animation:cfOrbit 2.4s linear infinite}
+.lfig .ray{animation:lRay 2.4s linear infinite both;animation-delay:calc(var(--i) * .3s)}
+@keyframes lRay{0%{transform:none;opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+.lfig .dot{transform-box:fill-box;transform-origin:center;animation:pop .4s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(.4s + var(--i) * .12s)}
+.lookfig{margin:0;background:#0F1A21;border-radius:12px;padding:10px}
+.lookfig svg{width:100%;height:auto;display:block}
 /* MAX's story box */
 .story{border-radius:14px;overflow:hidden;background:#0F1A21;display:grid}
 .story svg{display:block;width:100%;height:auto;aspect-ratio:16/9;max-width:100%}
@@ -421,21 +449,37 @@ en:{
   'The medical physicist plans beams that meet at the tumour and miss the eyes and brainstem.',
   'Everyone leaves the bunker. The linac turns around MAX and the beam hits the tumour to within 1 mm.',
   'Five treatments of 6 Gy later, MAX’s course is complete. Now it is your turn to treat it!'],
- briefEyebrow:'Briefing · about 3 minutes · the clock has not started',back:'Back',next:'Next',skipBrief:'Skip to the start',
+ briefEyebrow:'Briefing · about 5 minutes · the clock has not started',back:'Back',next:'Next',skipBrief:'Skip to the start',
  brief:[
-  {h:'What is radiotherapy?',
-   p:'Radiotherapy treats cancer with high-energy X-rays made by a machine called a linear accelerator, or linac. The X-rays damage the DNA inside cells. Cancer cells are worse at repairing that damage than healthy cells, so over the weeks of treatment the tumour shrinks while healthy tissue recovers.',
-   li:['Today MAX has stereotactic radiotherapy: a few very precise, high-dose treatments aimed at the tumour from many directions.','About half of all people with cancer have radiotherapy at some point.','It does not hurt. The patient cannot see or feel the beam.','The patient does not become radioactive and can hug their family straight after.'],
-   cap:'Stereotactic treatment uses many beams that overlap on the tumour. The tumour gets the full dose; the healthy tissue each beam passes through gets only a small share.'},
-  {h:'The team behind every treatment',
+  {k:'rt',h:'What is radiotherapy?',
+   p:'Our bodies are made of tiny cells. Cancer is when some cells keep growing when they should stop, and form a lump called a tumour. Radiotherapy treats it with X-rays: the same invisible light used for a chest X-ray, but with far more energy. The X-rays break the DNA inside cells. Cancer cells are bad at repairing that damage; healthy cells are much better at it.',
+   li:['MAX has stereotactic radiotherapy: many beams from different directions meet at one small tumour.','Where the beams overlap the dose is high. Just outside the tumour it drops off steeply, so the healthy brain gets very little.','The beams must be aimed to within 1 mm, so MAX is held perfectly still and checked with images before every treatment.','It does not hurt, and the patient does not become radioactive.'],
+   cap:'Watch the machine circle the head. Each beam alone is weak; where they all cross, at the tumour, the dose adds up.'},
+  {k:'team',h:'The team behind every treatment',
    li:[['Clinical oncologist','The doctor. Decides that radiotherapy is right for the patient and prescribes the dose.'],['Radiation therapist','Makes the mask, does the planning CT scan and gives the treatment every day.'],['Medical physicist','Plans the beams, checks every plan and tests the linac so the dose is accurate to within a few percent.'],['The patient','MAX! Every check you do today is there to keep the patient safe.']]},
-  {h:'MAX’s journey today',
-   li:['Check who the patient is and what dose the doctor prescribed, then wheel the patient safely to the CT room.','Lock MAX on its base, line up the lasers and scan the head in the treatment position.','Choose many beam angles that hit the tumour and protect the eyes and brainstem.','Check the patient and the images, clear the room and switch the beam on.']},
-  {h:'Words you will need',
-   li:[['Gray (Gy)','The unit of radiation dose: 1 joule of energy absorbed per kilogram of tissue.'],['Fraction','One treatment. MAX’s stereotactic course is 5 of them, 6 Gy each.'],['Millimetre accuracy','Stereotactic beams are aimed to within 1 mm. That is why we use a rigid mask, lasers and a cone-beam CT scan on the treatment couch.'],['The safety rule','Nobody stays in the bunker while the beam is on.']]},
-  {h:'How the race works',
-   li:['You have {0} minutes from the moment you start the clock.','At each station: do the hands-on mission, answer the screen challenge, then call the marshal to sign you off.','Score: up to 60 for the screen, up to 30 for the marshal’s stars, plus a time bonus if MAX is treated.','Rules: walk, do not run. Handle MAX gently. Keep this device with your team.','Every member has a role. At each station the screen shows who leads: the oncologist in the clinic, radiation therapists at CT and the linac, and medical physicists in planning and at the linac.']}
+  {k:'energy',tag:'Physics idea 1 of 4',h:'Why the linac uses high-energy X-rays',
+   p:'X-ray energy is measured in volts. A chest X-ray machine uses about 100 thousand volts (100 kV). A linac uses 6 million volts (6 MV): sixty times more.',
+   li:['Low-energy X-rays are mostly soaked up in the first few centimetres, so most of their dose lands on the skin.','High-energy X-rays travel deep into the head, so they can reach a tumour in the middle.','Their dose builds up a little below the surface, so the skin gets less than the tissue underneath.'],
+   cap:'Top: low-energy X-rays fade out near the skin and never reach the tumour. Bottom: 6 MV X-rays go deep. The orange shape shows how much dose each depth receives.'},
+  {k:'dose',tag:'Physics idea 2 of 4',h:'Measuring dose: the gray',
+   p:'Radiation dose is the energy the body absorbs from the beam. It is measured in grays (Gy). 1 Gy means 1 joule of energy absorbed by each kilogram of tissue.',
+   li:['The doctor prescribes a total dose and splits it into equal treatments called fractions, usually one a day.','Total dose = dose per fraction × number of fractions. Example: 60 Gy in 30 fractions is 2 Gy each day, which is common for ordinary radiotherapy.','Stereotactic treatment uses bigger fractions, so it needs only a few treatment days.'],
+   cap:'MAX’s 30 Gy is shared equally over 5 treatment days. How big is each piece? You will work it out at the clinic.'},
+  {k:'ct',tag:'Physics idea 3 of 4',h:'Seeing inside: the CT scan',
+   p:'A CT scanner spins an X-ray tube around the patient and builds pictures of thin slices of the body. Every tiny square in a slice gets a CT number that tells us how dense the tissue is.',
+   li:['Air is black (about −1000), soft tissue is grey (about 0) and bone is white (+1000 or more).','Denser tissue absorbs more of the beam, so the planning computer uses these numbers to calculate the dose.','The scan must cover the whole head and a bit more: the tumour, the organs we must protect (eyes, brainstem) and the outline of the head, where the beams go in and come out.'],
+   cap:'The scan sweeps over the whole head and a margin beyond it. Each slice is a map of density.'},
+  {k:'dist',tag:'Physics idea 4 of 4',h:'Distance matters: the inverse square law',
+   p:'X-rays spread out from the linac like light from a torch. The further away you are, the bigger the area the same X-rays must cover, so each square centimetre gets less.',
+   li:['Move d times further away and the beam covers d × d times the area.','Example: 3 times further → 3 × 3 = 9 times the area → each square gets 1/9 of the dose.','That is why the distance from the linac source to the patient is fixed at 100 cm and checked before every treatment.'],
+   cap:'The same 9 X-rays land on 1 square at 1 m, but spread over 9 squares at 3 m.'},
+  {k:'journey',h:'MAX’s journey today',
+   li:['Answer the doctor’s physics questions, then wheel MAX safely to the CT room.','Lock MAX on its base, line up the lasers and scan the head in the treatment position.','Choose many beam angles that hit the tumour and protect the eyes and brainstem.','Answer a physics check, clear the room and switch the beam on.']},
+  {k:'rules',h:'How the race works',
+   li:['You have {0} minutes from the moment you start the clock.','At each station: do the hands-on mission, answer the screen challenge, then call the marshal to sign you off.','The questions use the four physics ideas you just met. Look for the “From the briefing” link if you need a reminder.','Score: up to 60 for the screen, up to 30 for the marshal’s stars, plus a time bonus if MAX is treated.','Rules: walk, do not run. Handle MAX gently. Nobody stays in the bunker while the beam is on.','Every member has a role. At each station the screen shows who leads: the oncologist in the clinic, radiation therapists at CT and the linac, and medical physicists in planning and at the linac.']}
  ],
+ fig:{kv:'Low energy · chest X-ray',mv:'High energy · 6 MV linac',skin:'skin',deep:'deep',tum:'tumour',total:'MAX: 30 Gy in total',day:'Day',jkg:'1 Gy = 1 joule per kg',air:'air',tissue:'tissue',bone:'bone',range:'scan range',slice:'one slice',m1:'1 m',m3:'3 m',same:'same 9 X-rays',src:'linac'},
+ useAt:'You will need this at:',qFrom:'From the briefing:',close:'Close',q:'Q',
  C:{
   patient:{dx:'Brain tumour, right side',rx:'30 Gy in 5 fractions (stereotactic)'},
   st:{clinic:['Clinic','Oncology Clinic'],transport:['Transport','Patient Transport'],ct:['CT Sim','CT Simulator'],plan:['Planning','Treatment Planning'],linac:['Linac','Linac Treatment']},
@@ -527,21 +571,37 @@ ms:{
   'Ahli fizik perubatan merancang alur yang bertemu pada tumor dan mengelak mata serta batang otak.',
   'Semua orang keluar dari bunker. Linac berputar mengelilingi MAX dan alur mengenai tumor dengan ketepatan 1 mm.',
   'Selepas lima rawatan 6 Gy, rawatan MAX selesai. Sekarang giliran kamu merawatnya!'],
- briefEyebrow:'Taklimat · kira-kira 3 minit · masa belum bermula',back:'Kembali',next:'Seterusnya',skipBrief:'Langkau ke permulaan',
+ briefEyebrow:'Taklimat · kira-kira 5 minit · masa belum bermula',back:'Kembali',next:'Seterusnya',skipBrief:'Langkau ke permulaan',
  brief:[
-  {h:'Apakah radioterapi?',
-   p:'Radioterapi merawat kanser menggunakan sinar-X bertenaga tinggi yang dihasilkan oleh mesin yang dipanggil pemecut linear, atau linac. Sinar-X merosakkan DNA di dalam sel. Sel kanser kurang berupaya membaiki kerosakan itu berbanding sel sihat, jadi sepanjang minggu rawatan tumor mengecut manakala tisu sihat pulih.',
-   li:['Hari ini MAX menerima radioterapi stereotaktik: beberapa rawatan berdos tinggi yang sangat tepat, dihalakan pada tumor dari banyak arah.','Kira-kira separuh daripada pesakit kanser menerima radioterapi pada suatu masa.','Rawatan ini tidak sakit. Pesakit tidak dapat melihat atau merasa alur sinaran.','Pesakit tidak menjadi radioaktif dan boleh memeluk keluarga sejurus selepas rawatan.'],
-   cap:'Rawatan stereotaktik menggunakan banyak alur yang bertindih pada tumor. Tumor menerima dos penuh; tisu sihat yang dilalui setiap alur hanya menerima sebahagian kecil.'},
-  {h:'Pasukan di sebalik setiap rawatan',
+  {k:'rt',h:'Apakah radioterapi?',
+   p:'Badan kita terdiri daripada sel-sel kecil. Kanser berlaku apabila sesetengah sel terus membesar walaupun sepatutnya berhenti, lalu membentuk ketulan yang dipanggil tumor. Radioterapi merawatnya dengan sinar-X: cahaya halimunan yang sama seperti untuk X-ray dada, tetapi dengan tenaga yang jauh lebih tinggi. Sinar-X memecahkan DNA di dalam sel. Sel kanser lemah membaiki kerosakan itu; sel sihat jauh lebih baik.',
+   li:['MAX menerima radioterapi stereotaktik: banyak alur dari arah berbeza bertemu pada satu tumor kecil.','Di tempat alur bertindih, dosnya tinggi. Sejurus di luar tumor, dos jatuh dengan mendadak, jadi otak yang sihat menerima sangat sedikit.','Alur mesti dihalakan dengan ketepatan 1 mm, jadi MAX dipegang tidak bergerak dan disemak dengan imej sebelum setiap rawatan.','Rawatan ini tidak sakit, dan pesakit tidak menjadi radioaktif.'],
+   cap:'Lihat mesin berputar mengelilingi kepala. Setiap alur sendirian lemah; di tempat semuanya bersilang, iaitu pada tumor, dos bertambah.'},
+  {k:'team',h:'Pasukan di sebalik setiap rawatan',
    li:[['Pakar onkologi klinikal','Doktor yang memutuskan radioterapi sesuai untuk pesakit dan menetapkan dos.'],['Juru terapi sinaran','Membuat topeng, menjalankan imbasan CT perancangan dan memberi rawatan setiap hari.'],['Ahli fizik perubatan','Merancang alur, menyemak setiap pelan dan menguji linac supaya dos tepat hingga beberapa peratus.'],['Pesakit','MAX! Setiap semakan yang kamu buat hari ini adalah untuk keselamatan pesakit.']]},
-  {h:'Perjalanan MAX hari ini',
-   li:['Semak identiti pesakit dan dos yang ditetapkan oleh doktor, kemudian bawa pesakit dengan selamat ke bilik CT.','Kunci MAX pada tapaknya, selaraskan laser dan imbas kepala dalam kedudukan rawatan.','Pilih banyak sudut alur yang mengenai tumor dan melindungi mata serta batang otak.','Semak pesakit dan imej, kosongkan bilik dan hidupkan alur.']},
-  {h:'Istilah yang kamu perlukan',
-   li:[['Gray (Gy)','Unit dos sinaran: 1 joule tenaga yang diserap bagi setiap kilogram tisu.'],['Fraksi','Satu rawatan. Kursus stereotaktik MAX ialah 5 fraksi, setiap satu 6 Gy.'],['Ketepatan milimeter','Alur stereotaktik dihalakan dengan ketepatan 1 mm. Sebab itu kita guna topeng yang tegar, laser dan imbasan CT alur kon di atas katil rawatan.'],['Peraturan keselamatan','Tiada sesiapa boleh berada di dalam bunker semasa alur dihidupkan.']]},
-  {h:'Cara perlumbaan berjalan',
-   li:['Kamu ada {0} minit bermula dari saat kamu memulakan masa.','Di setiap stesen: buat misi amali, jawab cabaran skrin, kemudian panggil marshal untuk menandatangani.','Markah: hingga 60 untuk skrin, hingga 30 untuk bintang marshal, dan bonus masa jika MAX dirawat.','Peraturan: berjalan, jangan berlari. Kendalikan MAX dengan lembut. Simpan peranti ini bersama pasukan kamu.','Setiap ahli ada peranan. Di setiap stesen skrin menunjukkan siapa yang mengetuai: pakar onkologi di klinik, juru terapi sinaran di CT dan linac, dan ahli fizik perubatan di perancangan dan linac.']}
+  {k:'energy',tag:'Idea fizik 1 drp 4',h:'Mengapa linac guna sinar-X bertenaga tinggi',
+   p:'Tenaga sinar-X diukur dalam volt. Mesin X-ray dada menggunakan kira-kira 100 ribu volt (100 kV). Linac menggunakan 6 juta volt (6 MV): enam puluh kali ganda.',
+   li:['Sinar-X tenaga rendah kebanyakannya diserap dalam beberapa sentimeter pertama, jadi kebanyakan dosnya jatuh pada kulit.','Sinar-X tenaga tinggi bergerak jauh ke dalam kepala, jadi ia boleh sampai ke tumor di tengah.','Dosnya terbina sedikit di bawah permukaan, jadi kulit menerima kurang daripada tisu di bawahnya.'],
+   cap:'Atas: sinar-X tenaga rendah pudar dekat kulit dan tidak sampai ke tumor. Bawah: sinar-X 6 MV menembusi jauh. Bentuk jingga menunjukkan dos yang diterima pada setiap kedalaman.'},
+  {k:'dose',tag:'Idea fizik 2 drp 4',h:'Mengukur dos: gray',
+   p:'Dos sinaran ialah tenaga yang diserap oleh badan daripada alur. Ia diukur dalam gray (Gy). 1 Gy bermaksud 1 joule tenaga diserap oleh setiap kilogram tisu.',
+   li:['Doktor menetapkan jumlah dos dan membahagikannya kepada rawatan sama besar yang dipanggil fraksi, biasanya satu sehari.','Jumlah dos = dos setiap fraksi × bilangan fraksi. Contoh: 60 Gy dalam 30 fraksi ialah 2 Gy setiap hari, biasa untuk radioterapi biasa.','Rawatan stereotaktik menggunakan fraksi yang lebih besar, jadi hanya perlu beberapa hari rawatan.'],
+   cap:'30 Gy MAX dibahagi sama rata kepada 5 hari rawatan. Berapa besar setiap bahagian? Kamu akan mengiranya di klinik.'},
+  {k:'ct',tag:'Idea fizik 3 drp 4',h:'Melihat ke dalam: imbasan CT',
+   p:'Pengimbas CT memutarkan tiub sinar-X mengelilingi pesakit dan membina gambar hirisan nipis badan. Setiap petak kecil dalam hirisan mendapat nombor CT yang menunjukkan ketumpatan tisu.',
+   li:['Udara hitam (kira-kira −1000), tisu lembut kelabu (kira-kira 0) dan tulang putih (+1000 atau lebih).','Tisu yang lebih tumpat menyerap lebih banyak alur, jadi komputer perancangan menggunakan nombor ini untuk mengira dos.','Imbasan mesti meliputi seluruh kepala dan sedikit lagi: tumor, organ yang perlu dilindungi (mata, batang otak) dan garis luar kepala, tempat alur masuk dan keluar.'],
+   cap:'Imbasan menyapu seluruh kepala dan sedikit jidar di luarnya. Setiap hirisan ialah peta ketumpatan.'},
+  {k:'dist',tag:'Idea fizik 4 drp 4',h:'Jarak penting: hukum kuasa dua songsang',
+   p:'Sinar-X tersebar dari linac seperti cahaya lampu suluh. Semakin jauh, semakin luas kawasan yang perlu diliputi oleh sinar-X yang sama, jadi setiap sentimeter persegi menerima kurang.',
+   li:['Bergerak d kali lebih jauh dan alur meliputi d × d kali kawasan.','Contoh: 3 kali lebih jauh → 3 × 3 = 9 kali kawasan → setiap petak menerima 1/9 dos.','Sebab itu jarak dari sumber linac ke pesakit ditetapkan pada 100 cm dan disemak sebelum setiap rawatan.'],
+   cap:'9 sinar-X yang sama jatuh pada 1 petak pada jarak 1 m, tetapi tersebar ke 9 petak pada jarak 3 m.'},
+  {k:'journey',h:'Perjalanan MAX hari ini',
+   li:['Jawab soalan fizik doktor, kemudian bawa MAX dengan selamat ke bilik CT.','Kunci MAX pada tapaknya, selaraskan laser dan imbas kepala dalam kedudukan rawatan.','Pilih banyak sudut alur yang mengenai tumor dan melindungi mata serta batang otak.','Jawab semakan fizik, kosongkan bilik dan hidupkan alur.']},
+  {k:'rules',h:'Cara perlumbaan berjalan',
+   li:['Kamu ada {0} minit bermula dari saat kamu memulakan masa.','Di setiap stesen: buat misi amali, jawab cabaran skrin, kemudian panggil marshal untuk menandatangani.','Soalan menggunakan empat idea fizik yang baru kamu pelajari. Cari pautan “Daripada taklimat” jika perlu peringatan.','Markah: hingga 60 untuk skrin, hingga 30 untuk bintang marshal, dan bonus masa jika MAX dirawat.','Peraturan: berjalan, jangan berlari. Kendalikan MAX dengan lembut. Tiada sesiapa dalam bunker semasa alur dihidupkan.','Setiap ahli ada peranan. Di setiap stesen skrin menunjukkan siapa yang mengetuai: pakar onkologi di klinik, juru terapi sinaran di CT dan linac, dan ahli fizik perubatan di perancangan dan linac.']}
  ],
+ fig:{kv:'Tenaga rendah · X-ray dada',mv:'Tenaga tinggi · linac 6 MV',skin:'kulit',deep:'dalam',tum:'tumor',total:'MAX: jumlah 30 Gy',day:'Hari',jkg:'1 Gy = 1 joule setiap kg',air:'udara',tissue:'tisu',bone:'tulang',range:'julat imbasan',slice:'satu hirisan',m1:'1 m',m3:'3 m',same:'9 sinar-X yang sama',src:'linac'},
+ useAt:'Kamu akan perlukan ini di:',qFrom:'Daripada taklimat:',close:'Tutup',q:'S',
  C:{
   patient:{dx:'Tumor otak, sebelah kanan',rx:'30 Gy dalam 5 fraksi (stereotaktik)'},
   st:{clinic:['Klinik','Klinik Onkologi'],transport:['Pengangkutan','Pengangkutan Pesakit'],ct:['CT Sim','Simulator CT'],plan:['Perancangan','Perancangan Rawatan'],linac:['Linac','Rawatan Linac']},
@@ -836,22 +896,86 @@ const CROSSFIRE='<svg class="cf" viewBox="0 0 260 200" role="img" aria-hidden="t
  '<circle cx="108" cy="42" r="8" fill="none" stroke="#5FD0DE" stroke-width="2"/><circle cx="148" cy="42" r="8" fill="none" stroke="#5FD0DE" stroke-width="2"/>'+
  '<circle class="cf-tum" cx="156" cy="100" r="10" fill="#E0312B" stroke="#FFD48A" stroke-width="2.5"/>'+
  '<g class="cf-gantry"><rect x="145" y="4" width="22" height="13" rx="3" fill="#E8961A"/><rect x="151" y="17" width="10" height="4" fill="#FFD48A"/></g></svg>';
+/* lesson figures: each loops gently; with reduced motion the resting frame still tells the story */
+const FIG={
+ energy(){const L=t('fig'),ph=(y,cls)=>[0,1,2,3].map(i=>`<circle class="ph ${cls}" style="--i:${i}" cx="14" cy="${y+[0,8,-8,4][i]}" r="3.2" fill="#FFD48A"/>`).join('');
+  const lane=(y0,lab,curve,cls,hit)=>`<text x="8" y="${y0+10}" font-size="10.5" font-weight="700" fill="#E9F1F4">${lab}</text>
+   <rect x="60" y="${y0+16}" width="192" height="54" rx="4" fill="#33424A"/><rect x="60" y="${y0+16}" width="4" height="54" fill="#E8C9A8"/>
+   <path class="curve" d="${curve}" fill="rgba(232,150,26,.5)" stroke="#E8961A" stroke-width="1.2"/>
+   <circle ${hit?'class="glow"':''} cx="190" cy="${y0+43}" r="9" fill="${hit?'#E0312B':'none'}" stroke="${hit?'#FFD48A':'#9FB3BD'}" stroke-width="1.6" ${hit?'':'stroke-dasharray="3 3"'}/>${ph(y0+43,cls)}`;
+  return `<svg class="lfig" viewBox="0 0 260 200" role="img" aria-label="${t('brief')[2].cap}">
+   ${lane(4,L.kv,'M64 70 L64 24 C80 42 98 54 130 62 C170 68 210 69 250 69 L250 70 Z','',false)}
+   ${lane(104,L.mv,'M64 170 L64 150 C69 132 75 128 90 128 C140 132 200 138 250 143 L250 170 Z','mv',true)}
+   <text x="62" y="191" font-size="9.5">↑ ${L.skin}</text><text x="252" y="191" font-size="9.5" text-anchor="end">${L.deep} →</text>
+   <text x="190" y="96" font-size="9" text-anchor="middle">${L.tum}</text></svg>`},
+ dose(){const L=t('fig');
+  return `<svg class="lfig" viewBox="0 0 260 200" role="img" aria-label="${t('brief')[3].cap}">
+   <text class="tot" x="130" y="20" font-size="13" font-weight="700" text-anchor="middle" fill="#FFD48A">${L.total}</text>
+   <rect x="18" y="28" width="224" height="46" rx="6" fill="none" stroke="#5E7380" stroke-width="2" stroke-dasharray="5 4"/>
+   ${[0,1,2,3,4].map(i=>`<g class="blk" style="--i:${i}"><rect x="${22+i*44}" y="32" width="40" height="38" rx="4" fill="#E8961A"/><text x="${42+i*44}" y="56" font-size="12" font-weight="700" text-anchor="middle" fill="#2A1A00">? Gy</text></g>
+     <text x="${42+i*44}" y="90" font-size="9.5" text-anchor="middle">${L.day} ${i+1}</text>`).join('')}
+   <rect x="96" y="120" width="56" height="56" rx="6" fill="#5E676C" stroke="#9FB3BD" stroke-width="1.5"/><text x="124" y="153" font-size="13" font-weight="700" text-anchor="middle" fill="#E9F1F4">1 kg</text>
+   ${[0,1,2].map(i=>`<path class="zap" style="--i:${i}" d="M${50} ${132+i*16}h34l-6-5m6 5l-6 5" stroke="#FFD48A" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+   <text x="130" y="194" font-size="11.5" font-weight="700" text-anchor="middle" fill="#E9F1F4">${L.jkg}</text></svg>`},
+ ct(){const L=t('fig');
+  return `<svg class="lfig" viewBox="0 0 260 200" role="img" aria-label="${t('brief')[4].cap}">
+   <rect x="58" y="138" width="24" height="26" fill="#CFD6D9"/><path d="M30 178q0-16 40-16q40 0 40 16z" fill="#CFD6D9"/>
+   <ellipse cx="70" cy="92" rx="38" ry="50" fill="#CFD6D9"/>
+   <circle cx="56" cy="80" r="6.5" fill="none" stroke="#5FD0DE" stroke-width="2"/><circle cx="84" cy="80" r="6.5" fill="none" stroke="#5FD0DE" stroke-width="2"/>
+   <rect x="65" y="112" width="10" height="20" rx="4" fill="none" stroke="#5FD0DE" stroke-width="2"/>
+   <circle cx="84" cy="62" r="6" fill="#E0312B"/>
+   <path d="M118 30v122M112 30h12M112 152h12" stroke="#FFD48A" stroke-width="2"/>
+   <text x="121" y="22" font-size="9.5" text-anchor="middle" fill="#FFD48A">${L.range}</text>
+   <rect class="sweep" x="22" y="28" width="96" height="7" rx="2" fill="rgba(95,208,222,.55)"/>
+   <rect x="142" y="26" width="106" height="112" rx="6" fill="#000"/>
+   <circle cx="195" cy="82" r="38" fill="#F2F4F5"/><circle cx="195" cy="82" r="32" fill="#7A8288"/><circle cx="206" cy="70" r="5" fill="#9AA2A7"/>
+   <g class="spin"><rect x="190" y="34" width="10" height="7" rx="2" fill="#E8961A"/></g>
+   <text x="195" y="134" font-size="9" text-anchor="middle">${L.slice}</text>
+   ${[['#000',L.air,'−1000'],['#7A8288',L.tissue,'0'],['#F2F4F5',L.bone,'+1000']].map(([c,n,v],i)=>`<rect x="${144+i*36}" y="148" width="30" height="16" rx="3" fill="${c}" stroke="#5E7380"/><text x="${159+i*36}" y="178" font-size="9.5" text-anchor="middle">${n}</text><text x="${159+i*36}" y="191" font-size="9.5" text-anchor="middle" fill="#FFD48A">${v}</text>`).join('')}</svg>`},
+ dist(){const L=t('fig');
+  const rays=[-30,-15,0,15,30].map((dy,i)=>`<circle class="ray" style="--i:${i};--dx:180px;--dy:${dy}px" cx="16" cy="52" r="2.6" fill="#FFD48A"/>`).join('');
+  const nine=(x,y,s)=>[0,1,2].map(r=>[0,1,2].map(c=>`<circle class="dot" style="--i:${r*3+c}" cx="${x+c*s}" cy="${y+r*s}" r="2.4" fill="#FFD48A"/>`).join('')).join('');
+  return `<svg class="lfig" viewBox="0 0 260 200" role="img" aria-label="${t('brief')[5].cap}">
+   <path d="M16 52L250 6V98Z" fill="rgba(232,150,26,.14)"/>
+   <circle cx="16" cy="52" r="7" fill="#E8961A"/><text x="16" y="74" font-size="9.5" text-anchor="middle">${L.src}</text>
+   <path d="M76 42v20" stroke="#E9F1F4" stroke-width="3"/><path d="M196 22v60" stroke="#E9F1F4" stroke-width="3"/>
+   <text x="76" y="94" font-size="10.5" font-weight="700" text-anchor="middle" fill="#E9F1F4">${L.m1}</text><text x="196" y="96" font-size="10.5" font-weight="700" text-anchor="middle" fill="#E9F1F4">${L.m3}</text>
+   ${rays}
+   <text x="130" y="110" font-size="10" text-anchor="middle" fill="#FFD48A">${L.same}</text>
+   <rect x="58" y="134" width="36" height="36" rx="2" fill="rgba(232,150,26,.35)" stroke="#E8961A" stroke-width="1.5"/>${nine(66,142,10)}
+   <text x="76" y="186" font-size="10" text-anchor="middle">${L.m1} · 1 ▢</text>
+   ${[0,1,2].map(r=>[0,1,2].map(c=>`<rect x="${163+c*22}" y="${116+r*22}" width="22" height="22" fill="rgba(232,150,26,.12)" stroke="#E8961A" stroke-width="1"/>`).join('')).join('')}${nine(174,127,22)}
+   <text x="196" y="196" font-size="10" text-anchor="middle">${L.m3} · 9 ▢</text></svg>`},
+ rt(){return CROSSFIRE}
+};
+/* which question uses which briefing card: station key -> lesson kind per question */
+const QFROM={clinic:['energy','dose','rt'],ctq:['ct','ct'],linac:['dist']};
+const QSTN={clinic:'clinic',ctq:'ct',linac:'linac'};
+const lessonIdx=k=>t('brief').findIndex(b=>b.k===k);
+function useAt(kind){const L=[];for(const key in QFROM)QFROM[key].forEach((k,i)=>{if(k===kind)L.push(`${C().st[QSTN[key]][0]} · ${t('q')}${key==='linac'?1:i+1}`)});
+  return L.length?`<p class="uselink stag" style="--d:6">${t('useAt')} ${L.map((x,i)=>`<span class="chip pop" style="--d:${8+i}">${x}</span>`).join('')}</p>`:''}
+const qLink=(key,i)=>{const k=QFROM[key]&&QFROM[key][i];if(!k)return '';const n=lessonIdx(k);
+  return `<p class="qlink">${t('qFrom')} <button class="linkbtn" type="button" data-act="lookBack" data-l="${n}">${t('brief')[n].h}</button></p>`};
+function lessonBody(b){return `${b.tag?`<span class="ltag">${b.tag}</span>`:''}<h2>${b.h}</h2>
+  <figure class="lookfig">${FIG[b.k]()}</figure><p>${b.p}</p><ul class="blist">${b.li.map(x=>`<li>${x}</li>`).join('')}</ul>`}
+function openLesson(n){const b=t('brief')[n];
+  $('modalCard').innerHTML=`<div class="brief" style="display:grid;gap:10px">${lessonBody(b)}</div><div class="btnrow"><button class="btn primary" id="mCancel">${t('close')}</button></div>`;
+  $('modal').hidden=false;$('mCancel').onclick=closeModal;$('mCancel').focus()}
 const sg=k=>`class="stag" style="--d:${k}"`;
 function briefCard(i){
-  const B=t('brief');
-  if(i===0)return `<h2 ${sg(0)}>${B[0].h}</h2><div class="brief-split"><div class="brief-txt"><p ${sg(1)}>${B[0].p}</p><ul class="blist">${B[0].li.map((x,k)=>`<li ${sg(k+2)}>${x}</li>`).join('')}</ul></div>
-    <figure class="brief-fig" ${sg(1)}>${CROSSFIRE}<figcaption>${B[0].cap}</figcaption></figure></div>`;
-  if(i===1)return `<h2 ${sg(0)}>${B[1].h}</h2><dl class="glossary">${B[1].li.map(([a,b],k)=>`<div ${sg(k+1)}><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`;
-  if(i===2)return `<h2 ${sg(0)}>${B[2].h}</h2><ol class="journey">${IDS.map((id,k)=>`<li ${sg(k+1)}>${ICON[id]}<div><b>${stFull(id)}</b><span>${B[2].li[k]}</span></div></li>`).join('')}</ol>`;
-  if(i===3)return `<h2 ${sg(0)}>${B[3].h}</h2><dl class="glossary">${B[3].li.map(([a,b],k)=>`<div ${sg(k+1)}><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`;
-  if(i===4)return `<h2 ${sg(0)}>${B[4].h}</h2><ul class="blist">${B[4].li.map((x,k)=>`<li ${sg(k+1)}>${x.replace('{0}',cfg.minutes)}</li>`).join('')}</ul>`;
+  const B=t('brief'),b=B[i];
+  if(b&&(b.k==='rt'||FIG[b.k]))return `${b.tag?`<span class="ltag pop" style="--d:0">${b.tag}</span>`:''}<h2 ${sg(0)}>${b.h}</h2><div class="brief-split"><div class="brief-txt"><p ${sg(1)}>${b.p}</p><ul class="blist">${b.li.map((x,k)=>`<li ${sg(k+2)}>${x}</li>`).join('')}</ul></div>
+    <figure class="brief-fig" ${sg(1)}>${FIG[b.k]()}<figcaption>${b.cap}</figcaption></figure></div>${useAt(b.k)}`;
+  if(b&&b.k==='team')return `<h2 ${sg(0)}>${b.h}</h2><dl class="glossary">${b.li.map(([a,c],k)=>`<div ${sg(k+1)}><dt>${a}</dt><dd>${c}</dd></div>`).join('')}</dl>`;
+  if(b&&b.k==='journey')return `<h2 ${sg(0)}>${b.h}</h2><ol class="journey">${IDS.map((id,k)=>`<li ${sg(k+1)}>${ICON[id]}<div><b>${stFull(id)}</b><span>${b.li[k]}</span></div></li>`).join('')}</ol>`;
+  if(b&&b.k==='rules')return `<h2 ${sg(0)}>${b.h}</h2><ul class="blist">${b.li.map((x,k)=>`<li ${sg(k+1)}>${x.replace('{0}',cfg.minutes)}</li>`).join('')}</ul>`;
   return `<span class="eyebrow" ${sg(0)}>${t('signedIn')}</span><h2 ${sg(0)}>${esc(teamName(S.team))}</h2><p class="muted" ${sg(1)}>${esc(S.school)}</p>
     <ul class="roster">${S.names.map((n,k)=>`<li class="pop" style="--d:${k}">${esc(mem(n,(S.roles||[])[k]))}</li>`).join('')}</ul><p ${sg(3)}>${t('readyP',cfg.minutes)}</p>`;
 }
 function readyView(){
-  const i=S.brief||0,last=5;
+  const last=t('brief').length,i=Math.min(S.brief||0,last);
   return `<div class="card hero brief">
-    <div class="row-h"><span class="eyebrow amber">${t('briefEyebrow')}</span><span class="dots" aria-label="${i+1} / ${last+1}">${[0,1,2,3,4,5].map(k=>`<i class="${k===i?'on':k<i?'past':''}"></i>`).join('')}</span></div>
+    <div class="row-h"><span class="eyebrow amber">${t('briefEyebrow')}</span><span class="dots" aria-label="${i+1} / ${last+1}">${Array.from({length:last+1},(_,k)=>`<i class="${k===i?'on':k<i?'past':''}"></i>`).join('')}</span></div>
     <div class="brief-body ${S.briefDir<0?'from-left':''}" key="${i}">${briefCard(i)}</div>
     <div class="btnrow brief-nav">
       ${i>0?`<button class="btn" data-act="briefNav" data-d="-1">${t('back')}</button>`:''}
@@ -890,7 +1014,7 @@ function signoffView(id,st){
 function quizView(key,qs,ans){
   const c=ch(key,()=>({ans:{}}));
   return qs.map((q,i)=>{const a=c.ans[i];const done=a!==undefined;
-    return `<div class="q"><p class="ask">${i+1}. ${q.ask}</p><div class="opts">${q.opts.map((o,j)=>{
+    return `<div class="q"><p class="ask">${i+1}. ${q.ask}</p>${qLink(key,i)}<div class="opts">${q.opts.map((o,j)=>{
       let cls='';if(done){if(j===ans[i])cls='right';else if(j===a)cls='wrong'}
       return `<button class="opt ${cls}" data-act="quiz" data-k="${key}" data-q="${i}" data-o="${j}" ${done?'disabled':''}>${o}</button>`}).join('')}</div>
       ${done?`<p class="why"><b>${a===ans[i]?t('correct'):t('notQuite')}</b> ${q.why}</p>`:''}</div>`}).join('');
@@ -936,7 +1060,7 @@ const CH={
    <p class="small muted">${t('plNote')}</p>`},
  linac(){const c=ch('linac',()=>({plan:null,planPts:null,wrongs:0,off:{x:nz(),y:nz(),z:nz()},tries:0,matched:false,sel:[],safety:null,safeTries:0,mu:0}));
    const LQ=C().linacQ;
-   let h=`<p>${t('lnStep1')}</p><div class="q"><p class="ask">${LQ.ask}</p><div class="opts">${LQ.opts.map((o,i)=>{let cls='';if(c.planPts!==null&&i===LIN_A)cls='right';else if(c.plan===i&&i!==LIN_A)cls='wrong';
+   let h=`<p>${t('lnStep1')}</p><div class="q"><p class="ask">${LQ.ask}</p>${qLink('linac',0)}<div class="opts">${LQ.opts.map((o,i)=>{let cls='';if(c.planPts!==null&&i===LIN_A)cls='right';else if(c.plan===i&&i!==LIN_A)cls='wrong';
      return `<button class="opt ${cls}" data-act="loadplan" data-i="${i}" ${c.planPts!==null?'disabled':''}>${o}</button>`}).join('')}</div></div>`;
    if(c.plan!==null&&c.plan!==LIN_A&&c.planPts===null)h+=`<p class="flag bad">${t('lnWrong')}</p>`;
    if(c.planPts===null)return h;
@@ -1080,11 +1204,12 @@ const ACT={
  pickRole(b){keepForm();const i=+b.dataset.i,r=b.dataset.r;S.roles=S.roles||[];S.roles[i]=S.roles[i]===r?'':r;tone(560,.04,'triangle',.04);persist();render()},
  demoGo(){S=fresh();Object.assign(S,JSON.parse(JSON.stringify(DEMO_TEAM)));S.phase='ready';tone(660,.12);persist();render(false)},
  editSignin(){S.phase='setup';persist();render(false)},
- briefNav(b){S.briefDir=+b.dataset.d;S.brief=Math.min(5,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
+ briefNav(b){S.briefDir=+b.dataset.d;S.brief=Math.min(t('brief').length,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
  tune(){if(tuneOn){tuneMuted=true;tuneStop()}else{tuneMuted=false;tuneStart()}},
  storyToggle(){storyOn=!storyOn;$('storyPlay').textContent=storyOn?t('pause'):t('play');if(storyOn)storyStart()},
  storyGo(b){storyShow(+b.dataset.i);storyStart()},
- briefSkip(){S.brief=5;persist();render(false)},
+ lookBack(b){openLesson(+b.dataset.l)},
+ briefSkip(){S.brief=t('brief').length;persist();render(false)},
  endRun(){openPin(t('endRunQ'),t('endRunBtn'),()=>finish('stopped'))},
  newTeam(){openPin(t('nextTeamQ'),t('nextTeamBtn'),()=>{S=fresh();persist();render(false)})},
  copyBoard(){const board=load(BOARD,[]);const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
