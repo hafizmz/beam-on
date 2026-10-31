@@ -386,7 +386,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
       <button type="button" data-lang="ms" aria-pressed="false">BM</button>
     </div>
     <div class="stat"><b id="scoreHd">Score</b><span id="scoreLbl">0</span></div>
-    <div class="stat"><b id="clockHd">Time left</b><span id="clock">20:00</span></div>
+    <div class="stat"><b id="clockHd">Time left</b><span id="clock">15:00</span></div>
   </header>
   <ol class="path" id="path" aria-label="Patient pathway"></ol>
   <main id="main"></main>
@@ -405,7 +405,7 @@ const TX={
 en:{
  station:'Radiotherapy station',score:'Score',timeLeft:'Time left',ofN:'{0} of 4',pts:'{0} pts',pathway:'Patient pathway',
  team:'Team',teamPrefix:/^team\b/i,
- foot:'Made for science camp outreach by Hafiz M Zin, medical physicist. Physics is simplified for a 20-minute race.',more:'More Beam On! games',
+ foot:'Made for science camp outreach by Hafiz M Zin, medical physicist. Physics is simplified for a short race.',more:'More Beam On! games',
  eyebrowSetup:'Science camp · Radiotherapy station · {0} minutes',
  heroH:'MAX has a brain tumour. Give it stereotactic radiotherapy before the clock runs out.',
  heroP:'Your team takes MAX through the same four steps a real cancer patient follows: clinic, CT simulation, treatment planning and the linear accelerator (linac). Do the hands-on task at each station, answer the challenge on this device, then get the staff member to sign you off.',
@@ -465,7 +465,7 @@ en:{
   'The medical physicist plans beams that meet at the tumour and miss the eyes and brainstem.',
   'Everyone leaves the bunker. The linac turns around MAX and the beam hits the tumour to within 1 mm.',
   'Five treatments of 6 Gy later, MAX’s course is complete. Now it is your turn to treat it!'],
- briefEyebrow:'Briefing · about 7 minutes · the clock has not started',back:'Back',next:'Next',skipBrief:'Skip to the start',
+ briefEyebrow:'Briefing · {0} left · the race clock has not started',back:'Back',next:'Next',skipBrief:'Skip to the start',
  brief:[
   {k:'rt',h:'What is radiotherapy?',
    p:'Our bodies are made of tiny cells. Cancer is when some cells keep growing when they should stop, and form a lump called a tumour. Radiotherapy treats it with X-rays: the same invisible light used for a chest X-ray, but with far more energy. The X-rays break the DNA inside cells. Cancer cells are bad at repairing that damage; healthy cells are much better at it.',
@@ -496,7 +496,7 @@ en:{
  ],
  fig:{kv:'Low energy · chest X-ray',mv:'High energy · 6 MV linac',skin:'skin',deep:'deep',tum:'tumour',total:'MAX: 30 Gy in total',day:'Day',jkg:'1 Gy = 1 joule per kg',air:'air',tissue:'tissue',bone:'bone',range:'scan range',slice:'one slice',m1:'1 m',m3:'3 m',same:'same 9 X-rays',src:'linac'},
  useAt:'You will need this at:',
- demoH:'Staff demo',demoP:'Staff: show the team how this station works. The race clock stops while the demo runs, so the team loses no time.',demoStart:'Start the {0}-minute staff demo',demoSkip:'Skip the demo',demoRun:'Staff demo running',demoEnd:'End the demo, start the challenge',demoPausedClock:'Race clock paused',paused:'Paused',autoNote:'Slides move on by themselves. Pause if you need more time.',qFrom:'From the briefing:',close:'Close',q:'Q',
+ demoH:'Staff demo',demoP:'Staff: show the team how this station works. The race clock stops while the demo runs, so the team loses no time.',demoStart:'Start the {0}-minute staff demo',demoSkip:'Skip the demo',demoRun:'Staff demo running',demoEnd:'End the demo, start the challenge',demoPausedClock:'Race clock paused',paused:'Paused',autoNote:'The briefing lasts 3 minutes and the slides move on by themselves. Staff can pause to explain.',qFrom:'From the briefing:',close:'Close',q:'Q',
  C:{
   patient:{dx:'Brain tumour, right side',rx:'30 Gy in 5 fractions (stereotactic)'},
   st:{clinic:['Clinic','Oncology Clinic'],transport:['Transport','Patient Transport'],ct:['CT Sim','CT Simulator'],plan:['Planning','Treatment Planning'],linac:['Linac','Linac Treatment']},
@@ -528,7 +528,7 @@ en:{
 ms:{
  station:'Stesen radioterapi',score:'Markah',timeLeft:'Masa tinggal',ofN:'{0} drp 4',pts:'{0} mata',pathway:'Laluan pesakit',
  team:'Pasukan',teamPrefix:/^(pasukan|team)\b/i,
- foot:'Dibina untuk jangkauan kem sains oleh Hafiz M Zin, ahli fizik perubatan. Fizik dipermudahkan untuk perlumbaan 20 minit.',more:'Permainan Beam On! lain',
+ foot:'Dibina untuk jangkauan kem sains oleh Hafiz M Zin, ahli fizik perubatan. Fizik dipermudahkan untuk perlumbaan yang singkat.',more:'Permainan Beam On! lain',
  eyebrowSetup:'Kem sains · Stesen radioterapi · {0} minit',
  heroH:'MAX ada tumor otak. Beri dia radioterapi stereotaktik sebelum masa tamat.',
  heroP:'Pasukan kamu membawa MAX melalui empat langkah yang sama seperti pesakit kanser sebenar: klinik, simulasi CT, perancangan rawatan dan pemecut linear (linac). Buat tugasan amali di setiap stesen, jawab cabaran pada peranti ini, kemudian minta staf menandatangani kamu.',
@@ -588,7 +588,7 @@ ms:{
   'Ahli fizik perubatan merancang alur yang bertemu pada tumor dan mengelak mata serta batang otak.',
   'Semua orang keluar dari bunker. Linac berputar mengelilingi MAX dan alur mengenai tumor dengan ketepatan 1 mm.',
   'Selepas lima rawatan 6 Gy, rawatan MAX selesai. Sekarang giliran kamu merawatnya!'],
- briefEyebrow:'Taklimat · kira-kira 7 minit · masa belum bermula',back:'Kembali',next:'Seterusnya',skipBrief:'Langkau ke permulaan',
+ briefEyebrow:'Taklimat · baki {0} · masa perlumbaan belum bermula',back:'Kembali',next:'Seterusnya',skipBrief:'Langkau ke permulaan',
  brief:[
   {k:'rt',h:'Apakah radioterapi?',
    p:'Badan kita terdiri daripada sel-sel kecil. Kanser berlaku apabila sesetengah sel terus membesar walaupun sepatutnya berhenti, lalu membentuk ketulan yang dipanggil tumor. Radioterapi merawatnya dengan sinar-X: cahaya halimunan yang sama seperti untuk X-ray dada, tetapi dengan tenaga yang jauh lebih tinggi. Sinar-X memecahkan DNA di dalam sel. Sel kanser lemah membaiki kerosakan itu; sel sihat jauh lebih baik.',
@@ -619,7 +619,7 @@ ms:{
  ],
  fig:{kv:'Tenaga rendah · X-ray dada',mv:'Tenaga tinggi · linac 6 MV',skin:'kulit',deep:'dalam',tum:'tumor',total:'MAX: jumlah 30 Gy',day:'Hari',jkg:'1 Gy = 1 joule setiap kg',air:'udara',tissue:'tisu',bone:'tulang',range:'julat imbasan',slice:'satu hirisan',m1:'1 m',m3:'3 m',same:'9 sinar-X yang sama',src:'linac'},
  useAt:'Kamu akan perlukan ini di:',
- demoH:'Demo staf',demoP:'Staf: tunjukkan kepada pasukan cara stesen ini berfungsi. Masa perlumbaan berhenti semasa demo, jadi pasukan tidak rugi masa.',demoStart:'Mula demo staf {0} minit',demoSkip:'Langkau demo',demoRun:'Demo staf sedang berjalan',demoEnd:'Tamatkan demo, mula cabaran',demoPausedClock:'Masa perlumbaan dijeda',paused:'Dijeda',autoNote:'Slaid bertukar sendiri. Tekan jeda jika perlukan masa lagi.',qFrom:'Daripada taklimat:',close:'Tutup',q:'S',
+ demoH:'Demo staf',demoP:'Staf: tunjukkan kepada pasukan cara stesen ini berfungsi. Masa perlumbaan berhenti semasa demo, jadi pasukan tidak rugi masa.',demoStart:'Mula demo staf {0} minit',demoSkip:'Langkau demo',demoRun:'Demo staf sedang berjalan',demoEnd:'Tamatkan demo, mula cabaran',demoPausedClock:'Masa perlumbaan dijeda',paused:'Dijeda',autoNote:'Taklimat ini 3 minit dan slaid bertukar sendiri. Staf boleh jeda untuk menerangkan.',qFrom:'Daripada taklimat:',close:'Tutup',q:'S',
  C:{
   patient:{dx:'Tumor otak, sebelah kanan',rx:'30 Gy dalam 5 fraksi (stereotaktik)'},
   st:{clinic:['Klinik','Klinik Onkologi'],transport:['Pengangkutan','Pengangkutan Pesakit'],ct:['CT Sim','Simulator CT'],plan:['Perancangan','Perancangan Rawatan'],linac:['Linac','Rawatan Linac']},
@@ -693,7 +693,9 @@ const SUF=DEMO?'-demo':'';
 const KEY='beamon-explorace-v1'+SUF, CFG='beamon-explorace-cfg'+SUF, BOARD='beamon-explorace-board'+SUF;
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-let cfg=Object.assign({pin:'1895',minutes:20},load(CFG,{}));
+let cfg=Object.assign({pin:'1895',minutes:15},load(CFG,{}));
+// v2: the race became 15 minutes after a 3-minute briefing; move devices still on the old 20-minute default
+if(!cfg.v){if(cfg.minutes===20)cfg.minutes=15;cfg.v=2;try{save(CFG,cfg)}catch(e){}}
 let S=load(KEY,null)||fresh();
 if(!Array.isArray(S.names))S.names=[];if(S.school==null)S.school='';
 function fresh(){return {phase:'setup',team:'',school:'',names:[],start:0,end:0,idx:0,reason:'',
@@ -998,17 +1000,21 @@ function briefCard(i){
   return `<span class="eyebrow" ${sg(0)}>${t('signedIn')}</span><h2 ${sg(0)}>${esc(teamName(S.team))}</h2><p class="muted" ${sg(1)}>${esc(S.school)}</p>
     <ul class="roster">${S.names.map((n,k)=>`<li class="pop" style="--d:${k}">${esc(mem(n,(S.roles||[])[k]))}</li>`).join('')}</ul><p ${sg(3)}>${t('readyP',cfg.minutes)}</p>`;
 }
-/* the briefing moves on by itself: about 170 words a minute, plus time to watch the animation */
-let briefOn=true,briefTimer=null,briefRemain=0,briefT0=0;
-function briefArm(){clearTimeout(briefTimer);const bar=$('bprog'),body=document.querySelector('.brief-body');if(S.phase!=='ready'||!bar||!body)return;
-  const words=body.innerText.trim().split(/\s+/).length,fig=body.querySelector('figure')?8000:0;
-  briefRemain=Math.max(12000,words*350+fig);bar.style.animationDuration=briefRemain+'ms';bar.style.animationPlayState=briefOn?'running':'paused';
-  if(briefOn){briefT0=Date.now();briefTimer=setTimeout(briefNext,briefRemain)}}
-function briefNext(){if(S.phase!=='ready'||!$('bprog'))return;S.briefDir=1;S.brief=Math.min(t('brief').length,(S.brief||0)+1);persist();render(false)}
+/* the briefing lasts 3 minutes in all: each slide gets a share by how much there is to read (animations count extra) */
+const BRIEF_MS=180000;
+let briefOn=true,briefTimer=null,briefRemain=0,briefT0=0,briefCd=null;
+function briefWeights(){return t('brief').map(b=>{const txt=[b.tag,b.h,b.p,b.cap,...(b.li||[]).flat()].filter(Boolean).join(' ');return txt.split(/\s+/).length+(FIG[b.k]?40:0)})}
+function slideMs(i){const w=briefWeights(),sum=w.reduce((a,b)=>a+b,0);return i<w.length?BRIEF_MS*w[i]/sum:0}
+function briefLeft(){const i=S.brief||0,n=t('brief').length;if(i>=n)return 0;let ms=briefRemain&&$('bprog')?briefRemain-(briefOn?Date.now()-briefT0:0):slideMs(i);for(let k=i+1;k<n;k++)ms+=slideMs(k);return Math.max(0,ms)}
+function briefArm(){clearTimeout(briefTimer);clearInterval(briefCd);const bar=$('bprog');if(S.phase!=='ready'||!bar)return;
+  const full=slideMs(S.brief||0);briefRemain=full;bar.style.animationDuration=full+'ms';bar.style.animationPlayState=briefOn?'running':'paused';
+  briefT0=Date.now();if(briefOn)briefTimer=setTimeout(briefNext,briefRemain);
+  briefCd=setInterval(()=>{const h=$('briefHd');if(!h){clearInterval(briefCd);return}h.textContent=t('briefEyebrow',fmt(briefLeft()))},500)}
+function briefNext(){if(S.phase!=='ready'||!$('bprog'))return;briefRemain=0;S.briefDir=1;S.brief=Math.min(t('brief').length,(S.brief||0)+1);persist();render(false)}
 function readyView(){
   const last=t('brief').length,i=Math.min(S.brief||0,last);
   return `<div class="card hero brief">
-    <div class="row-h"><span class="eyebrow amber">${t('briefEyebrow')}</span><span class="dots" aria-label="${i+1} / ${last+1}">${Array.from({length:last+1},(_,k)=>`<i class="${k===i?'on':k<i?'past':''}"></i>`).join('')}</span></div>
+    <div class="row-h"><span class="eyebrow amber" id="briefHd">${t('briefEyebrow',fmt(briefLeft()))}</span><span class="dots" aria-label="${i+1} / ${last+1}">${Array.from({length:last+1},(_,k)=>`<i class="${k===i?'on':k<i?'past':''}"></i>`).join('')}</span></div>
     ${i<last?`<div class="bauto"><button class="btn" type="button" data-act="briefAuto" id="bAutoBtn" style="min-height:34px;padding:4px 14px">${briefOn?t('pause'):t('play')}</button><span>${t('autoNote')}</span></div><div class="bprog"><i id="bprog"></i></div>`:''}
     <div class="brief-body ${S.briefDir<0?'from-left':''}" key="${i}">${briefCard(i)}</div>
     <div class="btnrow brief-nav">
@@ -1250,7 +1256,7 @@ const ACT={
  pickRole(b){keepForm();const i=+b.dataset.i,r=b.dataset.r;S.roles=S.roles||[];S.roles[i]=S.roles[i]===r?'':r;tone(560,.04,'triangle',.04);persist();render()},
  demoGo(){S=fresh();Object.assign(S,JSON.parse(JSON.stringify(DEMO_TEAM)));S.phase='ready';tone(660,.12);persist();render(false)},
  editSignin(){S.phase='setup';persist();render(false)},
- briefNav(b){S.briefDir=+b.dataset.d;S.brief=Math.min(t('brief').length,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
+ briefNav(b){briefRemain=0;S.briefDir=+b.dataset.d;S.brief=Math.min(t('brief').length,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
  tune(){if(tuneOn){tuneMuted=true;tuneStop()}else{tuneMuted=false;tuneStart()}},
  storyToggle(){storyOn=!storyOn;$('storyPlay').textContent=storyOn?t('pause'):t('play');if(storyOn)storyStart()},
  storyGo(b){storyShow(+b.dataset.i);storyStart()},
@@ -1259,8 +1265,8 @@ const ACT={
  demoEndBtn(){demoEnd(false)},
  briefAuto(){const bar=$('bprog');briefOn=!briefOn;$('bAutoBtn').textContent=briefOn?t('pause'):t('play');
    if(briefOn){briefT0=Date.now();clearTimeout(briefTimer);briefTimer=setTimeout(briefNext,briefRemain);if(bar)bar.style.animationPlayState='running'}
-   else{clearTimeout(briefTimer);briefRemain=Math.max(0,briefRemain-(Date.now()-briefT0));if(bar)bar.style.animationPlayState='paused'}},
- briefSkip(){S.brief=t('brief').length;persist();render(false)},
+   else{clearTimeout(briefTimer);briefRemain=Math.max(0,briefRemain-(Date.now()-briefT0));briefT0=Date.now();if(bar)bar.style.animationPlayState='paused'}},
+ briefSkip(){briefRemain=0;S.brief=t('brief').length;persist();render(false)},
  endRun(){openPin(t('endRunQ'),t('endRunBtn'),()=>finish('stopped'))},
  newTeam(){openPin(t('nextTeamQ'),t('nextTeamBtn'),()=>{S=fresh();persist();render(false)})},
  copyBoard(){const board=load(BOARD,[]);const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
