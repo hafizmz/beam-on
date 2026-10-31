@@ -258,6 +258,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .qinfo h3{margin:4px 0}.qinfo p{margin:0}
 @media (max-width:560px){.qinfo{grid-template-columns:minmax(0,1fr)}}
 .tbl.mk tr.mkhead td{background:var(--sunk);padding-top:10px}
+.herolist li{font-size:16.5px;color:var(--ink-2)}
 .yourturn{margin:0;background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:0 10px 10px 0;padding:10px 14px;font-weight:700}
 /* staff demo */
 .sdemo{display:grid;gap:10px;background:var(--amber-soft);border:2px solid var(--amber);border-radius:14px;padding:16px}
@@ -658,7 +659,7 @@ const C=()=>TX[LANG].C;
 /* quick race text: only the keys that differ from the full race */
 const QX={
  en:{heroH:'MAX has a brain tumour. Treat it before time runs out.',
-  heroP:'Three stations, a few minutes each: an introduction to radiotherapy, the CT scan, then treatment on the linear accelerator (linac). Watch the staff demo, try it on this device, then get a staff member to sign you off.',
+  heroP:['Welcome to the radiotherapy clinic.','MAX is a phantom: a dummy that mimics a patient with cancer in the head.','This Explorace lasts {0} minutes at most.','Three stations: introduction, CT scan and treatment on the linear accelerator (linac).','At each station: watch the staff demo, try it on this device, then get a staff member to sign you off.'],
   readyP:'MAX is waiting at the introduction station. The clock runs for {0} minutes and stops while staff demonstrate at CT and the linac. Walk, do not run. Nobody stays in the bunker when the beam is on.',
   stationN:'Station {0} of 3',ofN:'{0} of 3',walkWait:'Answer the question to unlock the move to CT.',ctStep2:'<b>Step 2.</b> Scan question',
   
@@ -671,13 +672,13 @@ const QX={
   ctInfo:{h:'CT numbers',p:'A CT scan maps how dense every part of the head is: air is black, tissue grey, bone white. The computer uses these numbers to work out the dose.'},
   lnInfo:{h:'Distance matters',p:'X-rays spread out like torch light. Go further away and the same beam covers a bigger area, so the dose goes down: 3 times as far means 1/9 of the dose.'}},
  ms:{heroH:'MAX ada tumor otak. Rawat dia sebelum masa tamat.',
-  heroP:'Tiga stesen, beberapa minit setiap satu: pengenalan radioterapi, imbasan CT, kemudian rawatan dengan pemecut linear (linac). Tonton demo staf, cuba pada peranti ini, kemudian minta staf menandatangani kamu.',
+  heroP:['Selamat datang ke klinik radioterapi.','MAX ialah satu patung mimik pesakit kanser kepala.','Masa untuk Explorace ini selama {0} minit maksimum.','Tiga stesen: pengenalan, imbasan CT dan rawatan dengan pemecut linear (linac).','Di setiap stesen: tonton demo staf, cuba pada peranti ini, kemudian minta staf menandatangani kamu.'],
   readyP:'MAX sedang menunggu di stesen pengenalan. Masa berjalan selama {0} minit dan berhenti semasa staf membuat demo di CT dan linac. Berjalan, jangan berlari. Tiada sesiapa dalam bunker semasa alur dihidupkan.',
   stationN:'Stesen {0} drp 3',ofN:'{0} drp 3',walkWait:'Jawab soalan untuk bergerak ke CT.',ctStep2:'<b>Langkah 2.</b> Soalan imbasan',
   
   lnStep3:'<b>Langkah 2.</b> Semakan keselamatan sebelum alur dihidupkan. Tandakan hanya perkara yang mesti benar.',lnStep4:'<b>Langkah 3.</b> Tekan dan tahan BEAM ON sehingga {0} unit monitor dihantar. Lepaskan dan alur akan berhenti.',
   theoryNote:'3 soalan fizik',interNote:'Laser, semakan keselamatan dan bintang staf',
-  quickTag:'Pantas',introNext:'Seterusnya',introBack:'Kembali',introQ:'Semakan pantas',infoTag:'Tahukah kamu?',
+  quickTag:'Singkat',introNext:'Seterusnya',introBack:'Kembali',introQ:'Semakan singkat',infoTag:'Tahukah kamu?',
   intro:[{k:'rt',h:'Radioterapi dalam satu minit',p:'Radioterapi menggunakan sinar-X bertenaga tinggi untuk memusnahkan sel kanser. Banyak alur bersilang pada tumor, jadi tumor menerima dos tinggi manakala tisu sihat hanya menerima sedikit.'},
    {k:'team',h:'Siapa yang merawat MAX?',li:[['Pakar onkologi klinikal','Doktor yang menetapkan dos.'],['Juru terapi sinaran','Mengimbas MAX dan memberi rawatan.'],['Ahli fizik perubatan','Merancang alur dan memastikan linac tepat dan selamat.']]},
    {k:'energy',h:'Mengapa sinar-X bertenaga tinggi?',p:'Linac menghasilkan sinar-X 6 MV, kira-kira 60 kali lebih bertenaga daripada X-ray dada. Ia cukup jauh untuk sampai ke tumor, dan memberi dos lebih rendah kepada kulit.'}],
@@ -730,9 +731,11 @@ const SUF=(QUICK?'-quick':'')+(DEMO?'-demo':'');
 const KEY='beamon-explorace-v1'+SUF, CFG='beamon-explorace-cfg'+SUF, BOARD='beamon-explorace-board'+SUF;
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-let cfg=Object.assign({pin:'1895',minutes:QUICK?12:15},load(CFG,{}));
+let cfg=Object.assign({pin:'1895',minutes:15},load(CFG,{}));
 // v2: the race became 15 minutes after a 3-minute briefing; move devices still on the old 20-minute default
 if(!cfg.v){if(cfg.minutes===20&&!QUICK)cfg.minutes=15;cfg.v=2;try{save(CFG,cfg)}catch(e){}}
+// v3: the quick race went from 12 to 15 minutes
+if(cfg.v<3){if(QUICK&&cfg.minutes===12)cfg.minutes=15;cfg.v=3;try{save(CFG,cfg)}catch(e){}}
 let S=load(KEY,null)||fresh();
 if(!Array.isArray(S.names))S.names=[];if(S.school==null)S.school='';
 function fresh(){return {phase:'setup',team:'',school:'',names:[],start:0,end:0,idx:0,reason:'',
@@ -905,7 +908,7 @@ function setupView(){
   const board=load(BOARD,[]);
   return `<div class="card hero">
     <h2>${t('heroH')}</h2>
-    <p class="muted">${t('heroP')}</p>
+    ${(h=>Array.isArray(h)?`<ul class="blist herolist">${h.map(x=>`<li>${x.replace('{0}',cfg.minutes)}</li>`).join('')}</ul>`:`<p class="muted">${h}</p>`)(t('heroP',cfg.minutes))}
     ${tuneHTML()}
     ${storyHTML()}
     <div class="pt">${BEAR}${kv(false)}</div>
