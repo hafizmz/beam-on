@@ -267,8 +267,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 #clock.paused{color:#9FB3BD}
 /* briefing auto-advance bar */
 .bprog{height:4px;border-radius:2px;background:var(--line);overflow:hidden}
-.bprog i{display:block;height:100%;width:100%;background:var(--amber);transform-origin:left;animation:bprog linear both}
-@keyframes bprog{from{transform:scaleX(0)}}
+.bprog i{display:block;height:100%;width:0;background:var(--amber);transition:width .5s linear}
 .bauto{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)}
 /* physics lessons */
 .ltag{display:inline-block;justify-self:start;background:var(--amber);color:#2A1A00;border-radius:999px;padding:3px 12px;font:700 12.5px var(--font-mono);letter-spacing:.02em}
@@ -985,7 +984,7 @@ const qLink=(key,i)=>{const k=QFROM[key]&&QFROM[key][i];if(!k)return '';const n=
   return `<p class="qlink">${t('qFrom')} <button class="linkbtn" type="button" data-act="lookBack" data-l="${n}">${t('brief')[n].h}</button></p>`};
 function lessonBody(b){return `${b.tag?`<span class="ltag">${b.tag}</span>`:''}<h2>${b.h}</h2>
   <figure class="lookfig">${FIG[b.k]()}</figure><p>${b.p}</p><ul class="blist">${b.li.map(x=>`<li>${x}</li>`).join('')}</ul>`}
-function openLesson(n){const b=t('brief')[n];clearTimeout(briefTimer);
+function openLesson(n){const b=t('brief')[n];
   $('modalCard').innerHTML=`<div class="brief" style="display:grid;gap:10px">${lessonBody(b)}</div><div class="btnrow"><button class="btn primary" id="mCancel">${t('close')}</button></div>`;
   $('modal').hidden=false;$('mCancel').onclick=closeModal;$('mCancel').focus()}
 const sg=k=>`class="stag" style="--d:${k}"`;
@@ -1001,20 +1000,26 @@ function briefCard(i){
 }
 /* the briefing lasts 3 minutes in all: each slide gets a share by how much there is to read (animations count extra) */
 const BRIEF_MS=180000;
-let briefOn=true,briefTimer=null,briefRemain=0,briefT0=0,briefCd=null;
+// one continuous 3-minute clock for the whole briefing; it runs on whichever slide is showing.
+// Slides change on a fixed schedule inside those 3 minutes; Back/Next only move between slides.
+let briefCd=null;
 function briefWeights(){return t('brief').map(b=>{const txt=[b.tag,b.h,b.p,b.cap,...(b.li||[]).flat()].filter(Boolean).join(' ');return txt.split(/\s+/).length+(FIG[b.k]?40:0)})}
 function slideMs(i){const w=briefWeights(),sum=w.reduce((a,b)=>a+b,0);return i<w.length?BRIEF_MS*w[i]/sum:0}
-function briefLeft(){const i=S.brief||0,n=t('brief').length;if(i>=n)return 0;let ms=briefRemain&&$('bprog')?briefRemain-(briefOn?Date.now()-briefT0:0):slideMs(i);for(let k=i+1;k<n;k++)ms+=slideMs(k);return Math.max(0,ms)}
-function briefArm(){clearTimeout(briefTimer);clearInterval(briefCd);const bar=$('bprog');if(S.phase!=='ready'||!bar)return;
-  const full=slideMs(S.brief||0);briefRemain=full;bar.style.animationDuration=full+'ms';bar.style.animationPlayState=briefOn?'running':'paused';
-  briefT0=Date.now();if(briefOn)briefTimer=setTimeout(briefNext,briefRemain);
-  briefCd=setInterval(()=>{const h=$('briefHd');if(!h){clearInterval(briefCd);return}h.textContent=t('briefEyebrow',fmt(briefLeft()))},500)}
-function briefNext(){if(S.phase!=='ready'||!$('bprog'))return;briefRemain=0;S.briefDir=1;S.brief=Math.min(t('brief').length,(S.brief||0)+1);persist();render(false)}
+const briefOn=()=>!S.bPauseAt;
+function briefUsed(){if(!S.bStart)return 0;const now=S.bPauseAt||Date.now();return Math.min(BRIEF_MS,now-S.bStart-(S.bPaused||0))}
+const briefLeft=()=>BRIEF_MS-briefUsed();
+// the slide the schedule says should be showing after `ms` of briefing
+function schedSlide(ms){let acc=0;const n=t('brief').length;for(let k=0;k<n;k++){acc+=slideMs(k);if(ms<acc)return k}return n}
+function briefTick(){const h=$('briefHd');if(S.phase!=='ready'||!h){clearInterval(briefCd);return}
+  h.textContent=t('briefEyebrow',fmt(briefLeft()));const bar=$('bprog');if(bar)bar.style.width=(briefUsed()/BRIEF_MS*100)+'%';
+  const k=schedSlide(briefUsed());if(k!==S.bSched){const first=S.bSched==null;S.bSched=k;if(!first&&k>(S.brief||0)){S.briefDir=1;S.brief=k;persist();render(false);return}persist()}}
+function briefArm(){clearInterval(briefCd);if(S.phase!=='ready')return;if(!S.bStart){S.bStart=Date.now();S.bPaused=0;S.bPauseAt=null;S.bSched=null;persist()}
+  briefTick();briefCd=setInterval(briefTick,500)}
 function readyView(){
   const last=t('brief').length,i=Math.min(S.brief||0,last);
   return `<div class="card hero brief">
     <div class="row-h"><span class="eyebrow amber" id="briefHd">${t('briefEyebrow',fmt(briefLeft()))}</span><span class="dots" aria-label="${i+1} / ${last+1}">${Array.from({length:last+1},(_,k)=>`<i class="${k===i?'on':k<i?'past':''}"></i>`).join('')}</span></div>
-    ${i<last?`<div class="bauto"><button class="btn" type="button" data-act="briefAuto" id="bAutoBtn" style="min-height:34px;padding:4px 14px">${briefOn?t('pause'):t('play')}</button><span>${t('autoNote')}</span></div><div class="bprog"><i id="bprog"></i></div>`:''}
+    ${i<last?`<div class="bauto"><button class="btn" type="button" data-act="briefAuto" id="bAutoBtn" style="min-height:34px;padding:4px 14px">${briefOn()?t('pause'):t('play')}</button><span>${t('autoNote')}</span></div><div class="bprog"><i id="bprog" style="width:${briefUsed()/BRIEF_MS*100}%"></i></div>`:''}
     <div class="brief-body ${S.briefDir<0?'from-left':''}" key="${i}">${briefCard(i)}</div>
     <div class="btnrow brief-nav">
       ${i>0?`<button class="btn" data-act="briefNav" data-d="-1">${t('back')}</button>`:''}
@@ -1210,7 +1215,7 @@ function afterRender(){
     S=fresh();S.team=tm;S.school=sc;S.names=names;S.roles=roles;S.phase='ready';persist();tone(660,.12);render(false)});
   if(S.phase==='race'&&IDS[S.idx]==='plan')drawCT();
   if($('storySvg')){storyShow(storyI);storyStart()}
-  if(S.phase==='ready')briefArm();else clearTimeout(briefTimer);
+  if(S.phase==='ready')briefArm();else clearInterval(briefCd);
   if(S.phase!=='setup')tuneStop(); // the tune belongs to the start page only
   else if(!tuneOn&&!tuneMuted)tuneStart(); // autoplay whenever the start page opens
   const bb=$('beamBtn');if(bb){bb.addEventListener('pointerdown',beamStart);['pointerup','pointerleave','pointercancel'].forEach(ev=>bb.addEventListener(ev,beamStop));
@@ -1255,17 +1260,16 @@ const ACT={
  pickRole(b){keepForm();const i=+b.dataset.i,r=b.dataset.r;S.roles=S.roles||[];S.roles[i]=S.roles[i]===r?'':r;tone(560,.04,'triangle',.04);persist();render()},
  demoGo(){S=fresh();Object.assign(S,JSON.parse(JSON.stringify(DEMO_TEAM)));S.phase='ready';tone(660,.12);persist();render(false)},
  editSignin(){S.phase='setup';persist();render(false)},
- briefNav(b){briefRemain=0;S.briefDir=+b.dataset.d;S.brief=Math.min(t('brief').length,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
+ briefNav(b){S.briefDir=+b.dataset.d;S.brief=Math.min(t('brief').length,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
  tune(){if(tuneOn){tuneMuted=true;tuneStop()}else{tuneMuted=false;tuneStart()}},
  storyToggle(){storyOn=!storyOn;$('storyPlay').textContent=storyOn?t('pause'):t('play');if(storyOn)storyStart()},
  storyGo(b){storyShow(+b.dataset.i);storyStart()},
  lookBack(b){openLesson(+b.dataset.l)},
  demoGoBtn(){if(S.demoAt)return;S.demoAt=Date.now();persist();tone(740,.12);render(false)},
  demoEndBtn(){demoEnd(false)},
- briefAuto(){const bar=$('bprog');briefOn=!briefOn;$('bAutoBtn').textContent=briefOn?t('pause'):t('play');
-   if(briefOn){briefT0=Date.now();clearTimeout(briefTimer);briefTimer=setTimeout(briefNext,briefRemain);if(bar)bar.style.animationPlayState='running'}
-   else{clearTimeout(briefTimer);briefRemain=Math.max(0,briefRemain-(Date.now()-briefT0));briefT0=Date.now();if(bar)bar.style.animationPlayState='paused'}},
- briefSkip(){briefRemain=0;S.brief=t('brief').length;persist();render(false)},
+ briefAuto(){if(S.bPauseAt){S.bPaused=(S.bPaused||0)+(Date.now()-S.bPauseAt);S.bPauseAt=null}else S.bPauseAt=Date.now();
+   persist();$('bAutoBtn').textContent=briefOn()?t('pause'):t('play')},
+ briefSkip(){S.brief=t('brief').length;persist();render(false)},
  endRun(){openPin(t('endRunQ'),t('endRunBtn'),()=>finish('stopped'))},
  newTeam(){openPin(t('nextTeamQ'),t('nextTeamBtn'),()=>{S=fresh();persist();render(false)})},
  copyBoard(){const board=load(BOARD,[]);const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
