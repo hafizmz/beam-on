@@ -10,7 +10,8 @@ A Theme Hospital-inspired browser game about running a radiotherapy department, 
 
 **Beam On! Junior**, mini-games about hospital machines for kindergarten and primary: https://hafizmz.github.io/beam-on/junior/
 
-**Beam On! Explorace**, a 20-minute stereotactic radiotherapy race for science camp teams (English and BM): https://hafizmz.github.io/beam-on/race/
+**Beam On! Explorace**, a stereotactic radiotherapy race for science camp teams (English and BM): https://hafizmz.github.io/beam-on/race/ (demo: `race/demo/`)
+- **Beam On! Explorace Quick**, a shorter three-station version (introduction, CT sim, treatment): https://hafizmz.github.io/beam-on/race/quick/ (demo: `race/quick/demo/`)
 
 ## Files
 
@@ -18,7 +19,7 @@ A Theme Hospital-inspired browser game about running a radiotherapy department, 
 - `play/index.html`: Beam On!
 - `first-light/`: Beam On: First Light
 - `junior/index.html`: Beam On! Junior
-- `race/index.html`: Beam On! Explorace, run on one shared device per station. Teams and the leaderboard are kept in that device's browser; marshals change the default PIN under Marshal settings.
+- `race/index.html`: Beam On! Explorace, run on one shared device per station. Teams and the leaderboard are kept in that device's browser; staff change the default PIN under Staff settings. `race/quick/` is the three-station quick race built from the same source.
 - `qr.svg`: QR code for the home page
 
 ## What you do

@@ -254,6 +254,9 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .cf .cf-gantry{transform-box:view-box;transform-origin:156px 100px;animation:cfOrbit 7s linear infinite}
 @keyframes cfOrbit{to{transform:rotate(360deg)}}
 .dots i{transition:width .3s,background .3s}
+.qinfo{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:14px;align-items:center;background:var(--sunk);border-radius:12px;padding:12px}
+.qinfo h3{margin:4px 0}.qinfo p{margin:0}
+@media (max-width:560px){.qinfo{grid-template-columns:minmax(0,1fr)}}
 .yourturn{margin:0;background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:0 10px 10px 0;padding:10px 14px;font-weight:700}
 /* staff demo */
 .sdemo{display:grid;gap:10px;background:var(--amber-soft);border:2px solid var(--amber);border-radius:14px;padding:16px}
@@ -380,7 +383,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
   <header class="top">
     <div class="brand">
       <div class="lamp" id="lamp" aria-hidden="true"><span></span></div>
-      <div><h1>Beam On! Explorace <span class="demotag" id="demoTag" hidden>Demo</span> <button type="button" class="demotag restart" id="demoRestart" data-act="demoRestart" hidden>↺ Restart</button></h1><small id="teamLbl"></small></div>
+      <div><h1>Beam On! Explorace <span class="demotag" id="quickTag" hidden>Quick</span> <span class="demotag" id="demoTag" hidden>Demo</span> <button type="button" class="demotag restart" id="demoRestart" data-act="demoRestart" hidden>↺ Restart</button></h1><small id="teamLbl"></small></div>
     </div>
     <div class="lang" role="group" aria-label="Language / Bahasa">
       <button type="button" data-lang="en" aria-pressed="true">EN</button>
@@ -496,11 +499,11 @@ en:{
    li:['You have {0} minutes from the moment you start the clock.','At each station: do the hands-on mission, answer the screen challenge, then call a staff member to sign you off.','The questions use the four physics ideas you just met. Look for the “From the briefing” link if you need a reminder.','Score: up to 60 for the screen, up to 30 for the staff member’s stars, plus a time bonus if MAX is treated.','Rules: walk, do not run. Handle MAX gently. Nobody stays in the bunker while the beam is on.','Every member has a role. At each station the screen shows who leads: the oncologist in the clinic, radiation therapists at CT and the linac, and medical physicists in planning and at the linac.']}
  ],
  fig:{kv:'Low energy · chest X-ray',mv:'High energy · 6 MV linac',skin:'skin',deep:'deep',tum:'tumour',total:'MAX: 30 Gy in total',day:'Day',jkg:'1 Gy = 1 joule per kg',air:'air',tissue:'tissue',bone:'bone',range:'scan range',slice:'one slice',m1:'1 m',m3:'3 m',same:'same 9 X-rays',src:'linac'},
- useAt:'You will need this at:',restartDemo:'Restart demo',
+ useAt:'You will need this at:',restartDemo:'Restart',
  demoH:'Staff demo',sdP:'Staff: show the steps below while the team watches, including how to do them on this screen. The race clock stops while you demonstrate.',sdPClinic:'Staff: show the team how to read the patient card and how to answer a question on this device. The race clock stops while you demonstrate.',sdWatch:'Watch the staff do this',yourTurn:'Your turn: try on the screen what the staff just showed you.',demoStart:'Start the {0}-minute staff demo',demoSkip:'Skip the demo',demoRun:'Staff demo running',demoEnd:'End the demo, start the challenge',demoPausedClock:'Race clock paused',paused:'Paused',autoNote:'The briefing lasts 3 minutes and the slides move on by themselves. Staff can pause to explain.',qFrom:'From the briefing:',close:'Close',q:'Q',
  C:{
   patient:{dx:'Brain tumour, right side',rx:'30 Gy in 5 fractions (stereotactic)'},
-  st:{clinic:['Clinic','Oncology Clinic'],transport:['Transport','Patient Transport'],ct:['CT Sim','CT Simulator'],plan:['Planning','Treatment Planning'],linac:['Linac','Linac Treatment']},
+  st:{intro:['Intro','Introduction'],clinic:['Clinic','Oncology Clinic'],transport:['Transport','Patient Transport'],ct:['CT Sim','CT Simulator'],plan:['Planning','Treatment Planning'],linac:['Linac','Linac Treatment']},
   mission:{
    clinic:['Collect MAX from the waiting area and read the patient card.','Ask the staff member (your oncologist) to sign the request for CT planning.','Load MAX onto the trolley, face up, and wheel it to the CT room. Walk, and do not bump into walls, people or other teams.'],
    transport:['Load MAX onto the trolley, lying face up.','Push the trolley to the CT room. No bumping into walls, people or other teams.','Park with the brakes on and hand over to the CT radiographer (staff).'],
@@ -619,11 +622,11 @@ ms:{
    li:['Kamu ada {0} minit bermula dari saat kamu memulakan masa.','Di setiap stesen: buat misi amali, jawab cabaran skrin, kemudian panggil staf untuk menandatangani.','Soalan menggunakan empat idea fizik yang baru kamu pelajari. Cari pautan “Daripada taklimat” jika perlu peringatan.','Markah: hingga 60 untuk skrin, hingga 30 untuk bintang staf, dan bonus masa jika MAX dirawat.','Peraturan: berjalan, jangan berlari. Kendalikan MAX dengan lembut. Tiada sesiapa dalam bunker semasa alur dihidupkan.','Setiap ahli ada peranan. Di setiap stesen skrin menunjukkan siapa yang mengetuai: pakar onkologi di klinik, juru terapi sinaran di CT dan linac, dan ahli fizik perubatan di perancangan dan linac.']}
  ],
  fig:{kv:'Tenaga rendah · X-ray dada',mv:'Tenaga tinggi · linac 6 MV',skin:'kulit',deep:'dalam',tum:'tumor',total:'MAX: jumlah 30 Gy',day:'Hari',jkg:'1 Gy = 1 joule setiap kg',air:'udara',tissue:'tisu',bone:'tulang',range:'julat imbasan',slice:'satu hirisan',m1:'1 m',m3:'3 m',same:'9 sinar-X yang sama',src:'linac'},
- useAt:'Kamu akan perlukan ini di:',restartDemo:'Mula semula demo',
+ useAt:'Kamu akan perlukan ini di:',restartDemo:'Mula semula',
  demoH:'Demo staf',sdP:'Staf: tunjukkan langkah di bawah sementara pasukan memerhati, termasuk cara melakukannya pada skrin ini. Masa perlumbaan berhenti semasa demo.',sdPClinic:'Staf: tunjukkan kepada pasukan cara membaca kad pesakit dan cara menjawab soalan pada peranti ini. Masa perlumbaan berhenti semasa demo.',sdWatch:'Perhatikan staf melakukan ini',yourTurn:'Giliran kamu: cuba lakukan pada skrin apa yang staf tunjukkan tadi.',demoStart:'Mula demo staf {0} minit',demoSkip:'Langkau demo',demoRun:'Demo staf sedang berjalan',demoEnd:'Tamatkan demo, mula cabaran',demoPausedClock:'Masa perlumbaan dijeda',paused:'Dijeda',autoNote:'Taklimat ini 3 minit dan slaid bertukar sendiri. Staf boleh jeda untuk menerangkan.',qFrom:'Daripada taklimat:',close:'Tutup',q:'S',
  C:{
   patient:{dx:'Tumor otak, sebelah kanan',rx:'30 Gy dalam 5 fraksi (stereotaktik)'},
-  st:{clinic:['Klinik','Klinik Onkologi'],transport:['Pengangkutan','Pengangkutan Pesakit'],ct:['CT Sim','Simulator CT'],plan:['Perancangan','Perancangan Rawatan'],linac:['Linac','Rawatan Linac']},
+  st:{intro:['Pengenalan','Stesen Pengenalan'],clinic:['Klinik','Klinik Onkologi'],transport:['Pengangkutan','Pengangkutan Pesakit'],ct:['CT Sim','Simulator CT'],plan:['Perancangan','Perancangan Rawatan'],linac:['Linac','Rawatan Linac']},
   mission:{
    clinic:['Ambil MAX dari ruang menunggu dan baca kad pesakit.','Minta staf (pakar onkologi kamu) menandatangani permohonan perancangan CT.','Letakkan MAX di atas troli, menghadap ke atas, dan tolak ke bilik CT. Berjalan, dan jangan langgar dinding, orang atau pasukan lain.'],
    transport:['Letakkan MAX di atas troli, berbaring menghadap ke atas.','Tolak troli ke bilik CT. Jangan langgar dinding, orang atau pasukan lain.','Parkir dengan brek dipasang dan serahkan kepada juru radiografi CT (staf).'],
@@ -650,12 +653,44 @@ ms:{
   oar:{eyeL:'Mata kiri',eyeR:'Mata kanan',stem:'Batang otak'}
  }}
 };
-const t=(k,...a)=>{let s=(TX[LANG][k]??TX.en[k]??k);if(typeof s!=='string')return s;return s.replace(/\{(\d)\}/g,(m,i)=>a[+i])};
+const t=(k,...a)=>{let s=((QUICK?QX[LANG][k]:undefined)??TX[LANG][k]??TX.en[k]??k);if(typeof s!=='string')return s;return s.replace(/\{(\d)\}/g,(m,i)=>a[+i])};
 const C=()=>TX[LANG].C;
+/* quick race text: only the keys that differ from the full race */
+const QX={
+ en:{heroH:'MAX has a brain tumour. Treat it before time runs out.',
+  heroP:'Three stations, a few minutes each: an introduction to radiotherapy, the CT scan, then treatment on the linear accelerator (linac). Watch the staff demo, try it on this device, then get a staff member to sign you off.',
+  readyP:'MAX is waiting at the introduction station. The clock runs for {0} minutes and stops while staff demonstrate at CT and the linac. Walk, do not run. Nobody stays in the bunker when the beam is on.',
+  stationN:'Station {0} of 3',ofN:'{0} of 3',walkWait:'Answer the question to unlock the move to CT.',ctStep2:'<b>Step 2.</b> Scan question',
+  lnLoaded:'Correct. {0} of 30.',lnClear:'Interlocks clear. {0} of 30.',
+  lnStep3:'<b>Step 2.</b> Safety checks before beam on. Tick only what must be true.',lnStep4:'<b>Step 3.</b> Press and hold BEAM ON until {0} monitor units are delivered. Let go and the beam stops.',
+  theoryNote:'3 physics questions',interNote:'Lasers, safety check and staff stars',
+  quickTag:'Quick',introNext:'Next',introBack:'Back',introQ:'Quick check',infoTag:'Did you know?',
+  intro:[{k:'rt',h:'Radiotherapy in one minute',p:'Radiotherapy uses high-energy X-rays to destroy cancer cells. Many beams cross at the tumour, so the tumour gets a high dose while healthy tissue gets only a little.'},
+   {k:'team',h:'Who treats MAX?',li:[['Clinical oncologist','The doctor who prescribes the dose.'],['Radiation therapist','Scans MAX and gives the treatment.'],['Medical physicist','Plans the beams and keeps the linac accurate and safe.']]},
+   {k:'energy',h:'Why high-energy X-rays?',p:'A linac makes 6 MV X-rays, about 60 times more energetic than a chest X-ray. They go deep enough to reach the tumour, and give less dose to the skin.'}],
+  ctInfo:{h:'CT numbers',p:'A CT scan maps how dense every part of the head is: air is black, tissue grey, bone white. The computer uses these numbers to work out the dose.'},
+  lnInfo:{h:'Distance matters',p:'X-rays spread out like torch light. Go further away and the same beam covers a bigger area, so the dose goes down: 3 times as far means 1/9 of the dose.'}},
+ ms:{heroH:'MAX ada tumor otak. Rawat dia sebelum masa tamat.',
+  heroP:'Tiga stesen, beberapa minit setiap satu: pengenalan radioterapi, imbasan CT, kemudian rawatan dengan pemecut linear (linac). Tonton demo staf, cuba pada peranti ini, kemudian minta staf menandatangani kamu.',
+  readyP:'MAX sedang menunggu di stesen pengenalan. Masa berjalan selama {0} minit dan berhenti semasa staf membuat demo di CT dan linac. Berjalan, jangan berlari. Tiada sesiapa dalam bunker semasa alur dihidupkan.',
+  stationN:'Stesen {0} drp 3',ofN:'{0} drp 3',walkWait:'Jawab soalan untuk bergerak ke CT.',ctStep2:'<b>Langkah 2.</b> Soalan imbasan',
+  lnLoaded:'Betul. {0} drp 30.',lnClear:'Interlok selamat. {0} drp 30.',
+  lnStep3:'<b>Langkah 2.</b> Semakan keselamatan sebelum alur dihidupkan. Tandakan hanya perkara yang mesti benar.',lnStep4:'<b>Langkah 3.</b> Tekan dan tahan BEAM ON sehingga {0} unit monitor dihantar. Lepaskan dan alur akan berhenti.',
+  theoryNote:'3 soalan fizik',interNote:'Laser, semakan keselamatan dan bintang staf',
+  quickTag:'Pantas',introNext:'Seterusnya',introBack:'Kembali',introQ:'Semakan pantas',infoTag:'Tahukah kamu?',
+  intro:[{k:'rt',h:'Radioterapi dalam satu minit',p:'Radioterapi menggunakan sinar-X bertenaga tinggi untuk memusnahkan sel kanser. Banyak alur bersilang pada tumor, jadi tumor menerima dos tinggi manakala tisu sihat hanya menerima sedikit.'},
+   {k:'team',h:'Siapa yang merawat MAX?',li:[['Pakar onkologi klinikal','Doktor yang menetapkan dos.'],['Juru terapi sinaran','Mengimbas MAX dan memberi rawatan.'],['Ahli fizik perubatan','Merancang alur dan memastikan linac tepat dan selamat.']]},
+   {k:'energy',h:'Mengapa sinar-X bertenaga tinggi?',p:'Linac menghasilkan sinar-X 6 MV, kira-kira 60 kali lebih bertenaga daripada X-ray dada. Ia cukup jauh untuk sampai ke tumor, dan memberi dos lebih rendah kepada kulit.'}],
+  ctInfo:{h:'Nombor CT',p:'Imbasan CT memetakan ketumpatan setiap bahagian kepala: udara hitam, tisu kelabu, tulang putih. Komputer menggunakan nombor ini untuk mengira dos.'},
+  lnInfo:{h:'Jarak penting',p:'Sinar-X tersebar seperti cahaya lampu suluh. Semakin jauh, alur yang sama meliputi kawasan lebih luas, jadi dos berkurang: 3 kali lebih jauh bermaksud 1/9 dos.'}}
+};
+
 
 /* ================= fixed content ================= */
 const PATIENT={name:'MAX',dob:'01/06/2019',mrn:'RT-1895-07'};
-const IDS=['clinic','ct','plan','linac']; // transport is now part of the clinic station
+// quick race: three stations (introduction, CT sim, treatment), one physics question each, no planning
+const QUICK=!!window.EXPLORACE_QUICK||location.hash==='#quick';
+const IDS=QUICK?['intro','ct','linac']:['clinic','ct','plan','linac']; // transport is now part of the clinic station
 const ICON={
  clinic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5v8a6 6 0 0 0 12 0V5"/><path d="M15 19v3a5 5 0 0 0 10 0v-2"/><circle cx="25" cy="17" r="3"/></svg>',
  transport:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15h24v4H3z"/><path d="M6 19v5M24 19v5"/><circle cx="6" cy="26" r="2"/><circle cx="24" cy="26" r="2"/><circle cx="9" cy="11" r="3"/></svg>',
@@ -663,13 +698,14 @@ const ICON={
  plan:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><ellipse cx="16" cy="16" rx="11" ry="13"/><circle cx="20" cy="15" r="3.5"/><path d="M20 2v8M30 15h-6M20 28v-9"/></svg>',
  linac:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h14v8l-4 4h-6l-4-4z"/><path d="M13 15l-3 9M13 15l3 9" stroke-dasharray="2 2"/><path d="M3 26h26"/></svg>'
 };
+ICON.intro=ICON.clinic;
 const STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 6 6.4.7-4.8 4.4 1.4 6.4L12 17l-5.8 3.3 1.4-6.4L2.8 9.5l6.4-.7z" fill="currentColor"/></svg>';
 const PH=(o={})=>`<path d="M30 50L30 38Q33 35.6 36 34.8Q40 31.4 44 30C50 27.5 58 27 64 28C72 29 78 31 82.5 33Q86 34.6 88.5 36L113.5 38.6Q115.6 38.4 116.2 33.4Q116.8 30.4 118.9 30.9Q120.6 31.8 120.2 38Q119.8 44.5 117.2 47.4L116.4 50Z" fill="#F2F4F5" stroke="#A9B3B9" stroke-width="1.1" stroke-linejoin="round"/><path d="M88.5 44.2L115.5 45.2" stroke="#C3CBD0" stroke-width=".9" fill="none" stroke-linecap="round"/><path d="M46 40.2C56 39 70 39.4 83.5 40.8Q87.4 41.4 86.6 43.6Q85.6 45 82 44.6Q70 44 60 44.2Q50.5 44.6 47.2 43.6Q45 42.4 46 40.2Z" fill="#E7EBED" stroke="#B4BEC3" stroke-width=".9" stroke-linejoin="round"/><g transform="matrix(0 -.8 .8 0 3 49.2)"><path d="M14 0C22 0 27 4 27.5 10C27.8 12 27.4 13.2 28 14Q28.6 15 28.2 16L31.6 21.6Q32 22.6 31 22.9L28.6 23.4Q28.8 24.6 28.4 25.2Q29 25.8 28.2 26.6Q29 27.4 28.4 28.6Q27.4 29.4 27.8 30.4Q28.6 32.4 27 33.6Q24 35 20 34.4L18 40H-1.2Q-1.6 34 1 30C-1 24-1 10 3 5C6 1 10 0 14 0Z" fill="#F2F4F5" stroke="#A9B3B9" stroke-width="1.4" stroke-linejoin="round"/></g><rect x="33.4" y="35.4" width="3.6" height="14.3" fill="#F2F4F5"/><path d="M32 50.1H38.5" stroke="#A9B3B9" stroke-width="1.1"/><path d="M13.6 29.6q1.5 .9 3 0" stroke="#9AA6AC" stroke-width=".8" fill="none" stroke-linecap="round"/><path d="M15.6 38.8c0-1.8 1.4-2.4 2.8-2.4c1.8 0 3 1 3 2.3c0 1.5-1.2 2.3-2.7 2.3c-.8 0-1.3-.5-1.1-1.1c-1.2.5-2 0-2-1.1z" fill="#E6EAEC" stroke="#B4BEC3" stroke-width=".7"/><rect x="55" y="31" width="18" height="5" rx="1" fill="#1C1D20"/><text x="64" y="34.9" text-anchor="middle" font-family="JetBrains Mono, monospace" font-weight="700" font-size="3.8" fill="#F2F4F5">MAX</text>${o.tumour?'<circle cx="12" cy="37" r="2.4" fill="#E0312B" stroke="#FFD48A" stroke-width=".7"/>':''}${o.laser?'<path d="M12 12V54M0 37H40" stroke="#FF3B30" stroke-width=".7"/><path d="M8.5 37h7M12 33.5v7" stroke="#FF3B30" stroke-width="1.4"/>':''}`;
 const PHG=(x,y,sc,o)=>`<g transform="translate(${x} ${y}) scale(${sc})">${PH(o)}</g>`;
 const BEAR=`<svg viewBox="0 10 122 44" aria-hidden="true">${PH({laser:true})}</svg>`;
 const PHYS_STAR=10;
 const ROLES=['onc','rtt','mp'], NMAX=9;
-const LEAD={clinic:['onc'],ct:['rtt'],plan:['mp'],linac:['rtt','mp']};
+const LEAD={intro:['onc'],clinic:['onc'],ct:['rtt'],plan:['mp'],linac:['rtt','mp']};
 const roleName=r=>(t('roleN')||{})[r]||'';
 const mem=(n,r)=>r?`${n} (${roleName(r)})`:n;
 const CLINIC_A=[1,1,1], CT_A=[1,1], LIN_A=3;
@@ -690,13 +726,13 @@ OARS.forEach(o=>{o.pts=[];for(let y=-o.r;y<=o.r;y+=2)for(let x=-o.r;x<=o.r;x+=2)
 // demo build: no sign-in, a ready-made team, the PIN shown on screen, and its own storage so demo runs never reach the camp leaderboard
 const DEMO=!!window.EXPLORACE_DEMO||location.hash==='#demo';
 const DEMO_TEAM={team:'Demo',school:'Demo',names:['Aina','Wei Jie','Kumar'],roles:['onc','rtt','mp']};
-const SUF=DEMO?'-demo':'';
+const SUF=(QUICK?'-quick':'')+(DEMO?'-demo':'');
 const KEY='beamon-explorace-v1'+SUF, CFG='beamon-explorace-cfg'+SUF, BOARD='beamon-explorace-board'+SUF;
 const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-let cfg=Object.assign({pin:'1895',minutes:15},load(CFG,{}));
+let cfg=Object.assign({pin:'1895',minutes:QUICK?12:15},load(CFG,{}));
 // v2: the race became 15 minutes after a 3-minute briefing; move devices still on the old 20-minute default
-if(!cfg.v){if(cfg.minutes===20)cfg.minutes=15;cfg.v=2;try{save(CFG,cfg)}catch(e){}}
+if(!cfg.v){if(cfg.minutes===20&&!QUICK)cfg.minutes=15;cfg.v=2;try{save(CFG,cfg)}catch(e){}}
 let S=load(KEY,null)||fresh();
 if(!Array.isArray(S.names))S.names=[];if(S.school==null)S.school='';
 function fresh(){return {phase:'setup',team:'',school:'',names:[],start:0,end:0,idx:0,reason:'',
@@ -771,7 +807,8 @@ function timeBonus(){return S.reason==='done'?Math.floor(left()/10000):0}
 function total(){return IDS.reduce((a,id)=>a+stationScore(id),0)+(S.phase==='done'?timeBonus():0)}
 
 /* ================= shell ================= */
-function renderTop(){const dt=$('demoTag');if(dt)dt.hidden=!DEMO;const dr=$('demoRestart');if(dr){dr.hidden=!DEMO||S.phase==='setup';dr.textContent='↺ '+t('restartDemo')}
+function renderTop(){const dt=$('demoTag');if(dt)dt.hidden=!DEMO;const qt=$('quickTag');if(qt){qt.hidden=!QUICK;qt.textContent=t('quickTag')}
+  $('path').style.gridTemplateColumns=`repeat(${IDS.length},minmax(0,1fr))`;const dr=$('demoRestart');if(dr){dr.hidden=!DEMO||S.phase==='setup';dr.textContent='↺';dr.title=t('restartDemo');dr.setAttribute('aria-label',t('restartDemo'))}
   const tl=S.team&&S.phase!=='setup'?teamName(S.team):'';$('teamLbl').textContent=tl;$('teamLbl').hidden=!tl;
   $('scoreHd').textContent=t('score');$('clockHd').textContent=S.demoAt&&S.phase==='race'?t('paused'):t('timeLeft');
   $('scoreLbl').textContent=total();
@@ -1016,9 +1053,11 @@ function schedSlide(ms){let acc=0;const n=t('brief').length;for(let k=0;k<n;k++)
 function briefTick(){const h=$('briefHd');if(S.phase!=='ready'||!h){clearInterval(briefCd);return}
   h.textContent=t('briefEyebrow',fmt(briefLeft()));const bar=$('bprog');if(bar)bar.style.width=(briefUsed()/BRIEF_MS*100)+'%';
   const k=schedSlide(briefUsed());if(k!==S.bSched){const first=S.bSched==null;S.bSched=k;if(!first&&k>(S.brief||0)){S.briefDir=1;S.brief=k;persist();render(false);return}persist()}}
-function briefArm(){clearInterval(briefCd);if(S.phase!=='ready')return;if(!S.bStart){S.bStart=Date.now();S.bPaused=0;S.bPauseAt=null;S.bSched=null;persist()}
+function briefArm(){clearInterval(briefCd);if(S.phase!=='ready'||QUICK)return;if(!S.bStart){S.bStart=Date.now();S.bPaused=0;S.bPauseAt=null;S.bSched=null;persist()}
   briefTick();briefCd=setInterval(briefTick,500)}
 function readyView(){
+  if(QUICK)return `<div class="card hero brief"><div class="brief-body">${briefCard(t('brief').length)}</div>
+    <div class="btnrow brief-nav"><button class="btn amber big" data-act="startRace">${t('startBtn')}</button><button class="linkbtn" data-act="editSignin">${t('changeSignin')}</button></div></div>`;
   const last=t('brief').length,i=Math.min(S.brief||0,last);
   return `<div class="card hero brief">
     <div class="row-h"><span class="eyebrow amber" id="briefHd">${t('briefEyebrow',fmt(briefLeft()))}</span><span class="dots" aria-label="${i+1} / ${last+1}">${Array.from({length:last+1},(_,k)=>`<i class="${k===i?'on':k<i?'past':''}"></i>`).join('')}</span></div>
@@ -1043,6 +1082,11 @@ function leadLine(id){const L=S.names.map((n,k)=>[n,(S.roles||[])[k]]).filter(([
 function keepForm(){if(!$('fTeam'))return;S.team=$('fTeam').value;S.school=$('fSchool').value;S.names=Array.from({length:NMAX},(_,i)=>$('fN'+i).value)}
 function stationView(){
   const id=IDS[S.idx],st=S.st[id];
+  if(id==='intro')return `<div class="card">
+    <div><span class="eyebrow">${t('stationN',S.idx+1)}</span><h2>${stFull(id)}</h2>${leadLine(id)}</div>
+    <div class="section">${CH.intro()}</div>
+    <div class="section">${walkView(st)}</div>
+    <div class="btnrow end"><button class="linkbtn" data-act="endRun">${t('endRun')}</button></div></div>`;
   if(!st.demo)return `<div class="card">
     <div><span class="eyebrow">${t('stationN',S.idx+1)}</span><h2>${stFull(id)}</h2>${leadLine(id)}</div>
     ${demoView()}
@@ -1070,10 +1114,12 @@ function signoffView(id,st){
     <p class="small">${ready?t('soReady'):t('soNotReady')}</p>
     <div class="btnrow"><button class="btn primary" data-act="signoff" ${ready?'':'disabled'}>${t('soBtn',stName(id))}</button></div></div>`;
 }
+function infoCard(o,fig){return `<div class="qinfo"><figure class="lookfig">${FIG[fig]()}</figure><div><span class="ltag">${t('infoTag')}</span><h3>${o.h}</h3><p>${o.p}</p></div></div>`}
+const QA={clinic:CLINIC_A,ctq:CT_A,introq:[1]};
 function quizView(key,qs,ans){
   const c=ch(key,()=>({ans:{}}));
   return qs.map((q,i)=>{const a=c.ans[i];const done=a!==undefined;
-    return `<div class="q"><p class="ask">${i+1}. ${q.ask}</p>${qLink(key,i)}<div class="opts">${q.opts.map((o,j)=>{
+    return `<div class="q"><p class="ask">${QUICK?'':(i+1)+'. '}${q.ask}</p>${QUICK?'':qLink(key,i)}<div class="opts">${q.opts.map((o,j)=>{
       let cls='';if(done){if(j===ans[i])cls='right';else if(j===a)cls='wrong'}
       return `<button class="opt ${cls}" data-act="quiz" data-k="${key}" data-q="${i}" data-o="${j}" ${done?'disabled':''}>${o}</button>`}).join('')}</div>
       ${done?`<p class="why"><b>${a===ans[i]?t('correct'):t('notQuite')}</b> ${q.why}</p>`:''}</div>`}).join('');
@@ -1081,11 +1127,21 @@ function quizView(key,qs,ans){
 const quizScore=(key,ans,each)=>{const c=S.ch[key];if(!c)return 0;return ans.reduce((a,v,i)=>a+(c.ans[i]===v?each:0),0)};
 const quizDone=(key,ans)=>{const c=S.ch[key];return c&&ans.every((v,i)=>c.ans[i]!==undefined)};
 function checkDone(){
+  if(QUICK){const it=S.st.intro;if(it&&it.dig===null&&quizDone('introq',[1]))it.dig=quizScore('introq',[1],60);
+    const c=S.ch.ct;if(S.st.ct.dig===null&&c&&c.aligned&&quizDone('ctq',[1]))S.st.ct.dig=c.alignPts+quizScore('ctq',[1],30);return}
   if(S.st.clinic.dig===null&&quizDone('clinic',CLINIC_A))S.st.clinic.dig=quizScore('clinic',CLINIC_A,20);
   const c=S.ch.ct;if(S.st.ct.dig===null&&c&&c.aligned&&quizDone('ctq',CT_A))S.st.ct.dig=c.alignPts+quizScore('ctq',CT_A,15);
 }
 
 const CH={
+ intro(){const c=ch('intro',()=>({card:0}));const I=t('intro'),n=I.length,b=I[Math.min(c.card,n-1)];
+   const body=b.k==='team'?`<dl class="glossary">${b.li.map(([a,d],k)=>`<div class="stag" style="--d:${k+1}"><dt>${a}</dt><dd>${d}</dd></div>`).join('')}</dl>`
+     :`<div class="brief-split"><p class="stag" style="--d:1">${b.p}</p><figure class="brief-fig stag" style="--d:1">${FIG[b.k]()}</figure></div>`;
+   let h=`<div class="brief"><div class="row-h"><h3 class="stag">${b.h}</h3><span class="dots">${I.map((_,k)=>`<i class="${k===c.card?'on':k<c.card?'past':''}"></i>`).join('')}</span></div>
+     <div class="brief-body" key="${c.card}">${body}</div>
+     <div class="btnrow">${c.card>0?`<button class="btn" data-act="introNav" data-d="-1">${t('introBack')}</button>`:''}${c.card<n-1?`<button class="btn primary" data-act="introNav" data-d="1">${t('introNext')}</button>`:''}</div></div>`;
+   if(c.card<n-1&&!c.seen)return h;
+   return h+`<div class="section"><span class="eyebrow">${t('introQ')}</span>${quizView('introq',[C().clinicQ[0]],[1])}${S.st.intro.dig!==null?`<p class="flag good">${t('chDone',S.st.intro.dig)}</p>`:''}</div>`},
  clinic(){const st=S.st.clinic;
    return `<div class="pt">${BEAR}${kv(true)}</div>${quizView('clinic',C().clinicQ,CLINIC_A)}${st.dig!==null?`<p class="flag good">${t('chDone',st.dig)}</p>`:''}`},
  transport(){const c=ch('transport',()=>({sel:[],checked:false}));
@@ -1099,7 +1155,7 @@ const CH={
    ${c.aligned?`<p class="flag good">${t('ctAligned',c.alignPts)}</p>`:`${padView('ct')}
    <div class="btnrow"><button class="btn primary" data-act="ctcheck">${t('ctCheck')}</button><span class="readout">${t('checksUsed',c.tries)}</span></div>
    ${c.msg?`<p class="flag bad">${t('ctMiss')}</p>`:''}`}
-   ${c.aligned?`<p>${t('ctStep2')}</p>${quizView('ctq',C().ctQ,CT_A)}`:''}
+   ${c.aligned?`<p>${t('ctStep2')}</p>${QUICK?infoCard(t('ctInfo'),'ct')+quizView('ctq',[C().ctQ[0]],[1]):quizView('ctq',C().ctQ,CT_A)}`:''}
    ${S.st.ct.dig!==null?`<p class="flag good">${t('chDone',S.st.ct.dig)}</p>`:''}`},
  plan(){const c=ch('plan',()=>({beams:[],calc:null,calcs:0}));const r=c.calc?calcPlan(c.beams):null;const locked=S.st.plan.dig!==null;
    return `<p>${t('plIntro')}</p>
@@ -1119,13 +1175,13 @@ const CH={
    <p class="small muted">${t('plNote')}</p>`},
  linac(){const c=ch('linac',()=>({plan:null,planPts:null,wrongs:0,off:{x:nz(),y:nz(),z:nz()},tries:0,matched:false,sel:[],safety:null,safeTries:0,mu:0}));
    const LQ=C().linacQ;
-   let h=`<p>${t('lnStep1')}</p><div class="q"><p class="ask">${LQ.ask}</p>${qLink('linac',0)}<div class="opts">${LQ.opts.map((o,i)=>{let cls='';if(c.planPts!==null&&i===LIN_A)cls='right';else if(c.plan===i&&i!==LIN_A)cls='wrong';
+   let h=`<p>${t('lnStep1')}</p>${QUICK?infoCard(t('lnInfo'),'dist'):''}<div class="q"><p class="ask">${LQ.ask}</p>${QUICK?'':qLink('linac',0)}<div class="opts">${LQ.opts.map((o,i)=>{let cls='';if(c.planPts!==null&&i===LIN_A)cls='right';else if(c.plan===i&&i!==LIN_A)cls='wrong';
      return `<button class="opt ${cls}" data-act="loadplan" data-i="${i}" ${c.planPts!==null?'disabled':''}>${o}</button>`}).join('')}</div></div>`;
    if(c.plan!==null&&c.plan!==LIN_A&&c.planPts===null)h+=`<p class="flag bad">${t('lnWrong')}</p>`;
    if(c.planPts===null)return h;
-   h+=`<p class="why"><b>${t('lnLoaded',c.planPts)}</b> ${LQ.why}</p><p>${t('lnStep2')}</p>${alignViews(c.off,'cbct')}`;
+   h+=`<p class="why"><b>${t('lnLoaded',c.planPts)}</b> ${LQ.why}</p>`;if(QUICK){c.matched=true;c.matchPts=0}else h+=`<p>${t('lnStep2')}</p>${alignViews(c.off,'cbct')}`;
    if(!c.matched)return h+`${padView('linac')}<div class="btnrow"><button class="btn primary" data-act="cbcheck">${t('lnApply')}</button><span class="readout">${t('checksUsed',c.tries)}</span></div>${c.msg?`<p class="flag bad">${t('lnMiss')}</p>`:''}`;
-   h+=`<p class="flag good">${t('lnMatched',c.matchPts)}</p><p>${t('lnStep3')}</p>
+   h+=`${QUICK?'':`<p class="flag good">${t('lnMatched',c.matchPts)}</p>`}<p>${t('lnStep3')}</p>
    <div class="checks">${C().safety.map((x,i)=>{const on=c.sel.includes(i),good=SAFETY_OK[i];let cls='';if(c.safety!==null)cls=good&&on?'right':'';
      return `<label class="check ${cls}"><input type="checkbox" data-act="scheck" data-i="${i}" ${on?'checked':''} ${c.safety!==null?'disabled':''}><span>${x}</span></label>`}).join('')}</div>`;
    if(c.safety===null)return h+`<div class="btnrow"><button class="btn primary" data-act="ssubmit">${t('lnConfirm')}</button></div>${c.smsg?`<p class="flag bad">${t(c.smsg)}</p>`:''}`;
@@ -1245,21 +1301,21 @@ document.addEventListener('change',e=>{const b=e.target.closest('[data-act]');if
 
 const ACT={
  quiz(b){const c=ch(b.dataset.k,()=>({ans:{}}));const q=+b.dataset.q;if(c.ans[q]!==undefined)return;c.ans[q]=+b.dataset.o;
-   const ans=b.dataset.k==='clinic'?CLINIC_A:CT_A;(ans[q]===c.ans[q]?ok:no)();checkDone();persist();render()},
+   const ans=QA[b.dataset.k];(ans[q]===c.ans[q]?ok:no)();checkDone();persist();render()},
  tsubmit(){const c=S.ch.transport;let p=0;TRANSPORT_OK.forEach((good,i)=>{const on=c.sel.includes(i);if(good&&on)p+=7.5;if(!good&&on)p-=7.5});c.checked=true;c.pts=Math.max(0,Math.round(p));(c.pts>=30?ok:no)();checkDone();persist();render()},
  nudge(b){const c=S.ch[b.dataset.k];c.off[b.dataset.a]+= +b.dataset.d;c.msg=false;tone(520,.04,'triangle',.04);persist();render()},
  ctcheck(){const c=S.ch.ct;c.tries++;const o=c.off;if(Math.abs(o.x)<=1&&Math.abs(o.y)<=1&&Math.abs(o.z)<=1){c.aligned=true;c.alignPts=Math.max(10,30-(c.tries-1)*5);ok()}else{c.msg=true;no()}persist();render()},
  cbcheck(){const c=S.ch.linac;c.tries++;const o=c.off;if(Math.abs(o.x)<=1&&Math.abs(o.y)<=1&&Math.abs(o.z)<=1){c.matched=true;c.matchPts=Math.max(10,25-(c.tries-1)*5);ok()}else{c.msg=true;no()}persist();render()},
- loadplan(b){const c=S.ch.linac,i=+b.dataset.i;if(c.planPts!==null)return;c.plan=i;if(i===LIN_A){c.planPts=Math.max(0,15-(c.wrongs||0)*10);ok()}else{c.wrongs=(c.wrongs||0)+1;no()}persist();render()},
+ loadplan(b){const c=S.ch.linac,i=+b.dataset.i;if(c.planPts!==null)return;c.plan=i;if(i===LIN_A){c.planPts=QUICK?Math.max(10,30-(c.wrongs||0)*10):Math.max(0,15-(c.wrongs||0)*10);ok()}else{c.wrongs=(c.wrongs||0)+1;no()}persist();render()},
  ssubmit(){const c=S.ch.linac;c.safeTries++;const good=SAFETY_OK.every((v,i)=>v===c.sel.includes(i));
-   if(good){c.safety=c.safeTries===1?20:10;ok()}else{c.smsg=SAFETY_OK.some((v,i)=>!v&&c.sel.includes(i))?'lnInterlockIn':'lnInterlockMiss';no()}persist();render()},
+   if(good){c.safety=QUICK?(c.safeTries===1?30:15):(c.safeTries===1?20:10);ok()}else{c.smsg=SAFETY_OK.some((v,i)=>!v&&c.sel.includes(i))?'lnInterlockIn':'lnInterlockMiss';no()}persist();render()},
  beam(b){const c=S.ch.plan,a=+b.dataset.a;c.beams=c.beams.includes(a)?c.beams.filter(x=>x!==a):[...c.beams,a].sort((x,y)=>x-y);c.calc=null;persist();render()},
  calc(){const c=S.ch.plan;c.calcs++;c.calc=true;(calcPlan(c.beams).pass?ok:no)();persist();render()},
  approve(){const c=S.ch.plan;S.st.plan.dig=planPoints(calcPlan(c.beams),c.calcs);ok();persist();render()},
  signoff(){openSignoff()},
  settings(){openSettings()},
  clearBoard(){openPin(t('clearBoardQ'),t('clearBoardBtn'),()=>{save(BOARD,[]);render()})},
- goCT(){const st=S.st.clinic;if(st.dig===null)return;st.done=true;st.at=Date.now();S.idx=1;ok();persist();render(false)},
+ goCT(){const st=S.st[IDS[0]];if(st.dig===null)return;st.done=true;st.at=Date.now();S.idx=1;ok();persist();render(false)},
  startRace(){S.phase='race';S.start=Date.now();persist();tone(880,.2);wake();render(false)},
  pickRole(b){keepForm();const i=+b.dataset.i,r=b.dataset.r;S.roles=S.roles||[];S.roles[i]=S.roles[i]===r?'':r;tone(560,.04,'triangle',.04);persist();render()},
  demoGo(){S=fresh();Object.assign(S,JSON.parse(JSON.stringify(DEMO_TEAM)));S.phase='ready';tone(660,.12);persist();render(false)},
@@ -1274,6 +1330,7 @@ const ACT={
  briefAuto(){if(S.bPauseAt){S.bPaused=(S.bPaused||0)+(Date.now()-S.bPauseAt);S.bPauseAt=null}else S.bPauseAt=Date.now();
    persist();$('bAutoBtn').textContent=briefOn()?t('pause'):t('play')},
  demoRestart(){if(!DEMO)return;beamStop();S=fresh();persist();render(false)},
+ introNav(b){const c=S.ch.intro;c.card=Math.max(0,Math.min(t('intro').length-1,c.card+ +b.dataset.d));if(c.card===t('intro').length-1)c.seen=true;tone(560,.05,'triangle',.04);persist();render()},
  briefSkip(){S.brief=t('brief').length;persist();render(false)},
  endRun(){openPin(t('endRunQ'),t('endRunBtn'),()=>finish('stopped'))},
  newTeam(){openPin(t('nextTeamQ'),t('nextTeamBtn'),()=>{S=fresh();persist();render(false)})},
@@ -1323,6 +1380,10 @@ function openSettings(){openPin(t('settings'),t('unlock'),()=>{
    the approved plan (60), linac steps (CBCT 25, safety 20) and staff stars (3 x 30), to the nearest 0.5. */
 function marks(){const qa=(k,A)=>{const c=S.ch[k];return c?A.filter((v,i)=>c.ans[i]===v).length:0};
   const ct=S.ch.ct,ln=S.ch.linac||{};
+  /* quick race: theory = 3 questions (linac one right first time); interactive = CT lasers 30 + safety 30 + staff stars 2 x 30, out of 120 */
+  if(QUICK){const right=qa('introq',[1])+qa('ctq',[1])+(ln.planPts!=null&&!ln.wrongs?1:0);
+    const earned=(ct&&ct.aligned?ct.alignPts:0)+(ln.safety||0)+['ct','linac'].reduce((a,id)=>a+(S.st[id].stars||0)*PHYS_STAR,0);
+    const th=Math.round(right/3*20)/2,inter=Math.round(earned/120*20)/2;return {th,inter,sum:th+inter}}
   const earned=(ct&&ct.aligned?ct.alignPts:0)+(S.st.plan.dig||0)+(ln.matched?ln.matchPts:0)+(ln.safety||0)+['ct','plan','linac'].reduce((a,id)=>a+(S.st[id].stars||0)*PHYS_STAR,0);
   const right=qa('clinic',CLINIC_A)+qa('ctq',CT_A)+(ln.planPts!=null&&!ln.wrongs?1:0);
   const th=Math.round(right/6*20)/2,inter=Math.round(earned/225*20)/2;
