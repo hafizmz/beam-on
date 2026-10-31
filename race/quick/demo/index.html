@@ -257,6 +257,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .qinfo{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:14px;align-items:center;background:var(--sunk);border-radius:12px;padding:12px}
 .qinfo h3{margin:4px 0}.qinfo p{margin:0}
 @media (max-width:560px){.qinfo{grid-template-columns:minmax(0,1fr)}}
+.tbl.mk tr.mkhead td{background:var(--sunk);padding-top:10px}
 .yourturn{margin:0;background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:0 10px 10px 0;padding:10px 14px;font-weight:700}
 /* staff demo */
 .sdemo{display:grid;gap:10px;background:var(--amber-soft);border:2px solid var(--amber);border-radius:14px;padding:16px}
@@ -408,7 +409,7 @@ const LK='beamon-explorace-lang';
 let LANG=(()=>{try{return localStorage.getItem(LK)||'en'}catch(e){return 'en'}})();
 const TX={
 en:{
- station:'Radiotherapy station',score:'Score',timeLeft:'Time left',ofN:'{0} of 4',pts:'{0} pts',pathway:'Patient pathway',
+ station:'Radiotherapy station',score:'Marks',timeLeft:'Time left',ofN:'{0} of 4',pts:'{0} marks',pathway:'Patient pathway',
  team:'Team',teamPrefix:/^team\b/i,
  foot:'Made for science camp outreach by Hafiz M Zin, medical physicist. Physics is simplified for a short race.',more:'More Beam On! games',
  eyebrowSetup:'Science camp · Radiotherapy station · {0} minutes',
@@ -419,37 +420,37 @@ en:{
  fMembers:'Team members',fMembersHint:'(3 to 9 members, first names are fine, and at least one of each role)',member:'Member {0}',rolePick:'Role',eRole:'Choose a role for every member.',eCover:'Your team needs at least one clinical oncologist, one radiation therapist and one medical physicist.',leads:'Leading here',roleN:{onc:'Clinical oncologist',rtt:'Radiation therapist',mp:'Medical physicist'},roleShort:{onc:'Oncologist',rtt:'Radiation therapist',mp:'Medical physicist'},
  signinBtn:'Sign in',settings:'Staff settings',namesNote:'Names stay on this device only, for today’s leaderboard. A staff member clears them after camp.',
  eNoTeam:'Enter a team name.',eNoSchool:'Enter your school or camp group.',eNoMembers:'Add at least three team members.',eDupe:'That team name is already on the leaderboard. Pick another.',
- howScore:'How you score',sc1:'Screen challenge at each station',sc2:'Staff stars for the hands-on task (0–3 stars)',sc3:'Time bonus if MAX is treated: 1 point per 10 s left',upTo:'up to {0}',
- board:'Camp leaderboard',teamsN:'{0} teams',team1:'1 team',thRank:'#',thTeam:'Team',thTime:'Time',thScore:'Score',notTreated:'not treated',
+ howScore:'How you get marks',sc1:'Screen challenge at each station',sc2:'Staff stars for the hands-on task (0–3 stars)',sc3:'Time bonus if MAX is treated: 1 point per 10 s left',upTo:'up to {0}',
+ board:'Camp leaderboard',teamsN:'{0} teams',team1:'1 team',thRank:'#',thTeam:'Team',thTime:'Time',thScore:'Theory',notTreated:'not treated',
  copyBtn:'Copy results for a spreadsheet',clearBoard:'Clear leaderboard (staff)',copied:'Copied. Paste it into a spreadsheet.',
- csvHead:'Rank,Team,School,Members,Theory /10,Interactive /10,Mark /20,Race points,Time used,Treated,Stations signed off,Finished at',finalH:'Final mark',theory:'Theory',interactive:'Interactive',theoryNote:'6 physics questions',interNote:'Lasers, plan, linac and staff stars',racePts:'Race points',th20:'/20',sc4:'Final mark: theory /10 + interactive /10',yes:'yes',no:'no',
+ csvHead:'Rank,Team,School,Members,Theory /10,Interactive /10,Mark /20,Time used,Treated,Stations signed off,Finished at',finalH:'Final mark',theory:'Theory',interactive:'Interactive',theoryNote:'6 physics questions',interNote:'Lasers, plan, linac and staff stars',racePts:'Race points',th20:'/20',sc4:'Final mark: theory /10 + interactive /10',yes:'yes',no:'no',
  signedIn:'Signed in',readyP:'MAX is waiting in the clinic. The clock starts the moment you tap the button and runs for {0} minutes. Take this device with you to every station.',
  startBtn:'Start the clock',changeSignin:'Change sign-in',
- stationN:'Station {0} of 4',mission:'Hands-on mission',challenge:'Screen challenge · up to {0} points',endRun:'Staff: end this run early',
- signedOff:'Signed off.',signedOffDetail:'Challenge {0} + staff {1} = {2} points.',soTitle:'Staff sign-off',
+ stationN:'Station {0} of 4',mission:'Hands-on mission',challenge:'Screen challenge',endRun:'Staff: end this run early',
+ signedOff:'Signed off.',signedOffDetail:'{0} marks at this station.',soTitle:'Staff sign-off',
  soReady:'Hand the device to the staff member once the hands-on mission is finished.',soNotReady:'Finish the screen challenge first, then call a staff member.',soBtn:'Staff: sign off {0}',
- correct:'Correct.',notQuite:'Not quite.',chDone:'Challenge done: {0} of 60.',
+ correct:'Correct.',notQuite:'Not quite.',chDone:'Challenge done.',
  trIntro:'Before you leave the clinic, tick every step that keeps MAX safe on the way to CT. Leave the unsafe ones unticked.',trCheck:'Check the list',walkWait:'Answer all three questions to unlock the move to CT.',walkWarn:'<b>Next: wheel MAX to the CT room on the trolley.</b> Walk, do not run.',goCT:'Go to CT Sim',trResult:'{0} of 30. Red means unsafe, amber means a safety step was missed.',
  ctStep1:'<b>Step 1.</b> Move the couch until the red laser crosses meet the marks on MAX in both views. You need to be within 1 mm.',
- ctAligned:'Lasers aligned. {0} of 30 points.',ctCheck:'Check alignment',checksUsed:'Checks used: {0}',ctMiss:'Not yet. Look at where the red cross sits on MAX in each view.',ctStep2:'<b>Step 2.</b> Scan questions',
+ ctAligned:'Lasers aligned.',ctCheck:'Check alignment',checksUsed:'Checks used: {0}',ctMiss:'Not yet. Look at where the red cross sits on MAX in each view.',ctStep2:'<b>Step 2.</b> Scan questions',
  front:'Front view',side:'Side view',axX:'Left / right',axY:'Couch up / down',axZ:'In / out',
  plIntro:'MAX’s planning CT slice is below. The tumour is in amber. Stereotactic plans use many beams so the dose falls away steeply outside the tumour. Pick 5 to 8 beam angles, then calculate. Each beam passes right through the head, so watch where it exits too.',
  plAngles:'Beam angles (gantry degrees)',plCalc:'Calculate dose',plDose:'Mean dose to each organ (limit marked)',
  plPass:'Physics check passed. The tumour gets the full dose and every organ is under its limit.',
  plFew:'Too few beams for stereotactic treatment: the skin where they enter gets too much dose. Use at least 5.',plMany:'Too many beams for one session. Use 8 or fewer.',plOver:'{0} gets {1}%, over its {2}% limit.',
- plApprove:'Approve plan',plApproveAnyway:'Approve anyway (lower score)',plApproved:'Plan approved: {0} of 60.',
+ plApprove:'Approve plan',plApproveAnyway:'Approve anyway (no plan mark)',plApproved:'Plan approved.',
  plNote:'Real stereotactic plans also use arcs, beams from above the head and tightly shaped fields. Here every beam gives an equal share of the dose.',ctAria:'Axial CT slice of MAX’s head with beams and dose',
  tumour:'Tumour',skin:'Skin hot spot',ant:'ANT',
  lnStep1:'<b>Step 1.</b> Physics check before the beam. Answer it to unlock the treatment.',dobShort:'DOB',
- lnWrong:'Not quite. Think about how the beam spreads out with distance, then try again.',lnLoaded:'Correct. {0} of 15.',
+ lnWrong:'Not quite. Think about how the beam spreads out with distance, then try again.',lnLoaded:'Correct.',
  lnStep2:'<b>Step 2.</b> Cone-beam CT. The amber outline is the planning CT, the teal image is today. Shift the couch until they match within 1 mm.',
- lnApply:'Apply match',lnMiss:'Still off. The outlines must sit on top of each other in both views.',lnMatched:'Images matched. {0} of 25.',
+ lnApply:'Apply match',lnMiss:'Still off. The outlines must sit on top of each other in both views.',lnMatched:'Images matched.',
  lnStep3:'<b>Step 3.</b> Safety checks before beam on. Tick only what must be true.',lnConfirm:'Confirm safety checks',
  lnInterlockIn:'Interlock! Someone would still be inside the bunker. Nobody stays in the room during beam on.',lnInterlockMiss:'Interlock. A safety check is missing. Read each one again.',
- lnClear:'Interlocks clear. {0} of 20.',lnStep4:'<b>Step 4.</b> Press and hold BEAM ON until {0} monitor units are delivered. Let go and the beam stops.',
- beamOn:'BEAM ON',delivered:'Delivered',lnDone:'Stereotactic fraction 1 of 5 delivered. Challenge done: {0} of 60.',
- marshalOnly:'Staff only',soModalH:'Sign off {0}',soModalP:'Rate how well the team did the hands-on mission. 3 stars: careful, safe and quick.',
- pin:'Staff PIN',cancel:'Cancel',signOff:'Sign off',ePickStars:'Choose 0 to 3 stars.',eWrongPin:'Wrong PIN. Hand the device to the staff member.',eWrongPinShort:'Wrong PIN.',
+ lnClear:'Interlocks clear.',lnStep4:'<b>Step 4.</b> Press and hold BEAM ON until {0} monitor units are delivered. Let go and the beam stops.',
+ beamOn:'BEAM ON',delivered:'Delivered',lnDone:'Stereotactic fraction 1 of 5 delivered. Challenge done.',
+ marshalOnly:'Staff only',soModalH:'Sign off {0}',soModalP:'Rate the hands-on mission: 0 to {0} stars. Each star is 1 hands-on mark. Full stars: careful, safe and quick.',
+ pin:'Staff PIN',cancel:'Cancel',signOff:'Sign off',ePickStars:'Choose 0 to {0} stars.',eWrongPin:'Wrong PIN. Hand the device to the staff member.',eWrongPinShort:'Wrong PIN.',
  clearBoardQ:'Clear the leaderboard on this device?',clearBoardBtn:'Clear leaderboard',unlock:'Unlock',
  setH:'Race settings',setMin:'Time limit (minutes)',setNote:'Settings are saved on this device only. Change them before the first team signs in.',save:'Save',
  eMin:'Time limit must be 5 to 60 minutes.',ePin:'PIN needs at least 4 characters.',
@@ -531,7 +532,7 @@ en:{
   oar:{eyeL:'Left eye',eyeR:'Right eye',stem:'Brainstem'}
  }},
 ms:{
- station:'Stesen radioterapi',score:'Markah',timeLeft:'Masa tinggal',ofN:'{0} drp 4',pts:'{0} mata',pathway:'Laluan pesakit',
+ station:'Stesen radioterapi',score:'Markah',timeLeft:'Masa tinggal',ofN:'{0} drp 4',pts:'{0} markah',pathway:'Laluan pesakit',
  team:'Pasukan',teamPrefix:/^(pasukan|team)\b/i,
  foot:'Dibina untuk jangkauan kem sains oleh Hafiz M Zin, ahli fizik perubatan. Fizik dipermudahkan untuk perlumbaan yang singkat.',more:'Permainan Beam On! lain',
  eyebrowSetup:'Kem sains · Stesen radioterapi · {0} minit',
@@ -543,36 +544,36 @@ ms:{
  signinBtn:'Daftar masuk',settings:'Tetapan staf',namesNote:'Nama disimpan pada peranti ini sahaja untuk papan markah hari ini. Staf akan memadamnya selepas kem.',
  eNoTeam:'Masukkan nama pasukan.',eNoSchool:'Masukkan sekolah atau kumpulan kem kamu.',eNoMembers:'Tambah sekurang-kurangnya tiga ahli pasukan.',eDupe:'Nama pasukan itu sudah ada dalam papan markah. Pilih nama lain.',
  howScore:'Cara mendapat markah',sc1:'Cabaran skrin di setiap stesen',sc2:'Bintang staf untuk tugasan amali (0–3 bintang)',sc3:'Bonus masa jika MAX dirawat: 1 mata bagi setiap 10 s yang tinggal',upTo:'hingga {0}',
- board:'Papan markah kem',teamsN:'{0} pasukan',team1:'1 pasukan',thRank:'#',thTeam:'Pasukan',thTime:'Masa',thScore:'Markah',notTreated:'tidak dirawat',
+ board:'Papan markah kem',teamsN:'{0} pasukan',team1:'1 pasukan',thRank:'#',thTeam:'Pasukan',thTime:'Masa',thScore:'Teori',notTreated:'tidak dirawat',
  copyBtn:'Salin keputusan untuk hamparan',clearBoard:'Padam papan markah (staf)',copied:'Disalin. Tampal ke dalam hamparan.',
- csvHead:'Kedudukan,Pasukan,Sekolah,Ahli,Teori /10,Interaktif /10,Markah /20,Mata perlumbaan,Masa digunakan,Dirawat,Stesen ditandatangani,Tamat pada',finalH:'Markah akhir',theory:'Teori',interactive:'Interaktif',theoryNote:'6 soalan fizik',interNote:'Laser, pelan, linac dan bintang staf',racePts:'Mata perlumbaan',th20:'/20',sc4:'Markah akhir: teori /10 + interaktif /10',yes:'ya',no:'tidak',
+ csvHead:'Kedudukan,Pasukan,Sekolah,Ahli,Teori /10,Interaktif /10,Markah /20,Masa digunakan,Dirawat,Stesen ditandatangani,Tamat pada',finalH:'Markah akhir',theory:'Teori',interactive:'Interaktif',theoryNote:'6 soalan fizik',interNote:'Laser, pelan, linac dan bintang staf',racePts:'Mata perlumbaan',th20:'/20',sc4:'Markah akhir: teori /10 + interaktif /10',yes:'ya',no:'tidak',
  signedIn:'Sudah daftar masuk',readyP:'MAX sedang menunggu di klinik. Masa bermula sebaik sahaja kamu tekan butang dan berjalan selama {0} minit. Bawa peranti ini ke setiap stesen.',
  startBtn:'Mulakan masa',changeSignin:'Tukar maklumat daftar masuk',
- stationN:'Stesen {0} drp 4',mission:'Misi amali',challenge:'Cabaran skrin · hingga {0} mata',endRun:'Staf: tamatkan larian ini',
- signedOff:'Sudah ditandatangani.',signedOffDetail:'Cabaran {0} + staf {1} = {2} mata.',soTitle:'Tandatangan staf',
+ stationN:'Stesen {0} drp 4',mission:'Misi amali',challenge:'Cabaran skrin',endRun:'Staf: tamatkan larian ini',
+ signedOff:'Sudah ditandatangani.',signedOffDetail:'{0} markah di stesen ini.',soTitle:'Tandatangan staf',
  soReady:'Serahkan peranti kepada staf selepas misi amali selesai.',soNotReady:'Habiskan cabaran skrin dahulu, kemudian panggil staf.',soBtn:'Staf: tandatangan {0}',
- correct:'Betul.',notQuite:'Belum tepat.',chDone:'Cabaran selesai: {0} drp 60.',
+ correct:'Betul.',notQuite:'Belum tepat.',chDone:'Cabaran selesai.',
  trIntro:'Sebelum meninggalkan klinik, tandakan setiap langkah yang memastikan MAX selamat ke bilik CT. Jangan tandakan langkah yang tidak selamat.',trCheck:'Semak senarai',walkWait:'Jawab ketiga-tiga soalan untuk bergerak ke CT.',walkWarn:'<b>Seterusnya: bawa MAX ke bilik CT dengan troli.</b> Berjalan, jangan berlari.',goCT:'Pergi ke CT Sim',trResult:'{0} drp 30. Merah bermaksud tidak selamat, jingga bermaksud langkah keselamatan tertinggal.',
  ctStep1:'<b>Langkah 1.</b> Gerakkan katil sehingga silang laser merah bertemu tanda pada MAX dalam kedua-dua pandangan. Kamu perlu berada dalam 1 mm.',
- ctAligned:'Laser sudah sejajar. {0} drp 30 mata.',ctCheck:'Semak penjajaran',checksUsed:'Semakan digunakan: {0}',ctMiss:'Belum lagi. Lihat di mana silang merah berada pada MAX dalam setiap pandangan.',ctStep2:'<b>Langkah 2.</b> Soalan imbasan',
+ ctAligned:'Laser diselaraskan.',ctCheck:'Semak penjajaran',checksUsed:'Semakan digunakan: {0}',ctMiss:'Belum lagi. Lihat di mana silang merah berada pada MAX dalam setiap pandangan.',ctStep2:'<b>Langkah 2.</b> Soalan imbasan',
  front:'Pandangan depan',side:'Pandangan sisi',axX:'Kiri / kanan',axY:'Katil naik / turun',axZ:'Masuk / keluar',
  plIntro:'Hirisan CT perancangan MAX ada di bawah. Tumor berwarna jingga. Pelan stereotaktik menggunakan banyak alur supaya dos menurun dengan cepat di luar tumor. Pilih 5 hingga 8 sudut alur, kemudian kira. Setiap alur menembusi seluruh kepala, jadi perhatikan juga tempat alur itu keluar.',
  plAngles:'Sudut alur (darjah gantri)',plCalc:'Kira dos',plDose:'Dos purata bagi setiap organ (had ditanda)',
  plPass:'Semakan fizik lulus. Tumor menerima dos penuh dan setiap organ di bawah hadnya.',
  plFew:'Alur terlalu sedikit untuk rawatan stereotaktik: kulit di tempat alur masuk menerima dos terlalu tinggi. Gunakan sekurang-kurangnya 5.',plMany:'Terlalu banyak alur untuk satu sesi. Gunakan 8 atau kurang.',plOver:'{0} menerima {1}%, melebihi had {2}%.',
- plApprove:'Luluskan pelan',plApproveAnyway:'Luluskan juga (markah lebih rendah)',plApproved:'Pelan diluluskan: {0} drp 60.',
+ plApprove:'Luluskan pelan',plApproveAnyway:'Luluskan juga (tiada markah pelan)',plApproved:'Pelan diluluskan.',
  plNote:'Pelan stereotaktik sebenar juga menggunakan arka, alur dari atas kepala dan medan yang dibentuk rapat. Di sini setiap alur memberi bahagian dos yang sama.',ctAria:'Hirisan CT aksial kepala MAX dengan alur dan dos',
  tumour:'Tumor',skin:'Titik panas kulit',ant:'ANT',
  lnStep1:'<b>Langkah 1.</b> Semakan fizik sebelum alur. Jawab untuk membuka rawatan.',dobShort:'TL',
- lnWrong:'Belum tepat. Fikirkan bagaimana alur tersebar mengikut jarak, kemudian cuba lagi.',lnLoaded:'Betul. {0} drp 15.',
+ lnWrong:'Belum tepat. Fikirkan bagaimana alur tersebar mengikut jarak, kemudian cuba lagi.',lnLoaded:'Betul.',
  lnStep2:'<b>Langkah 2.</b> CT alur kon. Garis jingga ialah CT perancangan, imej biru kehijauan ialah hari ini. Anjakkan katil sehingga kedua-duanya sepadan dalam 1 mm.',
- lnApply:'Guna padanan',lnMiss:'Masih tersasar. Garis luar mesti bertindih dalam kedua-dua pandangan.',lnMatched:'Imej sepadan. {0} drp 25.',
+ lnApply:'Guna padanan',lnMiss:'Masih tersasar. Garis luar mesti bertindih dalam kedua-dua pandangan.',lnMatched:'Imej sepadan.',
  lnStep3:'<b>Langkah 3.</b> Semakan keselamatan sebelum alur dihidupkan. Tandakan hanya perkara yang mesti benar.',lnConfirm:'Sahkan semakan keselamatan',
  lnInterlockIn:'Interlok! Masih ada orang di dalam bunker. Tiada sesiapa boleh berada di dalam bilik semasa alur dihidupkan.',lnInterlockMiss:'Interlok. Ada semakan keselamatan yang tertinggal. Baca setiap satu sekali lagi.',
- lnClear:'Interlok selamat. {0} drp 20.',lnStep4:'<b>Langkah 4.</b> Tekan dan tahan BEAM ON sehingga {0} unit monitor dihantar. Lepaskan dan alur akan berhenti.',
- beamOn:'BEAM ON',delivered:'Selesai',lnDone:'Fraksi stereotaktik 1 drp 5 selesai. Cabaran selesai: {0} drp 60.',
- marshalOnly:'Staf sahaja',soModalH:'Tandatangan {0}',soModalP:'Nilai prestasi pasukan dalam misi amali. 3 bintang: berhati-hati, selamat dan pantas.',
- pin:'PIN staf',cancel:'Batal',signOff:'Tandatangan',ePickStars:'Pilih 0 hingga 3 bintang.',eWrongPin:'PIN salah. Serahkan peranti kepada staf.',eWrongPinShort:'PIN salah.',
+ lnClear:'Interlok selamat.',lnStep4:'<b>Langkah 4.</b> Tekan dan tahan BEAM ON sehingga {0} unit monitor dihantar. Lepaskan dan alur akan berhenti.',
+ beamOn:'BEAM ON',delivered:'Selesai',lnDone:'Fraksi stereotaktik 1 drp 5 selesai. Cabaran selesai.',
+ marshalOnly:'Staf sahaja',soModalH:'Tandatangan {0}',soModalP:'Nilai misi amali: 0 hingga {0} bintang. Setiap bintang ialah 1 markah amali. Bintang penuh: teliti, selamat dan pantas.',
+ pin:'PIN staf',cancel:'Batal',signOff:'Tandatangan',ePickStars:'Pilih 0 hingga {0} bintang.',eWrongPin:'PIN salah. Serahkan peranti kepada staf.',eWrongPinShort:'PIN salah.',
  clearBoardQ:'Padam papan markah pada peranti ini?',clearBoardBtn:'Padam papan markah',unlock:'Buka',
  setH:'Tetapan perlumbaan',setMin:'Had masa (minit)',setNote:'Tetapan disimpan pada peranti ini sahaja. Tukar sebelum pasukan pertama mendaftar masuk.',save:'Simpan',
  eMin:'Had masa mesti antara 5 hingga 60 minit.',ePin:'PIN perlu sekurang-kurangnya 4 aksara.',
@@ -662,7 +663,7 @@ const QX={
   heroP:'Three stations, a few minutes each: an introduction to radiotherapy, the CT scan, then treatment on the linear accelerator (linac). Watch the staff demo, try it on this device, then get a staff member to sign you off.',
   readyP:'MAX is waiting at the introduction station. The clock runs for {0} minutes and stops while staff demonstrate at CT and the linac. Walk, do not run. Nobody stays in the bunker when the beam is on.',
   stationN:'Station {0} of 3',ofN:'{0} of 3',walkWait:'Answer the question to unlock the move to CT.',ctStep2:'<b>Step 2.</b> Scan question',
-  lnLoaded:'Correct. {0} of 30.',lnClear:'Interlocks clear. {0} of 30.',
+  
   lnStep3:'<b>Step 2.</b> Safety checks before beam on. Tick only what must be true.',lnStep4:'<b>Step 3.</b> Press and hold BEAM ON until {0} monitor units are delivered. Let go and the beam stops.',
   theoryNote:'3 physics questions',interNote:'Lasers, safety check and staff stars',
   quickTag:'Quick',introNext:'Next',introBack:'Back',introQ:'Quick check',infoTag:'Did you know?',
@@ -675,7 +676,7 @@ const QX={
   heroP:'Tiga stesen, beberapa minit setiap satu: pengenalan radioterapi, imbasan CT, kemudian rawatan dengan pemecut linear (linac). Tonton demo staf, cuba pada peranti ini, kemudian minta staf menandatangani kamu.',
   readyP:'MAX sedang menunggu di stesen pengenalan. Masa berjalan selama {0} minit dan berhenti semasa staf membuat demo di CT dan linac. Berjalan, jangan berlari. Tiada sesiapa dalam bunker semasa alur dihidupkan.',
   stationN:'Stesen {0} drp 3',ofN:'{0} drp 3',walkWait:'Jawab soalan untuk bergerak ke CT.',ctStep2:'<b>Langkah 2.</b> Soalan imbasan',
-  lnLoaded:'Betul. {0} drp 30.',lnClear:'Interlok selamat. {0} drp 30.',
+  
   lnStep3:'<b>Langkah 2.</b> Semakan keselamatan sebelum alur dihidupkan. Tandakan hanya perkara yang mesti benar.',lnStep4:'<b>Langkah 3.</b> Tekan dan tahan BEAM ON sehingga {0} unit monitor dihantar. Lepaskan dan alur akan berhenti.',
   theoryNote:'3 soalan fizik',interNote:'Laser, semakan keselamatan dan bintang staf',
   quickTag:'Pantas',introNext:'Seterusnya',introBack:'Kembali',introQ:'Semakan pantas',infoTag:'Tahukah kamu?',
@@ -803,16 +804,15 @@ function left(){if(S.phase==='setup'||S.phase==='ready')return limit();return Ma
 const demoLeft=()=>S.demoAt?Math.max(0,DEMO_MS-(Date.now()-S.demoAt)):DEMO_MS;
 function demoStop(){if(S.demoAt){S.pausedMs=(S.pausedMs||0)+Math.min(DEMO_MS,Date.now()-S.demoAt);S.demoAt=null}}
 function fmt(ms){const s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function stationScore(id){const s=S.st[id];return (s.dig||0)+(s.stars||0)*PHYS_STAR}
-function timeBonus(){return S.reason==='done'?Math.floor(left()/10000):0}
-function total(){return IDS.reduce((a,id)=>a+stationScore(id),0)+(S.phase==='done'?timeBonus():0)}
+function stationScore(id){return markItems().filter(x=>x.st===id).reduce((a,x)=>a+x.got,0)}
+function total(){return marks().sum}
 
 /* ================= shell ================= */
 function renderTop(){const dt=$('demoTag');if(dt)dt.hidden=!DEMO;const qt=$('quickTag');if(qt){qt.hidden=!QUICK;qt.textContent=t('quickTag')}
   $('path').style.gridTemplateColumns=`repeat(${IDS.length},minmax(0,1fr))`;const dr=$('demoRestart');if(dr){dr.hidden=!DEMO||S.phase==='setup';dr.textContent='↺';dr.title=t('restartDemo');dr.setAttribute('aria-label',t('restartDemo'))}
   const tl=S.team&&S.phase!=='setup'?teamName(S.team):'';$('teamLbl').textContent=tl;$('teamLbl').hidden=!tl;
   $('scoreHd').textContent=t('score');$('clockHd').textContent=S.demoAt&&S.phase==='race'?t('paused'):t('timeLeft');
-  $('scoreLbl').textContent=total();
+  $('scoreLbl').textContent=total()+'/20';
   const l=left(),c=$('clock');c.textContent=fmt(l);
   c.className=S.phase==='race'?(S.demoAt?'paused':l<120000?'crit':l<300000?'warn':''):'';
   $('lamp').classList.toggle('on',S.phase==='race');
@@ -933,12 +933,7 @@ function setupView(){
   </div>
   <div class="card">
     <h3>${t('howScore')}</h3>
-    <div class="tblwrap"><table class="tbl"><tbody>
-      <tr><td>${t('sc1')}</td><td class="n">${t('upTo',60)}</td></tr>
-      <tr><td>${t('sc2')}</td><td class="n">${t('upTo',30)}</td></tr>
-      <tr><td>${t('sc3')}</td><td class="n">${t('upTo',cfg.minutes*6)}</td></tr>
-      <tr><td><b>${t('sc4')}</b></td><td class="n"><b>/20</b></td></tr>
-    </tbody></table></div>
+    ${markTable(false)}
   </div>
   ${boardView(board)}`;
 }
@@ -949,8 +944,8 @@ function finalView(){const m=marks();const bar=(v)=>`<div class="fbar"><i style=
 function boardView(board,hi){
   if(!board.length)return '';
   return `<div class="card"><div class="row-h"><h3>${t('board')}</h3><span class="chip">${board.length>1?t('teamsN',board.length):t('team1')}</span></div>
-  <div class="tblwrap"><table class="tbl"><thead><tr><th>${t('thRank')}</th><th>${t('thTeam')}</th><th class="n">${t('thTime')}</th><th class="n">${t('thScore')}</th><th class="n">${t('th20')}</th></tr></thead><tbody>
-    ${board.map((r,i)=>`<tr class="${hi===r.id?'me':''}"><td>${i+1}</td><td><b>${esc(r.team)}</b>${r.done?'':` <span class="chip">${t('notTreated')}</span>`}<br><span class="small muted">${esc(r.school||'')}${r.names&&r.names.length?' · '+esc(r.names.map((n,k)=>mem(n,(r.roles||[])[k])).join(', ')):''}</span></td><td class="n">${fmt(r.used)}</td><td class="n">${r.score}</td><td class="n"><b>${r.mark20??'–'}</b></td></tr>`).join('')}
+  <div class="tblwrap"><table class="tbl"><thead><tr><th>${t('thRank')}</th><th>${t('thTeam')}</th><th class="n">${t('thTime')}</th><th class="n">${t('thScore')}</th><th class="n">${t('interactive')}</th><th class="n">${t('th20')}</th></tr></thead><tbody>
+    ${board.map((r,i)=>`<tr class="${hi===r.id?'me':''}"><td>${i+1}</td><td><b>${esc(r.team)}</b>${r.done?'':` <span class="chip">${t('notTreated')}</span>`}<br><span class="small muted">${esc(r.school||'')}${r.names&&r.names.length?' · '+esc(r.names.map((n,k)=>mem(n,(r.roles||[])[k])).join(', ')):''}</span></td><td class="n">${fmt(r.used)}</td><td class="n">${r.theory??'–'}</td><td class="n">${r.inter??'–'}</td><td class="n"><b>${r.mark20??'–'}</b></td></tr>`).join('')}
   </tbody></table></div>
   <div class="btnrow"><button class="btn" data-act="copyBoard">${t('copyBtn')}</button><button class="linkbtn" data-act="clearBoard">${t('clearBoard')}</button></div>
   <textarea id="csvBox" class="csv" readonly hidden aria-label="CSV"></textarea></div>`;
@@ -1109,7 +1104,7 @@ function demoView(){const id=IDS[S.idx],run=!!S.demoAt,m=DEMO_MS/60000;
     <div class="btnrow">${run?`<button class="btn primary" data-act="demoEndBtn">${t('demoEnd')}</button>`
       :`<button class="btn amber big" data-act="demoGoBtn">${t('demoStart',m)}</button><button class="linkbtn" data-act="demoEndBtn">${t('demoSkip')}</button>`}</div></div>`}
 function signoffView(id,st){
-  if(st.done)return `<div class="signoff done"><b>${t('signedOff')}</b> <span>${t('signedOffDetail',st.dig,st.stars*PHYS_STAR,stationScore(id))}</span></div>`;
+  if(st.done)return `<div class="signoff done"><b>${t('signedOff')}</b> <span>${t('signedOffDetail',stationScore(id))}</span></div>`;
   const ready=st.dig!==null;
   return `<div class="signoff"><span class="eyebrow amber">${t('soTitle')}</span>
     <p class="small">${ready?t('soReady'):t('soNotReady')}</p>
@@ -1288,7 +1283,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 function finish(reason){if(S.phase!=='race')return;beamStop();demoStop();S.phase='done';S.reason=reason;S.end=Date.now();S.runId=String(S.start);
   const board=load(BOARD,[]);board.push({id:S.runId,team:S.team,school:S.school,names:S.names,roles:S.roles||[],score:total(),...(m=>({theory:m.th,inter:m.inter,mark20:m.sum}))(marks()),used:Math.min(limit(),elapsed()),done:reason==='done',stations:IDS.filter(id=>S.st[id].done).length,at:new Date(S.end).toISOString()});
-  board.sort((a,b)=>(b.mark20??-1)-(a.mark20??-1)||b.score-a.score||a.used-b.used);save(BOARD,board.slice(0,60));persist();reason==='done'?ok():no();closeModal();render(false)}
+  board.sort((a,b)=>(b.mark20??-1)-(a.mark20??-1)||a.used-b.used);save(BOARD,board.slice(0,60));persist();reason==='done'?ok():no();closeModal();render(false)}
 
 document.addEventListener('click',e=>{
   const lb=e.target.closest('[data-lang]');if(lb){LANG=lb.dataset.lang;try{localStorage.setItem(LK,LANG)}catch(err){}
@@ -1336,7 +1331,7 @@ const ACT={
  endRun(){openPin(t('endRunQ'),t('endRunBtn'),()=>finish('stopped'))},
  newTeam(){openPin(t('nextTeamQ'),t('nextTeamBtn'),()=>{S=fresh();persist();render(false)})},
  copyBoard(){const board=load(BOARD,[]);const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-   const csv=[t('csvHead')].concat(board.map((r,i)=>[i+1,q(r.team),q(r.school),q((r.names||[]).map((n,k)=>mem(n,(r.roles||[])[k])).join('; ')),r.theory??'',r.inter??'',r.mark20??'',r.score,fmt(r.used),r.done?t('yes'):t('no'),r.stations??'',q(r.at)].join(','))).join('\n');
+   const csv=[t('csvHead')].concat(board.map((r,i)=>[i+1,q(r.team),q(r.school),q((r.names||[]).map((n,k)=>mem(n,(r.roles||[])[k])).join('; ')),r.theory??'',r.inter??'',r.mark20??'',fmt(r.used),r.done?t('yes'):t('no'),r.stations??'',q(r.at)].join(','))).join('\n');
    const box=$('csvBox');const show=()=>{box.hidden=false;box.value=csv;box.focus();box.select()};
    try{navigator.clipboard.writeText(csv).then(()=>toast(t('copied')),show)}catch(e){show()}}
 };
@@ -1347,14 +1342,14 @@ function closeModal(){$('modal').hidden=true}
 function openSignoff(){const id=IDS[S.idx];let stars=null;$('modalCard').innerHTML=''; // start with an empty PIN, never the last staff member's
   const draw=()=>{const pin=$('pinIn')?$('pinIn').value:'';
    $('modalCard').innerHTML=`<span class="eyebrow amber">${t('marshalOnly')}</span><h2>${t('soModalH',stFull(id))}</h2>
-   <p class="small">${t('soModalP')}</p>
-   <div class="stars" role="group">${[0,1,2,3].map(n=>`<button type="button" data-n="${n}" aria-pressed="${stars===n}" aria-label="${t('stars',n)}">${n===0?'<b>0</b>':STAR+(n>1?'<b class="small">×'+n+'</b>':'')}</button>`).join('')}</div>
+   <p class="small">${t('soModalP',STAR_MAX)}</p>
+   <div class="stars" role="group">${Array.from({length:STAR_MAX+1},(_,n)=>n).map(n=>`<button type="button" data-n="${n}" aria-pressed="${stars===n}" aria-label="${t('stars',n)}">${n===0?'<b>0</b>':STAR+(n>1?'<b class="small">×'+n+'</b>':'')}</button>`).join('')}</div>
    <div class="field"><label for="pinIn">${t('pin')}</label><input id="pinIn" class="pin" type="text" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore name="marshal-check" value="${esc(pin)}"></div>
    <p class="err" id="pinErr"></p>${DEMO?`<p class="small muted">${t('demoPin',esc(cfg.pin))}</p>`:''}
    <div class="btnrow end"><button class="btn" type="button" id="mCancel">${t('cancel')}</button><button class="btn amber" type="button" id="mOk">${t('signOff')}</button></div>`;
    $('modalCard').querySelectorAll('.stars button').forEach(b=>b.onclick=()=>{stars=+b.dataset.n;draw()});
    $('mCancel').onclick=closeModal;
-   $('mOk').onclick=()=>{if(stars===null){$('pinErr').textContent=t('ePickStars');return}
+   $('mOk').onclick=()=>{if(stars===null){$('pinErr').textContent=t('ePickStars',STAR_MAX);return}
      if($('pinIn').value!==cfg.pin){$('pinErr').textContent=t('eWrongPin');no();return}
      const st=S.st[id];st.stars=stars;st.done=true;st.at=Date.now();closeModal();ok();
      if(S.idx===IDS.length-1)finish('done');else{S.idx++;persist();render(false)}}};
@@ -1375,35 +1370,59 @@ function openSettings(){openPin(t('settings'),t('unlock'),()=>{
     cfg={pin:p,minutes:m};save(CFG,cfg);closeModal();render()};
   $('modal').hidden=false})}
 
-/* ================= final mark /20 =================
-   Theory /10: the six physics questions (3 at the clinic, 2 at CT, 1 at the linac, right first time), to the nearest 0.5.
-   Interactive /10: everything done by hand, scaled from 225 points: CT laser alignment (30),
-   the approved plan (60), linac steps (CBCT 25, safety 20) and staff stars (3 x 30), to the nearest 0.5. */
-function marks(){const qa=(k,A)=>{const c=S.ch[k];return c?A.filter((v,i)=>c.ans[i]===v).length:0};
-  const ct=S.ch.ct,ln=S.ch.linac||{};
-  /* quick race: theory = 3 questions (linac one right first time); interactive = CT lasers 30 + safety 30 + staff stars 2 x 30, out of 120 */
-  if(QUICK){const right=qa('introq',[1])+qa('ctq',[1])+(ln.planPts!=null&&!ln.wrongs?1:0);
-    const earned=(ct&&ct.aligned?ct.alignPts:0)+(ln.safety||0)+['ct','linac'].reduce((a,id)=>a+(S.st[id].stars||0)*PHYS_STAR,0);
-    const th=Math.round(right/3*20)/2,inter=Math.round(earned/120*20)/2;return {th,inter,sum:th+inter}}
-  const earned=(ct&&ct.aligned?ct.alignPts:0)+(S.st.plan.dig||0)+(ln.matched?ln.matchPts:0)+(ln.safety||0)+['ct','plan','linac'].reduce((a,id)=>a+(S.st[id].stars||0)*PHYS_STAR,0);
-  const right=qa('clinic',CLINIC_A)+qa('ctq',CT_A)+(ln.planPts!=null&&!ln.wrongs?1:0);
-  const th=Math.round(right/6*20)/2,inter=Math.round(earned/225*20)/2;
-  return {th,inter,sum:th+inter}}
+
+/* ================= marks: theory /10 + interactive /10 =================
+   Every mark comes from one row below, so teams can see exactly where each one came from.
+   Questions count only when right first time. Staff stars are 1 mark each. */
+const STAR_MAX=QUICK?3:2;
+const MKL={
+ en:{introQ:'Introduction question',ctQ:'CT question',ctQs:'CT questions (2)',linQ:'Linac question (right first time)',clinQ:'Clinic questions (3)',
+  lasers:'CT lasers lined up',plan:'Treatment plan passes',match:'Cone-beam CT match',safety:'Safety check (right first time)',
+  starsCT:'Staff stars at CT',starsPlan:'Staff stars at planning',starsLin:'Staff stars at the linac',
+  each:'{0} each',got:'Got',outOf:'Out of'},
+ ms:{introQ:'Soalan pengenalan',ctQ:'Soalan CT',ctQs:'Soalan CT (2)',linQ:'Soalan linac (betul kali pertama)',clinQ:'Soalan klinik (3)',
+  lasers:'Laser CT diselaraskan',plan:'Pelan rawatan lulus',match:'Padanan CT alur kon',safety:'Semakan keselamatan (betul kali pertama)',
+  starsCT:'Bintang staf di CT',starsPlan:'Bintang staf di perancangan',starsLin:'Bintang staf di linac',
+  each:'{0} setiap satu',got:'Dapat',outOf:'Daripada'}};
+const ml=(k,...a)=>{let v=(MKL[LANG]||MKL.en)[k];a.forEach((x,i)=>v=v.replace('{'+i+'}',x));return v};
+function markItems(){const qa=(k,A)=>{const c=S.ch[k];return c?A.filter((v,i)=>c.ans[i]===v).length:0};
+  const ct=S.ch.ct||{},ln=S.ch.linac||{},stars=id=>S.st[id]&&S.st[id].stars||0,linRight=ln.planPts!=null&&!ln.wrongs;
+  if(QUICK)return [
+   {st:'intro',k:'th',l:ml('introQ'),max:3,got:qa('introq',[1])*3},
+   {st:'ct',k:'th',l:ml('ctQ'),max:3,got:qa('ctq',[1])*3},
+   {st:'linac',k:'th',l:ml('linQ'),max:4,got:linRight?4:0},
+   {st:'ct',k:'in',l:ml('lasers'),max:2,got:ct.aligned?(ct.tries<=2?2:1):0},
+   {st:'ct',k:'in',l:ml('starsCT'),max:3,got:stars('ct')},
+   {st:'linac',k:'in',l:ml('safety'),max:2,got:ln.safety!=null?(ln.safeTries===1?2:1):0},
+   {st:'linac',k:'in',l:ml('starsLin'),max:3,got:stars('linac')}];
+  const pl=S.ch.plan,plOk=S.st.plan&&S.st.plan.dig!==null&&pl&&calcPlan(pl.beams).pass;
+  return [
+   {st:'clinic',k:'th',l:ml('clinQ'),note:ml('each',2),max:6,got:qa('clinic',CLINIC_A)*2},
+   {st:'ct',k:'th',l:ml('ctQs'),note:ml('each',1),max:2,got:qa('ctq',CT_A)},
+   {st:'linac',k:'th',l:ml('linQ'),max:2,got:linRight?2:0},
+   {st:'ct',k:'in',l:ml('lasers'),max:1,got:ct.aligned?1:0},
+   {st:'ct',k:'in',l:ml('starsCT'),max:2,got:stars('ct')},
+   {st:'plan',k:'in',l:ml('plan'),max:1,got:plOk?1:0},
+   {st:'plan',k:'in',l:ml('starsPlan'),max:2,got:stars('plan')},
+   {st:'linac',k:'in',l:ml('match'),max:1,got:ln.matched?1:0},
+   {st:'linac',k:'in',l:ml('safety'),max:1,got:ln.safety!=null&&ln.safeTries===1?1:0},
+   {st:'linac',k:'in',l:ml('starsLin'),max:2,got:stars('linac')}]}
+function marks(){const it=markItems(),sum=k=>it.filter(x=>x.k===k).reduce((a,x)=>a+x.got,0);const th=sum('th'),inter=sum('in');return {th,inter,sum:th+inter}}
+function markTable(showGot){const it=markItems(),row=x=>`<tr><td>${x.l}${x.note?` <span class="small muted">· ${x.note}</span>`:''}</td>${showGot?`<td class="n"><b>${x.got}</b></td>`:''}<td class="n">${x.max}</td></tr>`;
+  const part=(k,h)=>`<tr class="mkhead"><td colspan="${showGot?3:2}"><b>${h}</b> /10</td></tr>${it.filter(x=>x.k===k).map(row).join('')}`;
+  return `<div class="tblwrap"><table class="tbl mk">${showGot?`<thead><tr><th></th><th class="n">${ml('got')}</th><th class="n">${ml('outOf')}</th></tr></thead>`:''}<tbody>${part('th',t('theory'))}${part('in',t('interactive'))}</tbody></table></div>`}
 const mk=n=>String(n);
 /* ================= done ================= */
 function doneView(){
   const treated=S.reason==='done',used=Math.min(limit(),elapsed());
-  const rows=IDS.map(id=>{const st=S.st[id];return `<tr><td>${stFull(id)}</td><td class="n">${st.dig??'–'}</td><td class="n">${st.stars!==null?st.stars*PHYS_STAR:'–'}</td><td class="n">${stationScore(id)}</td></tr>`}).join('');
   const board=load(BOARD,[]);const rank=board.findIndex(r=>r.id===S.runId)+1;
   return `<div class="card hero">
    <span class="eyebrow ${treated?'':'amber'}">${treated?t('dnTreated'):S.reason==='stopped'?t('dnStopped'):t('dnTime')}</span>
    <h2>${treated?t('dnTreatedH',esc(teamName(S.team)),fmt(used)):t('dnStopH',esc(teamName(S.team)),stFull(IDS[S.idx]))}</h2>
    <p class="muted">${esc(S.school)} · ${esc(S.names.map((n,k)=>mem(n,(S.roles||[])[k])).join(', '))}</p>
    ${finalView()}
-   <p class="muted">${t('racePts')}: <b class="score">${total()}</b></p>
    ${rank?`<p class="muted">${t('rankN',rank,board.length)}</p>`:''}
-   <div class="tblwrap"><table class="tbl"><thead><tr><th>${t('thStation')}</th><th class="n">${t('thScreen')}</th><th class="n">${t('thMarshal')}</th><th class="n">${t('thTotal')}</th></tr></thead><tbody>${rows}
-   <tr><td>${t('timeBonus')}</td><td></td><td></td><td class="n">${timeBonus()}</td></tr></tbody></table></div>
+   ${markTable(true)}
    <p class="why">${treated?t('dnWhyT'):t('dnWhyF')}</p>
    <div class="btnrow"><button class="btn amber" data-act="newTeam">${t('nextTeam')}</button></div>
   </div>
