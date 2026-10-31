@@ -254,6 +254,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .cf .cf-gantry{transform-box:view-box;transform-origin:156px 100px;animation:cfOrbit 7s linear infinite}
 @keyframes cfOrbit{to{transform:rotate(360deg)}}
 .dots i{transition:width .3s,background .3s}
+.yourturn{margin:0;background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:0 10px 10px 0;padding:10px 14px;font-weight:700}
 /* staff demo */
 .sdemo{display:grid;gap:10px;background:var(--amber-soft);border:2px solid var(--amber);border-radius:14px;padding:16px}
 .sdemo p{margin:0;max-width:62ch}
@@ -267,8 +268,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 #clock.paused{color:#9FB3BD}
 /* briefing auto-advance bar */
 .bprog{height:4px;border-radius:2px;background:var(--line);overflow:hidden}
-.bprog i{display:block;height:100%;width:100%;background:var(--amber);transform-origin:left;animation:bprog linear both}
-@keyframes bprog{from{transform:scaleX(0)}}
+.bprog i{display:block;height:100%;width:0;background:var(--amber);transition:width .5s linear}
 .bauto{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)}
 /* physics lessons */
 .ltag{display:inline-block;justify-self:start;background:var(--amber);color:#2A1A00;border-radius:999px;padding:3px 12px;font:700 12.5px var(--font-mono);letter-spacing:.02em}
@@ -322,6 +322,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .fbar{height:8px;border-radius:4px;background:#2A3D4A;overflow:hidden}
 .fbar i{display:block;height:100%;background:var(--amber);border-radius:4px}
 /* demo badge */
+.demotag.restart{background:transparent;color:var(--amber);border:1.5px solid var(--amber);cursor:pointer;min-height:24px}
 .demotag{display:inline-block;vertical-align:3px;margin-left:6px;font:700 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;background:var(--amber);color:#2A1A00;padding:3px 7px;border-radius:6px}
 /* theme tune button */
 .tune{justify-self:start;display:inline-flex;align-items:center;gap:10px;border:1.5px solid var(--amber);background:var(--amber-soft);color:var(--amber-ink);border-radius:999px;padding:8px 18px 8px 12px;min-height:44px;cursor:pointer;font-weight:700;font-size:15px}
@@ -379,7 +380,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
   <header class="top">
     <div class="brand">
       <div class="lamp" id="lamp" aria-hidden="true"><span></span></div>
-      <div><h1>Beam On! Explorace <span class="demotag" id="demoTag" hidden>Demo</span></h1><small id="teamLbl"></small></div>
+      <div><h1>Beam On! Explorace <span class="demotag" id="demoTag" hidden>Demo</span> <button type="button" class="demotag restart" id="demoRestart" data-act="demoRestart" hidden>↺ Restart</button></h1><small id="teamLbl"></small></div>
     </div>
     <div class="lang" role="group" aria-label="Language / Bahasa">
       <button type="button" data-lang="en" aria-pressed="true">EN</button>
@@ -495,8 +496,8 @@ en:{
    li:['You have {0} minutes from the moment you start the clock.','At each station: do the hands-on mission, answer the screen challenge, then call a staff member to sign you off.','The questions use the four physics ideas you just met. Look for the “From the briefing” link if you need a reminder.','Score: up to 60 for the screen, up to 30 for the staff member’s stars, plus a time bonus if MAX is treated.','Rules: walk, do not run. Handle MAX gently. Nobody stays in the bunker while the beam is on.','Every member has a role. At each station the screen shows who leads: the oncologist in the clinic, radiation therapists at CT and the linac, and medical physicists in planning and at the linac.']}
  ],
  fig:{kv:'Low energy · chest X-ray',mv:'High energy · 6 MV linac',skin:'skin',deep:'deep',tum:'tumour',total:'MAX: 30 Gy in total',day:'Day',jkg:'1 Gy = 1 joule per kg',air:'air',tissue:'tissue',bone:'bone',range:'scan range',slice:'one slice',m1:'1 m',m3:'3 m',same:'same 9 X-rays',src:'linac'},
- useAt:'You will need this at:',
- demoH:'Staff demo',demoP:'Staff: show the team how this station works. The race clock stops while the demo runs, so the team loses no time.',demoStart:'Start the {0}-minute staff demo',demoSkip:'Skip the demo',demoRun:'Staff demo running',demoEnd:'End the demo, start the challenge',demoPausedClock:'Race clock paused',paused:'Paused',autoNote:'The briefing lasts 3 minutes and the slides move on by themselves. Staff can pause to explain.',qFrom:'From the briefing:',close:'Close',q:'Q',
+ useAt:'You will need this at:',restartDemo:'Restart demo',
+ demoH:'Staff demo',sdP:'Staff: show the steps below while the team watches, including how to do them on this screen. The race clock stops while you demonstrate.',sdPClinic:'Staff: show the team how to read the patient card and how to answer a question on this device. The race clock stops while you demonstrate.',sdWatch:'Watch the staff do this',yourTurn:'Your turn: try on the screen what the staff just showed you.',demoStart:'Start the {0}-minute staff demo',demoSkip:'Skip the demo',demoRun:'Staff demo running',demoEnd:'End the demo, start the challenge',demoPausedClock:'Race clock paused',paused:'Paused',autoNote:'The briefing lasts 3 minutes and the slides move on by themselves. Staff can pause to explain.',qFrom:'From the briefing:',close:'Close',q:'Q',
  C:{
   patient:{dx:'Brain tumour, right side',rx:'30 Gy in 5 fractions (stereotactic)'},
   st:{clinic:['Clinic','Oncology Clinic'],transport:['Transport','Patient Transport'],ct:['CT Sim','CT Simulator'],plan:['Planning','Treatment Planning'],linac:['Linac','Linac Treatment']},
@@ -618,8 +619,8 @@ ms:{
    li:['Kamu ada {0} minit bermula dari saat kamu memulakan masa.','Di setiap stesen: buat misi amali, jawab cabaran skrin, kemudian panggil staf untuk menandatangani.','Soalan menggunakan empat idea fizik yang baru kamu pelajari. Cari pautan “Daripada taklimat” jika perlu peringatan.','Markah: hingga 60 untuk skrin, hingga 30 untuk bintang staf, dan bonus masa jika MAX dirawat.','Peraturan: berjalan, jangan berlari. Kendalikan MAX dengan lembut. Tiada sesiapa dalam bunker semasa alur dihidupkan.','Setiap ahli ada peranan. Di setiap stesen skrin menunjukkan siapa yang mengetuai: pakar onkologi di klinik, juru terapi sinaran di CT dan linac, dan ahli fizik perubatan di perancangan dan linac.']}
  ],
  fig:{kv:'Tenaga rendah · X-ray dada',mv:'Tenaga tinggi · linac 6 MV',skin:'kulit',deep:'dalam',tum:'tumor',total:'MAX: jumlah 30 Gy',day:'Hari',jkg:'1 Gy = 1 joule setiap kg',air:'udara',tissue:'tisu',bone:'tulang',range:'julat imbasan',slice:'satu hirisan',m1:'1 m',m3:'3 m',same:'9 sinar-X yang sama',src:'linac'},
- useAt:'Kamu akan perlukan ini di:',
- demoH:'Demo staf',demoP:'Staf: tunjukkan kepada pasukan cara stesen ini berfungsi. Masa perlumbaan berhenti semasa demo, jadi pasukan tidak rugi masa.',demoStart:'Mula demo staf {0} minit',demoSkip:'Langkau demo',demoRun:'Demo staf sedang berjalan',demoEnd:'Tamatkan demo, mula cabaran',demoPausedClock:'Masa perlumbaan dijeda',paused:'Dijeda',autoNote:'Taklimat ini 3 minit dan slaid bertukar sendiri. Staf boleh jeda untuk menerangkan.',qFrom:'Daripada taklimat:',close:'Tutup',q:'S',
+ useAt:'Kamu akan perlukan ini di:',restartDemo:'Mula semula demo',
+ demoH:'Demo staf',sdP:'Staf: tunjukkan langkah di bawah sementara pasukan memerhati, termasuk cara melakukannya pada skrin ini. Masa perlumbaan berhenti semasa demo.',sdPClinic:'Staf: tunjukkan kepada pasukan cara membaca kad pesakit dan cara menjawab soalan pada peranti ini. Masa perlumbaan berhenti semasa demo.',sdWatch:'Perhatikan staf melakukan ini',yourTurn:'Giliran kamu: cuba lakukan pada skrin apa yang staf tunjukkan tadi.',demoStart:'Mula demo staf {0} minit',demoSkip:'Langkau demo',demoRun:'Demo staf sedang berjalan',demoEnd:'Tamatkan demo, mula cabaran',demoPausedClock:'Masa perlumbaan dijeda',paused:'Dijeda',autoNote:'Taklimat ini 3 minit dan slaid bertukar sendiri. Staf boleh jeda untuk menerangkan.',qFrom:'Daripada taklimat:',close:'Tutup',q:'S',
  C:{
   patient:{dx:'Tumor otak, sebelah kanan',rx:'30 Gy dalam 5 fraksi (stereotaktik)'},
   st:{clinic:['Klinik','Klinik Onkologi'],transport:['Pengangkutan','Pengangkutan Pesakit'],ct:['CT Sim','Simulator CT'],plan:['Perancangan','Perancangan Rawatan'],linac:['Linac','Rawatan Linac']},
@@ -770,7 +771,7 @@ function timeBonus(){return S.reason==='done'?Math.floor(left()/10000):0}
 function total(){return IDS.reduce((a,id)=>a+stationScore(id),0)+(S.phase==='done'?timeBonus():0)}
 
 /* ================= shell ================= */
-function renderTop(){const dt=$('demoTag');if(dt)dt.hidden=!DEMO;
+function renderTop(){const dt=$('demoTag');if(dt)dt.hidden=!DEMO;const dr=$('demoRestart');if(dr){dr.hidden=!DEMO||S.phase==='setup';dr.textContent='↺ '+t('restartDemo')}
   const tl=S.team&&S.phase!=='setup'?teamName(S.team):'';$('teamLbl').textContent=tl;$('teamLbl').hidden=!tl;
   $('scoreHd').textContent=t('score');$('clockHd').textContent=S.demoAt&&S.phase==='race'?t('paused'):t('timeLeft');
   $('scoreLbl').textContent=total();
@@ -986,7 +987,7 @@ const qLink=(key,i)=>{const k=QFROM[key]&&QFROM[key][i];if(!k)return '';const n=
   return `<p class="qlink">${t('qFrom')} <button class="linkbtn" type="button" data-act="lookBack" data-l="${n}">${t('brief')[n].h}</button></p>`};
 function lessonBody(b){return `${b.tag?`<span class="ltag">${b.tag}</span>`:''}<h2>${b.h}</h2>
   <figure class="lookfig">${FIG[b.k]()}</figure><p>${b.p}</p><ul class="blist">${b.li.map(x=>`<li>${x}</li>`).join('')}</ul>`}
-function openLesson(n){const b=t('brief')[n];clearTimeout(briefTimer);
+function openLesson(n){const b=t('brief')[n];
   $('modalCard').innerHTML=`<div class="brief" style="display:grid;gap:10px">${lessonBody(b)}</div><div class="btnrow"><button class="btn primary" id="mCancel">${t('close')}</button></div>`;
   $('modal').hidden=false;$('mCancel').onclick=closeModal;$('mCancel').focus()}
 const sg=k=>`class="stag" style="--d:${k}"`;
@@ -1002,20 +1003,26 @@ function briefCard(i){
 }
 /* the briefing lasts 3 minutes in all: each slide gets a share by how much there is to read (animations count extra) */
 const BRIEF_MS=180000;
-let briefOn=true,briefTimer=null,briefRemain=0,briefT0=0,briefCd=null;
+// one continuous 3-minute clock for the whole briefing; it runs on whichever slide is showing.
+// Slides change on a fixed schedule inside those 3 minutes; Back/Next only move between slides.
+let briefCd=null;
 function briefWeights(){return t('brief').map(b=>{const txt=[b.tag,b.h,b.p,b.cap,...(b.li||[]).flat()].filter(Boolean).join(' ');return txt.split(/\s+/).length+(FIG[b.k]?40:0)})}
 function slideMs(i){const w=briefWeights(),sum=w.reduce((a,b)=>a+b,0);return i<w.length?BRIEF_MS*w[i]/sum:0}
-function briefLeft(){const i=S.brief||0,n=t('brief').length;if(i>=n)return 0;let ms=briefRemain&&$('bprog')?briefRemain-(briefOn?Date.now()-briefT0:0):slideMs(i);for(let k=i+1;k<n;k++)ms+=slideMs(k);return Math.max(0,ms)}
-function briefArm(){clearTimeout(briefTimer);clearInterval(briefCd);const bar=$('bprog');if(S.phase!=='ready'||!bar)return;
-  const full=slideMs(S.brief||0);briefRemain=full;bar.style.animationDuration=full+'ms';bar.style.animationPlayState=briefOn?'running':'paused';
-  briefT0=Date.now();if(briefOn)briefTimer=setTimeout(briefNext,briefRemain);
-  briefCd=setInterval(()=>{const h=$('briefHd');if(!h){clearInterval(briefCd);return}h.textContent=t('briefEyebrow',fmt(briefLeft()))},500)}
-function briefNext(){if(S.phase!=='ready'||!$('bprog'))return;briefRemain=0;S.briefDir=1;S.brief=Math.min(t('brief').length,(S.brief||0)+1);persist();render(false)}
+const briefOn=()=>!S.bPauseAt;
+function briefUsed(){if(!S.bStart)return 0;const now=S.bPauseAt||Date.now();return Math.min(BRIEF_MS,now-S.bStart-(S.bPaused||0))}
+const briefLeft=()=>BRIEF_MS-briefUsed();
+// the slide the schedule says should be showing after `ms` of briefing
+function schedSlide(ms){let acc=0;const n=t('brief').length;for(let k=0;k<n;k++){acc+=slideMs(k);if(ms<acc)return k}return n}
+function briefTick(){const h=$('briefHd');if(S.phase!=='ready'||!h){clearInterval(briefCd);return}
+  h.textContent=t('briefEyebrow',fmt(briefLeft()));const bar=$('bprog');if(bar)bar.style.width=(briefUsed()/BRIEF_MS*100)+'%';
+  const k=schedSlide(briefUsed());if(k!==S.bSched){const first=S.bSched==null;S.bSched=k;if(!first&&k>(S.brief||0)){S.briefDir=1;S.brief=k;persist();render(false);return}persist()}}
+function briefArm(){clearInterval(briefCd);if(S.phase!=='ready')return;if(!S.bStart){S.bStart=Date.now();S.bPaused=0;S.bPauseAt=null;S.bSched=null;persist()}
+  briefTick();briefCd=setInterval(briefTick,500)}
 function readyView(){
   const last=t('brief').length,i=Math.min(S.brief||0,last);
   return `<div class="card hero brief">
     <div class="row-h"><span class="eyebrow amber" id="briefHd">${t('briefEyebrow',fmt(briefLeft()))}</span><span class="dots" aria-label="${i+1} / ${last+1}">${Array.from({length:last+1},(_,k)=>`<i class="${k===i?'on':k<i?'past':''}"></i>`).join('')}</span></div>
-    ${i<last?`<div class="bauto"><button class="btn" type="button" data-act="briefAuto" id="bAutoBtn" style="min-height:34px;padding:4px 14px">${briefOn?t('pause'):t('play')}</button><span>${t('autoNote')}</span></div><div class="bprog"><i id="bprog"></i></div>`:''}
+    ${i<last?`<div class="bauto"><button class="btn" type="button" data-act="briefAuto" id="bAutoBtn" style="min-height:34px;padding:4px 14px">${briefOn()?t('pause'):t('play')}</button><span>${t('autoNote')}</span></div><div class="bprog"><i id="bprog" style="width:${briefUsed()/BRIEF_MS*100}%"></i></div>`:''}
     <div class="brief-body ${S.briefDir<0?'from-left':''}" key="${i}">${briefCard(i)}</div>
     <div class="btnrow brief-nav">
       ${i>0?`<button class="btn" data-act="briefNav" data-d="-1">${t('back')}</button>`:''}
@@ -1042,15 +1049,16 @@ function stationView(){
     <div class="btnrow end"><button class="linkbtn" data-act="endRun">${t('endRun')}</button></div></div>`;
   return `<div class="card">
     <div><span class="eyebrow">${t('stationN',S.idx+1)}</span><h2>${stFull(id)}</h2>${leadLine(id)}</div>
-    ${id==='clinic'?'':`<div class="mission"><span class="eyebrow">${t('mission')}</span><ol>${C().mission[id].map(x=>`<li>${x}</li>`).join('')}</ol></div>`}
+    <p class="yourturn">${t('yourTurn')}</p>
     <div class="section"><span class="eyebrow">${t('challenge',60)}</span>${CH[id]()}</div>
     <div class="section">${id==='clinic'?walkView(st):signoffView(id,st)}</div>
     <div class="btnrow end"><button class="linkbtn" data-act="endRun">${t('endRun')}</button></div>
   </div>`;
 }
-function demoView(){const run=!!S.demoAt,m=DEMO_MS/60000;
+function demoView(){const id=IDS[S.idx],run=!!S.demoAt,m=DEMO_MS/60000;
   return `<div class="sdemo ${run?'run':''}"><span class="eyebrow amber">${run?t('demoRun'):t('demoH')}</span>
-    <p>${t('demoP')}</p>
+    <p>${id==='clinic'?t('sdPClinic'):t('sdP')}</p>
+    ${id==='clinic'?'':`<div class="mission"><span class="eyebrow">${t('sdWatch')}</span><ol>${C().mission[id].map(x=>`<li>${x}</li>`).join('')}</ol></div>`}
     <div class="sdemo-clock"><span id="demoClock">${fmt(demoLeft())}</span>${run?`<small>${t('demoPausedClock')}</small>`:''}</div>
     <div class="sdemo-bar"><i id="demoBar" style="width:${run?100-demoLeft()/DEMO_MS*100:0}%"></i></div>
     <div class="btnrow">${run?`<button class="btn primary" data-act="demoEndBtn">${t('demoEnd')}</button>`
@@ -1211,7 +1219,7 @@ function afterRender(){
     S=fresh();S.team=tm;S.school=sc;S.names=names;S.roles=roles;S.phase='ready';persist();tone(660,.12);render(false)});
   if(S.phase==='race'&&IDS[S.idx]==='plan')drawCT();
   if($('storySvg')){storyShow(storyI);storyStart()}
-  if(S.phase==='ready')briefArm();else clearTimeout(briefTimer);
+  if(S.phase==='ready')briefArm();else clearInterval(briefCd);
   if(S.phase!=='setup')tuneStop(); // the tune belongs to the start page only
   else if(!tuneOn&&!tuneMuted)tuneStart(); // autoplay whenever the start page opens
   const bb=$('beamBtn');if(bb){bb.addEventListener('pointerdown',beamStart);['pointerup','pointerleave','pointercancel'].forEach(ev=>bb.addEventListener(ev,beamStop));
@@ -1256,17 +1264,17 @@ const ACT={
  pickRole(b){keepForm();const i=+b.dataset.i,r=b.dataset.r;S.roles=S.roles||[];S.roles[i]=S.roles[i]===r?'':r;tone(560,.04,'triangle',.04);persist();render()},
  demoGo(){S=fresh();Object.assign(S,JSON.parse(JSON.stringify(DEMO_TEAM)));S.phase='ready';tone(660,.12);persist();render(false)},
  editSignin(){S.phase='setup';persist();render(false)},
- briefNav(b){briefRemain=0;S.briefDir=+b.dataset.d;S.brief=Math.min(t('brief').length,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
+ briefNav(b){S.briefDir=+b.dataset.d;S.brief=Math.min(t('brief').length,Math.max(0,(S.brief||0)+ +b.dataset.d));tone(560,.05,'triangle',.04);persist();render(false)},
  tune(){if(tuneOn){tuneMuted=true;tuneStop()}else{tuneMuted=false;tuneStart()}},
  storyToggle(){storyOn=!storyOn;$('storyPlay').textContent=storyOn?t('pause'):t('play');if(storyOn)storyStart()},
  storyGo(b){storyShow(+b.dataset.i);storyStart()},
  lookBack(b){openLesson(+b.dataset.l)},
  demoGoBtn(){if(S.demoAt)return;S.demoAt=Date.now();persist();tone(740,.12);render(false)},
  demoEndBtn(){demoEnd(false)},
- briefAuto(){const bar=$('bprog');briefOn=!briefOn;$('bAutoBtn').textContent=briefOn?t('pause'):t('play');
-   if(briefOn){briefT0=Date.now();clearTimeout(briefTimer);briefTimer=setTimeout(briefNext,briefRemain);if(bar)bar.style.animationPlayState='running'}
-   else{clearTimeout(briefTimer);briefRemain=Math.max(0,briefRemain-(Date.now()-briefT0));briefT0=Date.now();if(bar)bar.style.animationPlayState='paused'}},
- briefSkip(){briefRemain=0;S.brief=t('brief').length;persist();render(false)},
+ briefAuto(){if(S.bPauseAt){S.bPaused=(S.bPaused||0)+(Date.now()-S.bPauseAt);S.bPauseAt=null}else S.bPauseAt=Date.now();
+   persist();$('bAutoBtn').textContent=briefOn()?t('pause'):t('play')},
+ demoRestart(){if(!DEMO)return;beamStop();S=fresh();persist();render(false)},
+ briefSkip(){S.brief=t('brief').length;persist();render(false)},
  endRun(){openPin(t('endRunQ'),t('endRunBtn'),()=>finish('stopped'))},
  newTeam(){openPin(t('nextTeamQ'),t('nextTeamBtn'),()=>{S=fresh();persist();render(false)})},
  copyBoard(){const board=load(BOARD,[]);const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
