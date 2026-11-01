@@ -112,6 +112,13 @@ footer a{color:var(--amber)}
 .race-btn{background:#16212A;color:#fff}
 .race-btn:hover{background:#2A3D4A}
 .race-btn:focus-visible{outline:3px solid #16212A;outline-offset:3px}
+.race-vers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%;max-width:760px}
+@media (max-width:720px){.race-vers{grid-template-columns:minmax(0,1fr)}}
+.race-ver{display:flex;flex-direction:column;gap:4px;background:#FFF1D9;border:2px solid #16212A;border-radius:12px;padding:12px 16px;color:#2A1A00;line-height:1.4}
+.race-ver b{font:700 20px var(--display);color:#16212A}
+.race-btns{display:flex;flex-wrap:wrap;gap:12px}
+.race-btn2{background:transparent;color:#16212A;box-shadow:inset 0 0 0 3px #16212A}
+.race-btn2:hover{background:#16212A;color:#fff}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -234,11 +241,15 @@ footer a{color:var(--amber)}
         <path d="M112 22 h10 v11 h-10 z M132 22 h10 v11 h-10 z M122 33 h10 v11 h-10 z" fill="#16212A"/>
       </svg>
       <div class="race-txt">
-        <span class="race-eb">New · For science camps · 20 minutes</span>
+        <span class="race-eb">New · For science camps · 15&#8209;minute race</span>
         <h2 id="race-h">Beam On! Explorace</h2>
-        <p>Teams race Teddy from clinic to CT, treatment planning and the linac, with a hands-on mission at every station. In English and Bahasa Melayu.</p>
-        <p class="race-note">Run it inside a radiotherapy department, or set up stations in a simulated hospital space with marshals.</p>
-        <a class="btn race-btn" href="race/">Open Explorace</a>
+        <p>Teams take MAX, a head phantom, along a real cancer patient's pathway. At each station the staff give a short demo, then the team tries it on screen, answers physics questions and does a hands-on task. In English and Bahasa Melayu.</p>
+        <div class="race-vers">
+          <div class="race-ver"><b>Full race</b><span>Four stations: clinic, CT simulation, treatment planning and the linac. A 3&#8209;minute briefing, then a 15&#8209;minute race.</span></div>
+          <div class="race-ver"><b>Quick race</b><span>Three stations: introduction, CT scan and treatment on the linac. 15 minutes at most.</span></div>
+        </div>
+        <p class="race-note">Run it inside a radiotherapy department, or set up stations in a simulated hospital space with staff at each one.</p>
+        <div class="race-btns"><a class="btn race-btn" href="race/">Open Explorace</a><a class="btn race-btn race-btn2" href="race/quick/">Open Quick race</a></div>
       </div>
     </div>
   </section>
