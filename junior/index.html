@@ -47,7 +47,7 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-
 
 .rooms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 @media (min-width:620px){.rooms{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
-@media (min-width:940px){.rooms{grid-template-columns:repeat(5,minmax(0,1fr))}.room .meta{padding:12px 12px 14px}.room h2{font-size:19px!important;letter-spacing:-.01em}}
+@media (min-width:1100px){.rooms{grid-template-columns:repeat(6,minmax(0,1fr))}.room .meta{padding:12px 12px 14px}.room h2{font-size:19px!important;letter-spacing:-.01em}}
 .room h2{text-wrap:balance;font-size:22px;overflow-wrap:break-word}
 @media (max-width:619px){.room .meta{padding:10px 11px 12px}.room h2{font-size:18px!important;letter-spacing:-.01em}.room .tag{font-size:14px}}
 .room{text-align:left;border:3px solid var(--ink);border-radius:22px;background:var(--card);box-shadow:5px 5px 0 var(--ink);padding:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
@@ -61,6 +61,7 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-
 .stars{display:flex;gap:3px;margin-top:6px}
 .stars svg{width:26px;height:26px}
 
+.cert[hidden]{display:none}
 .cert{margin-top:22px;display:flex;gap:16px;align-items:center;background:var(--sun);border:3px solid var(--ink);border-radius:22px;box-shadow:5px 5px 0 var(--ink);padding:14px 18px}
 .cert svg{width:76px;flex:none}
 .cert h2{font:700 24px var(--display);margin:0}
@@ -338,7 +339,7 @@ const W=640,H=440,INK='#123C43',SUN='#FFC53D',CORAL='#F26B4F',SKY='#58B6E0',LEAF
 const $=s=>document.querySelector(s);
 const state={mode:'little',lang:'en',sound:true,music:true,voice:{en:'',ms:''},players:[],cur:null};
 try{const s=JSON.parse(localStorage.getItem('bojr')||'null');if(s){Object.assign(state,s);if(!Array.isArray(state.players))state.players=[];delete state.stars;state.voice=Object.assign({en:'',ms:''},s.voice||{});}}catch(e){}
-const ROOMS=['xray','us','mri','rt','nm'];const MAXT=100;
+const ROOMS=['xray','ct','us','mri','rt','nm'];const MAXT=100;
 /* ---------- anonymous play data (no names or pictures are ever sent) ---------- */
 const DATA={sheetUrl:'https://script.google.com/macros/s/AKfycbyJ9tJpAwTg78FJ465yqfdlCXkbXajhUmhI5c_4MMOO_HhfqQfvsSRxnreGD3d9KBi0zQ/exec',goatcounter:'',version:'jr-2026-10-25'};
 const rid=n=>{const a='abcdefghjkmnpqrstuvwxyz23456789';let r='';for(let i=0;i<n;i++)r+=a[Math.floor(Math.random()*a.length)];return r};
@@ -355,7 +356,7 @@ function track(event,extra){
 if(DATA.goatcounter){try{const g=document.createElement('script');g.async=true;g.dataset.goatcounter='https://'+DATA.goatcounter+'.goatcounter.com/count';g.src='https://gc.zgo.at/count.js';document.head.appendChild(g)}catch(e){}}
 function me(){return state.players.find(p=>p.id===state.cur)||null}
 function myName(){const p=me();return p?p.name:''}
-function bestOf(p,mode){return Object.assign({xray:0,us:0,mri:0,rt:0,nm:0},p&&p.best&&p.best[mode]||{})}
+function bestOf(p,mode){return Object.assign({xray:0,ct:0,us:0,mri:0,rt:0,nm:0},p&&p.best&&p.best[mode]||{})}
 function totalOf(p,mode){const b=bestOf(p,mode);return Math.round(ROOMS.reduce((a,r)=>a+(b[r]||0),0)/ROOMS.length)}
 function starsFor(sc){return sc>=85?3:sc>=60?2:sc>0?1:0}
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -464,6 +465,28 @@ const S={
  'fact.nm':{en:'In nuclear medicine, the patient gets a tiny tracer that gives off invisible rays. A special camera sees where it goes inside the body!',ms:'Dalam perubatan nuklear, pesakit diberi sedikit penyurih yang memancarkan sinar tidak nampak. Kamera khas boleh nampak ke mana ia pergi dalam badan!'},
  'tip.nm':{en:'Medical physicists check every dose, look after the gamma cameras, and keep everyone safe with time, distance and shielding.',ms:'Ahli fizik perubatan menyemak setiap dos, menjaga kamera gama, dan memastikan semua orang selamat dengan masa, jarak dan perisai.'},
  'q.nm':{en:['Why does the tracer get weaker over time?','It decays: after each half-life, half of it is gone','The camera gets tired','The patient blinks'],ms:['Kenapa penyurih makin lemah dengan masa?','Ia mereput: selepas setiap separuh hayat, separuh daripadanya hilang','Kamera menjadi penat','Pesakit berkelip mata']},
+ 'room.ct':{en:'CT scan',ms:'Imbasan CT'},'tag.ct':{en:'The body in slices',ms:'Badan dalam hirisan'},'short.ct':{en:'CT',ms:'CT'},
+ 'ct.little':{en:'This is the CT scanner, a big donut camera! Drag the X-ray tube all the way round the patient.',ms:'Ini pengimbas CT, kamera donat yang besar! Seret tiub X-ray mengelilingi pesakit sampai habis.'},
+ 'ct.big':{en:'CT takes X-ray pictures from all around the body, and a computer builds them into a slice. First, the morning check with the water phantom.',ms:'CT mengambil gambar X-ray dari sekeliling badan, dan komputer membinanya menjadi satu hirisan. Mula-mula, semakan pagi dengan fantom air.'},
+ 'ct.qa':{en:'Water should read 0 HU (between −4 and +4). Is this reading OK?',ms:'Air sepatutnya memberi bacaan 0 HU (antara −4 dan +4). Adakah bacaan ini OK?'},
+ 'ct.qaLabel':{en:'Water phantom',ms:'Fantom air'},'ct.ok':{en:'OK',ms:'OK'},'ct.fix':{en:'Needs fixing',ms:'Perlu dibaiki'},
+ 'ct.goodOk':{en:'Good check! Water reads close to 0 HU, so the scanner is ready.',ms:'Semakan bagus! Bacaan air hampir 0 HU, jadi pengimbas sedia digunakan.'},
+ 'ct.goodFix':{en:'Good check! 12 HU is too far from 0. You recalibrate the scanner: now water reads 0 HU.',ms:'Semakan bagus! 12 HU terlalu jauh dari 0. Kamu menentukur semula pengimbas: kini bacaan air 0 HU.'},
+ 'ct.bad':{en:'Look again: water must read between −4 and +4 HU.',ms:'Lihat semula: bacaan air mesti antara −4 dan +4 HU.'},
+ 'ct.dose':{en:'Choose the dose. Use the lowest dose that still gives a clear picture.',ms:'Pilih dos. Guna dos paling rendah yang masih memberi gambar yang jelas.'},
+ 'ct.low':{en:'Low dose',ms:'Dos rendah'},'ct.med':{en:'Medium dose',ms:'Dos sederhana'},'ct.high':{en:'High dose',ms:'Dos tinggi'},'ct.doseL':{en:'Dose',ms:'Dos'},
+ 'ct.spin':{en:'Drag the X-ray tube all the way round. Every angle adds to the picture.',ms:'Seret tiub X-ray mengelilingi pesakit. Setiap sudut menambah gambar.'},
+ 'ct.spinBtn':{en:'Spin',ms:'Pusing'},'ct.angles':{en:'Angles',ms:'Sudut'},
+ 'ct.noisy':{en:'Too grainy! The dose was too low to see clearly. Choose again.',ms:'Terlalu berbintik! Dos terlalu rendah untuk nampak dengan jelas. Pilih semula.'},
+ 'ct.tooHigh':{en:'Very clear, but more dose than needed. A lower dose would have been enough.',ms:'Sangat jelas, tetapi dos lebih daripada perlu. Dos yang lebih rendah sudah cukup.'},
+ 'ct.justRight':{en:'Just right: a clear picture with a sensible dose!',ms:'Tepat sekali: gambar jelas dengan dos yang sesuai!'},
+ 'ct.find.little':{en:'Here is the picture inside the tummy! Tap the backbone, the air bubble and the marble.',ms:'Ini gambar di dalam perut! Ketik tulang belakang, gelembung udara dan guli.'},
+ 'ct.find.big':{en:'Here is the slice. Bone looks bright and air looks dark. Tap the spine, the gas bubble in the stomach and the swallowed marble.',ms:'Inilah hirisannya. Tulang nampak cerah dan udara nampak gelap. Ketik tulang belakang, gelembung gas dalam perut dan guli yang tertelan.'},
+ 'ct.miss':{en:'Look again!',ms:'Cuba lihat lagi!'},
+ 'f.spine':{en:'The backbone!',ms:'Tulang belakang!'},'f.bubble':{en:'An air bubble in the tummy!',ms:'Gelembung udara dalam perut!'},'f.marble':{en:'The swallowed marble! Now the doctor knows where it is.',ms:'Guli yang tertelan! Sekarang doktor tahu di mana ia.'},
+ 'fact.ct':{en:'CT takes lots of X-ray pictures from all around, and a computer puts them together into slices, like slices of bread!',ms:'CT mengambil banyak gambar X-ray dari sekeliling, dan komputer menyusunnya menjadi hirisan, macam hirisan roti!'},
+ 'tip.ct':{en:'Medical physicists check CT scanners with a water phantom and keep every scan at the lowest dose that still gives a clear picture.',ms:'Ahli fizik perubatan memeriksa pengimbas CT dengan fantom air dan memastikan setiap imbasan guna dos paling rendah yang masih memberi gambar yang jelas.'},
+ 'q.ct':{en:['Why does the CT X-ray tube spin around the patient?','To take pictures from many angles and build a slice','To keep the patient cool','To make the bed move'],ms:['Kenapa tiub X-ray CT berpusing mengelilingi pesakit?','Untuk mengambil gambar dari banyak sudut dan membina hirisan','Supaya pesakit rasa sejuk','Supaya katil bergerak']},
  'tip.rt':{en:'Medical physicists plan where each beam goes and check the machine every single day.',ms:'Ahli fizik perubatan merancang arah setiap sinar dan memeriksa mesin setiap hari.'},
  'q.rt':{en:['Why do the beams come from different angles?','They add up at the tumour and spread out everywhere else','To make the machine spin faster','So the patient can watch them'],ms:['Kenapa sinar datang dari arah yang berbeza?','Ia bertambah di tumor dan tersebar di tempat lain','Supaya mesin berpusing lebih laju','Supaya pesakit boleh melihatnya']}
 };
@@ -556,6 +579,7 @@ function _unusedSpeak(text,el,force,voiceOverride){if((!state.sound&&!force)||!(
 /* ---------- art ---------- */
 const ANA=`<svg viewBox="0 0 100 120"><path d="M12 120Q14 84 50 80Q86 84 88 120Z" fill="#fff" stroke="${INK}" stroke-width="3"/><path d="M50 82L43 120M50 82L57 120" stroke="${INK}" stroke-width="2.5"/><rect x="62" y="96" width="15" height="11" rx="2" fill="${SUN}" stroke="${INK}" stroke-width="2"/><path d="M27 100q-4 10 6 14" fill="none" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/><circle cx="33" cy="114" r="3.5" fill="${SKY}" stroke="${INK}" stroke-width="2"/><path d="M21 54Q21 14 50 12Q79 14 79 54Q79 82 50 88Q21 82 21 54Z" fill="${SKY}" stroke="${INK}" stroke-width="3"/><ellipse cx="50" cy="50" rx="20" ry="23" fill="#E6B08A" stroke="${INK}" stroke-width="2.5"/><circle cx="42" cy="48" r="6.5" fill="#fff" stroke="${INK}" stroke-width="2"/><circle cx="58" cy="48" r="6.5" fill="#fff" stroke="${INK}" stroke-width="2"/><path d="M48.5 48h3" stroke="${INK}" stroke-width="2"/><circle cx="42" cy="48.5" r="2" fill="${INK}"/><circle cx="58" cy="48.5" r="2" fill="${INK}"/><circle cx="36" cy="59" r="3.4" fill="${CORAL}" opacity=".45"/><circle cx="64" cy="59" r="3.4" fill="${CORAL}" opacity=".45"/><path d="M42 61Q50 68 58 61" fill="none" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/></svg>`;
 const ROOMART={
+ ct:`<svg viewBox="0 0 160 120"><rect x="56" y="98" width="32" height="14" fill="${INK}"/><circle cx="72" cy="54" r="48" fill="#fff" stroke="${INK}" stroke-width="4"/><circle cx="72" cy="54" r="24" fill="#D6E9F4" stroke="${INK}" stroke-width="4"/><path d="M72 15a39 39 0 0 1 36 24" fill="none" stroke="${CORAL}" stroke-width="5" stroke-linecap="round"/><path d="M112 34l-1 13-11-6z" fill="${CORAL}"/><rect x="62" y="8" width="20" height="12" rx="3" fill="${SUN}" stroke="${INK}" stroke-width="3"/><rect x="50" y="62" width="104" height="11" rx="5" fill="${SKY}" stroke="${INK}" stroke-width="3"/></svg>`,
  nm:`<svg viewBox="0 0 160 120"><rect x="36" y="8" width="88" height="28" rx="7" fill="#fff" stroke="${INK}" stroke-width="4"/><rect x="48" y="30" width="64" height="7" fill="${INK}"/><rect x="36" y="84" width="88" height="28" rx="7" fill="#fff" stroke="${INK}" stroke-width="4"/><rect x="48" y="83" width="64" height="7" fill="${INK}"/><rect x="8" y="56" width="144" height="11" rx="5" fill="${SKY}" stroke="${INK}" stroke-width="3"/><ellipse cx="70" cy="51" rx="40" ry="8" fill="#F0C39E" stroke="${INK}" stroke-width="3"/><circle cx="118" cy="49" r="9" fill="#F0C39E" stroke="${INK}" stroke-width="3"/><g fill="${LEAF}"><circle cx="62" cy="47" r="4"/><circle cx="84" cy="52" r="3"/><circle cx="48" cy="52" r="2.5"/></g><g fill="${SUN}"><circle cx="70" cy="44" r="2"/><circle cx="96" cy="47" r="2"/></g></svg>`,
  xray:`<svg viewBox="0 0 160 120"><rect x="34" y="10" width="92" height="88" rx="10" fill="${FILM}" stroke="${INK}" stroke-width="4"/><g stroke="${BONE}" stroke-linecap="round"><path d="M60 36L100 74" stroke-width="11"/></g><g fill="${BONE}"><circle cx="53" cy="36" r="8"/><circle cx="60" cy="29" r="8"/><circle cx="100" cy="81" r="8"/><circle cx="107" cy="74" r="8"/></g><rect x="74" y="98" width="12" height="12" fill="${INK}"/><rect x="54" y="108" width="52" height="6" rx="3" fill="${INK}"/></svg>`,
  us:`<svg viewBox="0 0 160 120"><path d="M80 66l-44 46h88z" fill="#111" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"><path d="M64 84q16 8 32 0"/><path d="M54 96q26 12 52 0"/></g><circle cx="84" cy="102" r="6" fill="#bbb"/><rect x="64" y="8" width="32" height="48" rx="13" fill="#fff" stroke="${INK}" stroke-width="4"/><rect x="58" y="52" width="44" height="16" rx="6" fill="${INK}"/><path d="M80 8q0-6 10-6" fill="none" stroke="${INK}" stroke-width="4"/></svg>`,
@@ -590,9 +614,12 @@ function avatarSVG(id,crop){
  return `<svg viewBox="${vb}" aria-hidden="true">${neck}${coat}${back}${head}${front}${face}</svg>`;
 }
 const headSVG=id=>`<span class="head">${avatarSVG(id,true)}</span>`;
-const ROOMCOL={xray:'#9ED3EC',us:'#A9DEC8',mri:'#FFDA7A',rt:'#FFB8A6',nm:'#CDBDF2'};
+const ROOMCOL={xray:'#9ED3EC',ct:'#F7C1D9',us:'#A9DEC8',mri:'#FFDA7A',rt:'#FFB8A6',nm:'#CDBDF2'};
 function starSVG(on){return `<svg viewBox="0 0 24 24" class="${on?'on':''}"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="${on?SUN:'#E2ECE9'}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/></svg>`}
 const ICON={
+ spine:`<svg viewBox="0 0 48 48"><g fill="#fff" stroke="${INK}" stroke-width="3"><rect x="14" y="4" width="20" height="10" rx="4"/><rect x="14" y="19" width="20" height="10" rx="4"/><rect x="14" y="34" width="20" height="10" rx="4"/></g><path d="M8 9h6M34 9h6M8 24h6M34 24h6M8 39h6M34 39h6" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></svg>`,
+ bubble:`<svg viewBox="0 0 48 48"><circle cx="24" cy="25" r="16" fill="#CFEAF7" stroke="${INK}" stroke-width="3"/><path d="M15 21a10 10 0 0 1 8-7" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>`,
+ marble:`<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="${SKY}" stroke="${INK}" stroke-width="3"/><path d="M13 28q8-12 22-6M15 33q10-4 18 2" fill="none" stroke="${CORAL}" stroke-width="4" stroke-linecap="round"/><circle cx="18" cy="17" r="3.5" fill="#fff"/></svg>`,
  kidney:`<svg viewBox="0 0 48 48"><path d="M20 8c-9 0-14 8-14 16s5 16 14 16c6 0 8-4 6-8-2-3-2-6 0-8 2-4 0-8-6-16z" fill="${CORAL}" stroke="${INK}" stroke-width="3" stroke-linejoin="round" transform="translate(4 0)"/><path d="M34 24h8" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></svg>`,
  bladder:`<svg viewBox="0 0 48 48"><path d="M24 6C17 16 11 23 11 30a13 13 0 0 0 26 0c0-7-6-14-13-24z" fill="${SUN}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><path d="M18 30a6 6 0 0 0 6 6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`,
  coin:`<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="#CBD3DA" stroke="${INK}" stroke-width="3"/><circle cx="24" cy="24" r="10" fill="none" stroke="${INK}" stroke-width="2"/></svg>`,
@@ -681,7 +708,7 @@ function openGame(id){
 let ov=null;
 function closeOverlay(){if(ov){ov.remove();ov=null}}
 function overlay(html){closeOverlay();ov=document.createElement('div');ov.className='overlay';ov.innerHTML=`<div class="card" role="dialog" aria-modal="true">${html}</div>`;document.body.appendChild(ov);const f=ov.querySelector('button');if(f)setTimeout(()=>f.focus(),50);return ov}
-const TARGET={xray:[20,30],us:[30,40],mri:[25,45],rt:[40,75],nm:[30,60]};
+const TARGET={xray:[20,30],ct:[30,70],us:[30,40],mri:[25,45],rt:[40,75],nm:[30,60]};
 function finish(id,acc){
  const secs=(performance.now()-gameStart)/1000;
  setTimeout(()=>{if(state.mode==='little')score(id,acc,secs,null);else quiz(id,ok=>score(id,acc,secs,ok))},900);
@@ -1089,6 +1116,116 @@ function voicePicker(){
  o.querySelector('#vDone').onclick=closeOverlay;
 }
 /* ---------- NUCLEAR MEDICINE ---------- */
+/* ---------- CT ---------- */
+let CTDATA=null;
+function ctBuild(){
+ if(CTDATA)return CTDATA;
+ const N=80,NA=180,ND=115,SEC=12,c0=(ND-1)/2,ctr=(N-1)/2;
+ const val=(u,v)=>{
+  if((u/.86)**2+(v/.64)**2>1)return 0;
+  if(((u+.3)/.16)**2+((v+.2)/.1)**2<1)return .02;
+  if(Math.hypot(u-.33,v+.02)<.055)return 3.2;
+  const d=Math.hypot(u,v-.4);if(d<.055)return 1;if(d<.13)return 2.1;
+  if(((Math.abs(u)-.42)/.11)**2+((v-.26)/.15)**2<1)return 1.18;
+  if((u/.8)**2+(v/.58)**2>1)return .82;
+  return 1;
+ };
+ const ph=new Float32Array(N*N);
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){let s=0;for(let a=0;a<2;a++)for(let b=0;b<2;b++)s+=val((i+.25+a*.5)/N*2-1,(j+.25+b*.5)/N*2-1);ph[j*N+i]=s/4}
+ const K=new Float32Array(2*ND-1);for(let n=-(ND-1);n<ND;n++)K[n+ND-1]=n===0?.25:(n%2?-1/(Math.PI*Math.PI*n*n):0);
+ const filt=p=>{const q=new Float32Array(ND);for(let s=0;s<ND;s++){let a=0;for(let k=0;k<ND;k++)a+=p[k]*K[s-k+ND-1];q[s]=a}return q};
+ const g=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+ const sig=[],noi=[];for(let k=0;k<SEC;k++){sig.push(new Float32Array(N*N));noi.push(new Float32Array(N*N))}
+ for(let a=0;a<NA;a++){
+  const th=a*Math.PI/NA,cs=Math.cos(th),sn=Math.sin(th),p=new Float32Array(ND),pn=new Float32Array(ND);
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const v=ph[j*N+i];if(!v)continue;const s=(i-ctr)*cs+(j-ctr)*sn+c0,s0=Math.floor(s),w=s-s0;p[s0]+=v*(1-w);p[s0+1]+=v*w}
+  for(let s=0;s<ND;s++)pn[s]=g();
+  const fp=filt(p),fn=filt(pn),sec=Math.floor(a/(NA/SEC)),S1=sig[sec],S2=noi[sec];
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const s=(i-ctr)*cs+(j-ctr)*sn+c0,s0=Math.floor(s),w=s-s0,k=j*N+i;S1[k]+=fp[s0]*(1-w)+fp[s0+1]*w;S2[k]+=fn[s0]*(1-w)+fn[s0+1]*w}
+ }
+ const sc=Math.PI/NA;sig.forEach(x=>{for(let k=0;k<x.length;k++)x[k]*=sc});
+ const tot=new Float32Array(N*N);noi.forEach(x=>{for(let k=0;k<x.length;k++)tot[k]+=x[k]});let m=0;for(let k=0;k<tot.length;k++)m+=tot[k]*tot[k];const nsd=Math.sqrt(m/tot.length)||1;
+ noi.forEach(x=>{for(let k=0;k<x.length;k++)x[k]/=nsd});
+ return CTDATA={N,SEC,sig,noi};
+}
+GAMES.ct=function(stage){
+ const big=state.mode==='big';let active=true,raf,qaWrong=0,doseAcc=1;
+ const D=ctBuild(),N=D.N,SEC=D.SEC;
+ const CX=172,CY=222,RO=150,RI=94,RT=(RO+RI)/2,IX=378,IY=100,IS=234;
+ const cov=new Array(SEC).fill(false),T=[{id:'spine',u:0,v:.4},{id:'bubble',u:-.3,v:-.2},{id:'marble',u:.33,v:-.02}];
+ const tol=big?.13:.18;let phase='prep',phi=-Math.PI/2,touched=false,k=.06,dose='',busy=false,done=false;
+ const img=document.createElement('canvas');img.width=img.height=N;const ix=img.getContext('2d');
+ function render(){const d=ix.createImageData(N,N);for(let p=0;p<N*N;p++){let v=0;for(let s=0;s<SEC;s++)if(cov[s])v+=D.sig[s][p]+k*D.noi[s][p];const gy=Math.max(0,Math.min(255,v/2.3*255));d.data[p*4]=d.data[p*4+1]=d.data[p*4+2]=gy;d.data[p*4+3]=255}ix.putImageData(d,0,0)}
+ const base=mk(),bx=base.getContext('2d');
+ (function scene(x){
+  x.fillStyle='#F4FAF8';x.fillRect(0,0,W,H);x.strokeStyle='#E1EEE9';x.lineWidth=2;for(let i=0;i<W;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke()}for(let j=0;j<H;j+=40){x.beginPath();x.moveTo(0,j);x.lineTo(W,j);x.stroke()}
+  x.fillStyle=INK;x.fillRect(CX-60,CY+RO-6,120,H-(CY+RO-6));
+  circ(x,CX,CY,RO+12,'#fff',4);circ(x,CX,CY,RO,'#FBE3EE',3);circ(x,CX,CY,RI,'#DDEFF6',4);
+  x.fillStyle=SKY;x.strokeStyle=INK;x.lineWidth=3;x.beginPath();x.roundRect(CX-RI+6,CY+36,2*RI-12,14,6);x.fill();x.stroke();
+  ell(x,CX,CY+6,58,30,0,'#9FD0EC',4);
+  [[-20],[20]].forEach(([dx])=>{ell(x,CX+dx,CY+4,13,19,0,'#E9B98F',3);for(let t2=-2;t2<=2;t2++)circ(x,CX+dx+t2*4.4,CY-16+Math.abs(t2)*2,3,'#E9B98F',2)});
+  x.fillStyle='#2B3A40';x.strokeStyle=INK;x.lineWidth=4;x.beginPath();x.roundRect(IX-16,IY-40,IS+32,IS+58,18);x.fill();x.stroke();
+  x.fillStyle='#000';x.fillRect(IX,IY,IS,IS);x.fillStyle='#F7C1D9';x.font='700 18px Fredoka, sans-serif';x.textAlign='left';x.fillText('CT',IX+2,IY-14);
+  x.fillStyle=INK;x.fillRect(IX+IS/2-12,IY+IS+18,24,24);x.fillRect(IX+IS/2-50,IY+IS+38,100,8);
+ })(bx);
+ stage.innerHTML=`<canvas width="${W}" height="${H}" tabindex="0" aria-label="${t('room.ct')}"></canvas>`;
+ const cv=stage.querySelector('canvas'),ctx=cv.getContext('2d');
+ const secOf=a=>{let r=(a+Math.PI/2)%(2*Math.PI);if(r<0)r+=2*Math.PI;return Math.min(SEC-1,Math.floor(r/(2*Math.PI/SEC)))};
+ function sweep(a){let d=a-phi;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;const n=Math.max(1,Math.ceil(Math.abs(d)/.05));let ch=false;for(let i=1;i<=n;i++){const s=secOf(phi+d*i/n);if(!cov[s]){cov[s]=true;ch=true}}phi=a;if(ch){render();sfx('find');upd();if(cov.every(Boolean))scanned()}}
+ function upd(){const e=$('#ctN');if(e)e.textContent=cov.filter(Boolean).length+' / '+SEC}
+ function spinBtn(){$('#controls').innerHTML=(big?`<div class="readout"><span>${t('ct.angles')}</span>: <b id="ctN">0 / ${SEC}</b></div>`:'')+`<button class="cta ready" id="ctSpin">⟳ ${t('ct.spinBtn')}</button>`;
+  $('#ctSpin').onclick=async()=>{if(busy||phase!=='scan')return;busy=true;touched=true;const a0=phi;await tween(320,p=>{if(phase==='scan')sweep(a0+p*Math.PI/6)});busy=false}}
+ function startScan(){phase='scan';cov.fill(false);render();spinBtn();say(big?t('ct.spin'):tm('ct'),true)}
+ async function autoSpin(){phase='auto';cov.fill(false);render();$('#controls').innerHTML='';const a0=phi;await tween(1500,p=>{if(!active)return;let d=a0+p*2*Math.PI;for(let s=0;s<SEC;s++)if(!cov[s]&&secOf(d)===s){cov[s]=true;render()}phi=d});if(!active)return;cov.fill(true);render();phase='scan';scanned()}
+ function chooseDose(){phase='dose';say(t('ct.dose'),false);
+  $('#controls').innerHTML=['low','med','high'].map(d=>`<button class="cta${d==='med'?'':' alt'}" data-d="${d}">${t('ct.'+d)}</button>`).join('');
+  $('#controls').querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const again=!!dose;dose=b.dataset.d;k={low:.62,med:.13,high:.045}[dose];if(again)autoSpin();else startScan()})}
+ async function scanned(){if(phase!=='scan')return;phase='scanned';sfx('good');$('#controls').innerHTML='';
+  if(big){if(dose==='low'){doseAcc-=.25;say(t('ct.noisy'),false);await wait(2200);if(!active)return;chooseDose();return}
+   if(dose==='high'){doseAcc*=.7;say(t('ct.tooHigh'),false);await wait(2400)}else{say(t('ct.justRight'),false);await wait(1600)}}
+  else await wait(500);
+  if(!active)return;phase='find';say(tm('ct.find'),true)}
+ function qa(){
+  const reads=shuffle([{v:1,ok:true},{v:12,ok:false}]);let i=0;busy=false;
+  say(t('ct.big')+' '+t('ct.qa'),false);
+  stage.innerHTML=`<div class="qa"><svg viewBox="0 0 380 200" role="img" aria-label="${t('ct.qaLabel')}"><rect x="20" y="16" width="200" height="168" rx="18" fill="#2B3A40" stroke="${INK}" stroke-width="4"/><rect x="34" y="30" width="172" height="120" rx="6" fill="#000"/><circle cx="120" cy="80" r="38" fill="#777" stroke="#bbb" stroke-width="3"/><circle cx="120" cy="80" r="13" fill="none" stroke="${SUN}" stroke-width="3"/><text id="huTxt" x="120" y="142" text-anchor="middle" font-family="Fredoka,sans-serif" font-weight="700" font-size="20" fill="${LEAF}">--- HU</text><text x="120" y="172" text-anchor="middle" font-family="Fredoka,sans-serif" font-weight="600" font-size="15" fill="#fff">${t('ct.qaLabel')}</text><g transform="translate(262 40)"><rect x="0" y="0" width="90" height="120" rx="14" fill="#CFE9F6" stroke="${INK}" stroke-width="4"/><path d="M6 46q39 -14 78 0v66a8 8 0 0 1-8 8H14a8 8 0 0 1-8-8z" fill="${SKY}" opacity=".7"/><rect x="30" y="-12" width="30" height="14" rx="4" fill="${INK}"/></g></svg><div class="readout">0 ± 4 HU</div><p class="left" id="huN"></p></div>`;
+  $('#controls').innerHTML=`<button class="cta ok" id="cOk">${t('ct.ok')}</button><button class="cta" id="cFix">${t('ct.fix')}</button>`;
+  const txt=stage.querySelector('#huTxt');
+  async function show(){busy=true;stage.querySelector('#huN').textContent=`${i+1} / 2`;const r=reads[i];await tween(700,p=>{txt.textContent=Math.round(r.v*p+(Math.random()-.5)*20*(1-p))+' HU'});txt.textContent=r.v+' HU';busy=false}
+  async function answer(ok){if(busy)return;busy=true;const r=reads[i];
+   if(ok!==r.ok){qaWrong++;sfx('bad');say(t('ct.bad'));busy=false;return}
+   sfx('good');say(t(r.ok?'ct.goodOk':'ct.goodFix'));if(!r.ok)await tween(700,p=>{txt.textContent=Math.round(12*(1-p))+' HU'});
+   await wait(1700);if(!active)return;i++;if(i<reads.length)show();else{busy=false;stage.innerHTML='';stage.appendChild(cv);chooseDose();loop0()}}
+  $('#cOk').onclick=()=>answer(true);$('#cFix').onclick=()=>answer(false);show();
+ }
+ function tap(x,y){
+  if(phase!=='find'||done)return;if(x<IX||x>IX+IS||y<IY||y>IY+IS)return;
+  const u=(x-IX)/IS*2-1,v=(y-IY)/IS*2-1;let best=null,bd=9;T.forEach(o=>{if(o.found)return;const d=Math.hypot(o.u-u,o.v-v);if(d<bd){bd=d;best=o}});
+  if(best&&bd<tol){best.found=true;sfx('find');gotChip(best.id);say(t('f.'+best.id),true);if(T.every(o=>o.found)){done=true;setTimeout(()=>finish('ct',big?Math.max(0,1-.25*qaWrong)*Math.max(0,doseAcc):1),500)}}
+  else{sfx('bad');say(t('ct.miss'))}
+ }
+ bindPointer(cv,{down:(x,y)=>{if(phase==='scan'&&x<IX-20&&!busy){touched=true;sweep(Math.atan2(y-CY,x-CX))}else tap(x,y)},move:(x,y,d)=>{if(d&&phase==='scan'&&x<IX-20&&!busy){touched=true;sweep(Math.atan2(y-CY,x-CX))}}});
+ cv.addEventListener('keydown',e=>{const s={ArrowLeft:-1,ArrowRight:1,ArrowUp:-1,ArrowDown:1}[e.key];if(s&&phase==='scan'&&!busy){touched=true;sweep(phi+s*Math.PI/12);e.preventDefault()}});
+ function draw(now){
+  ctx.drawImage(base,0,0);
+  for(let s=0;s<SEC;s++){const a0=-Math.PI/2+s*2*Math.PI/SEC;ctx.beginPath();ctx.arc(CX,CY,RO-7,a0+.03,a0+2*Math.PI/SEC-.03);ctx.lineWidth=9;ctx.strokeStyle=cov[s]?LEAF:'#E8D3DD';ctx.stroke()}
+  const tx=CX+Math.cos(phi)*RT,ty=CY+Math.sin(phi)*RT,dx=CX-Math.cos(phi)*RT,dy=CY-Math.sin(phi)*RT;
+  if(phase==='scan'||phase==='auto'){const px=-Math.sin(phi),py=Math.cos(phi);ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(dx+px*52,dy+py*52);ctx.lineTo(dx-px*52,dy-py*52);ctx.closePath();ctx.fillStyle='rgba(255,197,61,.32)';ctx.fill()}
+  ctx.beginPath();ctx.arc(CX,CY,RT,phi+Math.PI-.42,phi+Math.PI+.42);ctx.lineWidth=16;ctx.strokeStyle=INK;ctx.stroke();ctx.lineWidth=10;ctx.strokeStyle='#9AA6AF';ctx.stroke();
+  ctx.save();ctx.translate(tx,ty);ctx.rotate(phi+Math.PI/2);ctx.fillStyle=SUN;ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(-22,-14,44,28,7);ctx.fill();ctx.stroke();ctx.fillStyle=INK;ctx.fillRect(-7,12,14,6);ctx.restore();
+  if(phase==='scan'&&!touched){const p=(now%1200)/1200;ctx.beginPath();ctx.arc(tx,ty,26+p*22,0,7);ctx.lineWidth=4;ctx.strokeStyle=`rgba(242,107,79,${1-p})`;ctx.stroke();
+   ctx.beginPath();ctx.arc(CX,CY,RT,phi+.35,phi+.9);ctx.lineWidth=4;ctx.strokeStyle=CORAL;ctx.stroke();const ea=phi+.9;ctx.save();ctx.translate(CX+Math.cos(ea)*RT,CY+Math.sin(ea)*RT);ctx.rotate(ea+Math.PI/2);ctx.fillStyle=CORAL;ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-6,-8);ctx.lineTo(-6,8);ctx.closePath();ctx.fill();ctx.restore()}
+  if(cov.some(Boolean)){ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(img,IX,IY,IS,IS);ctx.restore()}
+  if(big&&dose){ctx.fillStyle='#fff';ctx.font='600 14px Fredoka, sans-serif';ctx.textAlign='right';ctx.fillText(t('ct.'+dose),IX+IS,IY-14)}
+  T.forEach(o=>{if(o.found){const x=IX+(o.u+1)/2*IS,y=IY+(o.v+1)/2*IS;ctx.beginPath();ctx.arc(x,y,16,0,7);ctx.lineWidth=3;ctx.strokeStyle=SUN;ctx.stroke();ctx.save();starPath(ctx,x+18,y-18,10);ctx.fillStyle=SUN;ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=INK;ctx.stroke();ctx.restore()}});
+  if(phase==='find'&&!T.some(o=>o.found)){const p=(now%1400)/1400;ctx.lineWidth=4;ctx.strokeStyle=`rgba(255,197,61,${1-p})`;ctx.strokeRect(IX-4-p*8,IY-4-p*8,IS+8+p*16,IS+8+p*16)}
+ }
+ function loop0(){const loop=n=>{if(!active)return;draw(n);raf=requestAnimationFrame(loop)};raf=requestAnimationFrame(loop)}
+ setChips(T.map(o=>o.id));
+ if(big)qa();else{startScan();loop0()}
+ return{stop(){active=false;cancelAnimationFrame(raf)}};
+};
+
 GAMES.nm=function(stage){
  const big=state.mode==='big';let active=true,raf,calWrong=0;
  const PSKIN='#E9B98F',GOWN='#9FD0EC';
