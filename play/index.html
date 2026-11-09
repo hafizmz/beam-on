@@ -10,11 +10,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Beam On!">
+<script>/* Store app mode: set by the app stores' packages. No data is sent, no sign-up, no install prompts. */
+window.BEAMON_STORE=(()=>{const L=location;let s=false;try{const q=new URLSearchParams(L.search);if(q.get('store')==='1')sessionStorage.setItem('beamon-store','1');if(q.get('store')==='0')sessionStorage.removeItem('beamon-store');s=sessionStorage.getItem('beamon-store')==='1'}catch(e){}return s||!/^https?:$/.test(L.protocol)||(L.hostname==='localhost'&&!L.port&&L.protocol==='https:')})();
+if(window.BEAMON_STORE)document.documentElement.classList.add('store-app');</script>
 <title>Beam On!</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="../fonts/fonts.css" rel="stylesheet">
 <style>
 /* Layout: linac-console top bar, department floor plan on the left, tabbed control desk on the right; stacks on phones.
    Single committed light look: clinical vinyl floor, bunker concrete, beam-on amber as the one bold accent. */
@@ -243,7 +244,7 @@ button,.tab,canvas{touch-action:manipulation;-webkit-tap-highlight-color:transpa
   </div>
 </div>
 
-<p class="credit">Made by <a href="https://hafizmz.github.io/" target="_blank" rel="noopener">Hafiz M Zin</a>, Associate Professor in Medical Physics, Pusat Kanser Tun Abdullah Ahmad Badawi, USM <span id="installWrap"><button class="install-btn" id="installApp" hidden>Install app</button><span id="iosHint" hidden> · To install on iPhone or iPad: tap Share, then Add to Home Screen</span></span> · <a href="../">All Beam On! games</a></p>
+<p class="credit">Made by <a href="https://hafizmz.github.io/" target="_blank" rel="noopener">Hafiz M Zin</a>, Associate Professor in Medical Physics, Pusat Kanser Tun Abdullah Ahmad Badawi, USM · <a href="https://hafizmz.github.io/beam-on/privacy/" target="_blank" rel="noopener">Privacy</a> <span id="installWrap"><button class="install-btn" id="installApp" hidden>Install app</button><span id="iosHint" hidden> · To install on iPhone or iPad: tap Share, then Add to Home Screen</span></span> · <a href="../">All Beam On! games</a></p>
 
 <div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" id="modalCard"></div></div>
 
@@ -959,8 +960,9 @@ const REG_ROLES=['Student (school)','Student (university)','Medical physicist','
 function getPlayer(){try{return JSON.parse(localStorage.getItem(REG_KEY)||'null')}catch(e){return null}}
 function savePlayer(p){try{localStorage.setItem(REG_KEY,JSON.stringify(p))}catch(e){}}
 let PLAYER=getPlayer();
+const STORE=!!window.BEAMON_STORE;
 function sendRegistration(p){
-  if(!REG_FORM.url)return;
+  if(STORE||!REG_FORM.url)return;
   try{const fd=new FormData();for(const k in REG_FORM.fields){if(REG_FORM.fields[k])fd.append(REG_FORM.fields[k],k==='consent'?'Yes':(p[k]||''))}
     fetch(REG_FORM.url,{method:'POST',mode:'no-cors',body:fd}).catch(()=>{})}catch(e){}
 }
@@ -971,14 +973,14 @@ function loadTrial(){try{const t=JSON.parse(localStorage.getItem(TRIAL_KEY)||'nu
 let TRIAL=loadTrial(),trialSaveAcc=0;
 function saveTrial(){try{localStorage.setItem(TRIAL_KEY,JSON.stringify(TRIAL))}catch(e){}}
 function track(ev){
-  if(!COUNTER_FORM.url)return;
+  if(STORE||!COUNTER_FORM.url)return;
   try{const f=COUNTER_FORM.fields,fd=new FormData();fd.append(f.event,ev);fd.append(f.visitor,TRIAL.id);fd.append(f.secs,String(Math.round(TRIAL.used)));fd.append(f.day,S?String(S.day):'0');fd.append(f.version,GAME_VERSION);
     fetch(COUNTER_FORM.url,{method:'POST',mode:'no-cors',body:fd}).catch(()=>{})}catch(e){}
 }
 function trialLeft(){return Math.max(0,TRIAL_SECS-TRIAL.used)}
 function fmtTrial(sec){sec=Math.ceil(sec);return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`}
 function trialFrame(dtR){
-  if(PLAYER||!S||!S.started||S.paused||modalOpen||document.visibilityState!=='visible')return;
+  if(STORE||PLAYER||!S||!S.started||S.paused||modalOpen||document.visibilityState!=='visible')return;
   TRIAL.used+=dtR;trialSaveAcc+=dtR;
   if(trialSaveAcc>2){trialSaveAcc=0;saveTrial()}
   if(trialLeft()<=0)trialWall();
@@ -1040,8 +1042,8 @@ function intro(){
    <li><b class="n">4</b><span>Watch the queues. Hire staff where the work piles up. Patients who wait over 3 hours go home.</span></li>
   </ol>
   <div class="legend"><span><i class="role-dot" style="background:${ROLES.phys.color}">P</i>Physicist</span><span><i class="role-dot" style="background:${ROLES.onc.color}">O</i>Oncologist</span><span><i class="role-dot" style="background:${ROLES.rtt.color}">R</i>Therapist</span></div>
-  ${PLAYER?'':`<p class="trialnote"><b>Free demo:</b> play for ${fmtTrial(trialLeft())} minutes, then register free to keep going. <button class="linkbtn" data-act="register">Register now</button></p>`}
-  <div class="btnrow">${sv?`<button class="btn big" data-act="continue">Continue day ${sv.day}</button>`:''}<button class="btn primary big" data-act="newgame">${sv?'New game':(PLAYER?'Open the department':'Start free demo')}</button></div>
+  ${PLAYER||STORE?'':`<p class="trialnote"><b>Free demo:</b> play for ${fmtTrial(trialLeft())} minutes, then register free to keep going. <button class="linkbtn" data-act="register">Register now</button></p>`}
+  <div class="btnrow">${sv?`<button class="btn big" data-act="continue">Continue day ${sv.day}</button>`:''}<button class="btn primary big" data-act="newgame">${sv?'New game':(PLAYER||STORE?'Open the department':'Start free demo')}</button></div>
   ${PLAYER?`<p class="note">Playing as <b>${esc(PLAYER.name)}</b>${PLAYER.institution?`, ${esc(PLAYER.institution)}`:''}. <button class="linkbtn" data-act="changePlayer">Not you? Change player</button></p>`:''}`);
 }
 function startNew(){
@@ -1337,7 +1339,7 @@ function renderPanel(){
 }
 function updateTop(){
   const tb=document.getElementById('tTrialBox'),rb=document.getElementById('tRegBtn');
-  if(tb){tb.hidden=!!PLAYER;rb.hidden=!!PLAYER;if(!PLAYER)document.getElementById('tTrial').textContent=fmtTrial(trialLeft())}
+  if(tb){tb.hidden=!!PLAYER||STORE;rb.hidden=!!PLAYER||STORE;if(!PLAYER&&!STORE)document.getElementById('tTrial').textContent=fmtTrial(trialLeft())}
   if(!S)return;
   document.getElementById('tCash').textContent=fmtRM(S.cash);
   document.getElementById('tCash').style.color=S.cash<0?'#FF8A8A':'';
@@ -1423,7 +1425,7 @@ window.__beam={get S(){return S},tick:d=>tick(d),build,startNew,answer,hideModal
 updatePlayerTag();
 if(!TRIAL.opened){TRIAL.opened=true;saveTrial();track('opened')}
 updateTop();
-if(PLAYER||trialLeft()>0)intro();else registerScreen('wall');
+if(STORE||PLAYER||trialLeft()>0)intro();else registerScreen('wall');
 requestAnimationFrame(frame);
 })();
 </script>
@@ -1431,6 +1433,7 @@ requestAnimationFrame(frame);
 (()=>{
 const topEl=document.querySelector('.top');if(topEl){const setTop=()=>document.documentElement.style.setProperty('--toph',topEl.offsetHeight+'px');setTop();if('ResizeObserver' in window)new ResizeObserver(setTop).observe(topEl);}
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));
+if(window.BEAMON_STORE)return;
 const btn=document.getElementById('installApp'),ios=document.getElementById('iosHint');let ev=null;
 const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 if(ios&&!standalone&&/iP(hone|ad|od)/.test(navigator.userAgent))ios.hidden=false;

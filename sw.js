@@ -1,8 +1,8 @@
 /* Beam On! service worker: lets the installed apps open and play offline.
    Pages are network-first (you always get the latest version when online),
    other same-site files and Google Fonts are served from cache and refreshed in the background. */
-const CACHE = 'beam-on-v1';
-const PRECACHE = ['./play/', './junior/', './icons/play-192.png', './icons/junior-192.png'];
+const CACHE = 'beam-on-v2';
+const PRECACHE = ['./play/', './junior/', './fonts/fonts.css', './icons/play-192.png', './icons/junior-192.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(PRECACHE.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting()));
