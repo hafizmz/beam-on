@@ -50,9 +50,12 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-
 @media (min-width:1100px){.rooms{grid-template-columns:repeat(6,minmax(0,1fr))}.room .meta{padding:12px 12px 14px}.room h2{font-size:19px!important;letter-spacing:-.01em}}
 .room h2{text-wrap:balance;font-size:22px;overflow-wrap:break-word}
 @media (max-width:619px){.room .meta{padding:10px 11px 12px}.room h2{font-size:18px!important;letter-spacing:-.01em}.room .tag{font-size:14px}}
-.room{text-align:left;border:3px solid var(--ink);border-radius:22px;background:var(--card);box-shadow:5px 5px 0 var(--ink);padding:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
+.room{position:relative;text-align:left;border:3px solid var(--ink);border-radius:22px;background:var(--card);box-shadow:5px 5px 0 var(--ink);padding:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
 .room:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
 .room:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.newb{position:absolute;top:8px;right:8px;z-index:2;background:var(--coral,#F26B4F);color:#fff;font-family:Fredoka,'Trebuchet MS',sans-serif;font-weight:700;font-size:15px;line-height:1;padding:6px 11px;border:3px solid var(--ink);border-radius:999px;box-shadow:2px 2px 0 var(--ink);transform:rotate(8deg);animation:newb 1.6s ease-in-out infinite}
+@keyframes newb{50%{transform:rotate(8deg) scale(1.12)}}
+@media (prefers-reduced-motion:reduce){.newb{animation:none}}
 .room .art{background:var(--c);border-bottom:3px solid var(--ink);aspect-ratio:4/3;display:grid;place-items:center;max-width:100%}
 .room .art svg{width:76%;height:auto}
 .room .meta{padding:12px 14px 14px;display:flex;flex-direction:column;gap:2px}
@@ -465,6 +468,7 @@ const S={
  'fact.nm':{en:'In nuclear medicine, the patient gets a tiny tracer that gives off invisible rays. A special camera sees where it goes inside the body!',ms:'Dalam perubatan nuklear, pesakit diberi sedikit penyurih yang memancarkan sinar tidak nampak. Kamera khas boleh nampak ke mana ia pergi dalam badan!'},
  'tip.nm':{en:'Medical physicists check every dose, look after the gamma cameras, and keep everyone safe with time, distance and shielding.',ms:'Ahli fizik perubatan menyemak setiap dos, menjaga kamera gama, dan memastikan semua orang selamat dengan masa, jarak dan perisai.'},
  'q.nm':{en:['Why does the tracer get weaker over time?','It decays: after each half-life, half of it is gone','The camera gets tired','The patient blinks'],ms:['Kenapa penyurih makin lemah dengan masa?','Ia mereput: selepas setiap separuh hayat, separuh daripadanya hilang','Kamera menjadi penat','Pesakit berkelip mata']},
+ 'newRoom':{en:'New!',ms:'Baru!'},
  'room.ct':{en:'CT scan',ms:'Imbasan CT'},'tag.ct':{en:'The body in slices',ms:'Badan dalam hirisan'},'short.ct':{en:'CT',ms:'CT'},
  'ct.little':{en:'This is the CT scanner, a big donut camera! Drag the X-ray tube all the way round the patient.',ms:'Ini pengimbas CT, kamera donat yang besar! Seret tiub X-ray mengelilingi pesakit sampai habis.'},
  'ct.big':{en:'CT takes X-ray pictures from all around the body, and a computer builds them into a slice. First, the morning check with the water phantom.',ms:'CT mengambil gambar X-ray dari sekeliling badan, dan komputer membinanya menjadi satu hirisan. Mula-mula, semakan pagi dengan fantom air.'},
@@ -688,7 +692,7 @@ function renderHub(){
  const p=me(),b=bestOf(p,state.mode),tot=totalOf(p,state.mode);
  $('#scoreBtn').innerHTML=`<svg viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1" fill="${SKY}" stroke="${INK}" stroke-width="2"/><rect x="10" y="6" width="4" height="15" rx="1" fill="${SUN}" stroke="${INK}" stroke-width="2"/><rect x="17" y="9" width="4" height="12" rx="1" fill="${CORAL}" stroke="${INK}" stroke-width="2"/></svg><span>${t('scoreT')}</span>`;
  $('#totalTag').textContent=`${t('total')}: ${tot} / ${MAXT}`;
- $('#rooms').innerHTML=ROOMS.map(id=>{const sc=b[id]||0,st=starsFor(sc);return `<button class="room" data-room="${id}" style="--c:${ROOMCOL[id]}"><div class="art">${ROOMART[id]}</div><div class="meta"><h2>${t('room.'+id)}</h2><span class="tag">${t('tag.'+id)}</span><div class="stars" aria-label="${st} of 3 stars, ${sc} ${t('marksOf')}">${[1,2,3].map(n=>starSVG(st>=n)).join('')}<span class="mark">${sc?sc+'/100':''}</span></div></div></button>`}).join('');
+ $('#rooms').innerHTML=ROOMS.map(id=>{const sc=b[id]||0,st=starsFor(sc);return `<button class="room" data-room="${id}" style="--c:${ROOMCOL[id]}">${id==='ct'&&!sc?`<span class="newb">${t('newRoom')}</span>`:''}<div class="art">${ROOMART[id]}</div><div class="meta"><h2>${t('room.'+id)}</h2><span class="tag">${t('tag.'+id)}</span><div class="stars" aria-label="${st} of 3 stars, ${sc} ${t('marksOf')}">${[1,2,3].map(n=>starSVG(st>=n)).join('')}<span class="mark">${sc?sc+'/100':''}</span></div></div></button>`}).join('');
  const all=ROOMS.every(r=>(b[r]||0)>0);
  const c=$('#cert');c.hidden=!all;
  if(all)c.innerHTML=`<svg viewBox="0 0 80 96"><path d="M24 56L14 92l14-6 8 10 6-34M56 56l10 36-14-6-8 10-6-34" fill="${CORAL}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="40" cy="38" r="32" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="40" cy="38" r="24" fill="${SKY}" stroke="${INK}" stroke-width="3"/><path d="M40 22l4.7 9.6 10.5 1.5-7.6 7.4 1.8 10.5L40 46l-9.4 5 1.8-10.5-7.6-7.4 10.5-1.5z" fill="${SUN}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/></svg><div><h2>${esc(t('certT'))}</h2><p><b>${esc(t('certName'))}</b></p><p>${t('certB')} <b>${tot} / ${MAXT}</b></p></div>`;
