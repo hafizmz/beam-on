@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1D2B35">
+<link rel="icon" type="image/png" sizes="192x192" href="../icons/play-192.png">
+<link rel="apple-touch-icon" href="../icons/play-apple-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Beam On!">
 <title>Beam On!</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -147,6 +154,52 @@ details.qlog p{margin:6px 0 0;color:var(--ink-2)}
 .credit{max-width:1440px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left,0px)) 24px;font-size:13px;color:var(--ink-2)}
 .credit a{color:var(--phys);font-weight:700}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* App-friendly phone layouts: header and floor plan stay on screen while the desk scrolls */
+button,.tab,canvas{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.app{padding-top:max(12px,env(safe-area-inset-top,0px))}
+.install-btn{border:0;background:var(--amber);color:#2A1A00;font-weight:700;border-radius:8px;padding:4px 10px;cursor:pointer;margin-left:6px}
+@media (max-width:980px) and (orientation:portrait){
+  .top{position:sticky;top:0;z-index:30}
+  .main{display:block}
+  .stage{position:sticky;top:var(--toph,0px);z-index:20;background:var(--paper);padding:8px 0 6px;margin-top:-8px}
+  .ticker{max-height:62px;padding:6px 12px}
+  .ticker h3{display:none}
+  .desk{margin-top:6px}
+}
+@media (max-width:600px){
+  .app{padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+  .top{padding:8px 10px;gap:6px 14px;border-radius:10px}
+  .brand{gap:8px}.brand h1{font-size:18px}.brand small{display:none}
+  .lamp{width:22px;height:22px;border-radius:6px}.lamp span{width:7px;height:7px}
+  .stat b{font-size:9px;letter-spacing:.1em}.stat span{font-size:13px}
+  .repbar{width:64px;height:5px;margin-top:2px}
+  .speed{padding:3px}.speed button{padding:5px 8px;font-size:12px}
+  .floorwrap{padding:4px}
+  .top .btn{padding:6px 10px;font-size:13px}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .top{position:sticky;top:0;z-index:30;padding:5px 10px;gap:4px 10px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .top::-webkit-scrollbar{display:none}
+  .top>*{flex:none}
+  .brand{margin-right:auto}.brand small,.brand h1{display:none}
+  .top .btn{padding:5px 10px;font-size:12.5px}
+  .lamp{width:22px;height:22px}.lamp span{width:7px;height:7px}
+  .stat b{font-size:9px}.stat span{font-size:13px}.repbar{width:64px;height:5px;margin-top:2px}
+  .speed button{padding:4px 8px;font-size:12px}
+  .app{padding-top:max(6px,env(safe-area-inset-top,0px));gap:8px}
+  .main{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,38%);gap:8px}
+  .stage{position:sticky;top:calc(var(--toph,0px) + 8px)}
+  .floorwrap{padding:4px}
+  .floorwrap canvas{width:auto;max-width:100%;max-height:calc(100dvh - var(--toph,0px) - 74px);margin:0 auto}
+  .stage{gap:6px}
+  .ticker{max-height:42px;padding:4px 10px}.ticker h3{display:none}
+  .desk{position:sticky;top:calc(var(--toph,0px) + 8px)}
+  .pane{max-height:calc(100dvh - var(--toph,0px) - 58px)}
+  html,body{height:100%;overflow:hidden}
+  .credit{display:none}
+  .stat b{letter-spacing:.06em}.repbar{width:52px}
+}
 </style>
 </head>
 <body>
@@ -190,7 +243,7 @@ details.qlog p{margin:6px 0 0;color:var(--ink-2)}
   </div>
 </div>
 
-<p class="credit">Made by <a href="https://hafizmz.github.io/" target="_blank" rel="noopener">Hafiz M Zin</a>, Associate Professor in Medical Physics, Pusat Kanser Tun Abdullah Ahmad Badawi, USM · <a href="../">All Beam On! games</a></p>
+<p class="credit">Made by <a href="https://hafizmz.github.io/" target="_blank" rel="noopener">Hafiz M Zin</a>, Associate Professor in Medical Physics, Pusat Kanser Tun Abdullah Ahmad Badawi, USM <span id="installWrap"><button class="install-btn" id="installApp" hidden>Install app</button><span id="iosHint" hidden> · To install on iPhone or iPad: tap Share, then Add to Home Screen</span></span> · <a href="../">All Beam On! games</a></p>
 
 <div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" id="modalCard"></div></div>
 
@@ -1280,7 +1333,7 @@ function renderPanel(){
   const h=paneHTML();if(h!==lastPanel){const pane=document.getElementById('pane');const st=pane.scrollTop;const open=[...pane.querySelectorAll('details[open] summary')].map(s=>s.textContent);pane.innerHTML=h;pane.scrollTop=st;pane.querySelectorAll('details summary').forEach(s=>{if(open.includes(s.textContent))s.parentElement.open=true});lastPanel=h}
   const tk='<h3>Department log</h3>'+S.log.slice(0,14).map(l=>`<div class="msg ${l.k}"><time>D${l.d} ${clock(l.t)}</time><span>${esc(l.m)}</span></div>`).join('');
   if(tk!==lastTicker){document.getElementById('ticker').innerHTML=tk;lastTicker=tk}
-  const hint=document.getElementById('placeHint');hint.hidden=!S.placing;if(S.placing)document.getElementById('placeText').textContent=`Click an empty plot for the ${RT[S.placing].name}`;
+  const hint=document.getElementById('placeHint');hint.hidden=!S.placing;if(S.placing)document.getElementById('placeText').textContent=`${matchMedia('(pointer:coarse)').matches?'Tap':'Click'} an empty plot for the ${RT[S.placing].name}`;
 }
 function updateTop(){
   const tb=document.getElementById('tTrialBox'),rb=document.getElementById('tRegBtn');
@@ -1372,6 +1425,18 @@ if(!TRIAL.opened){TRIAL.opened=true;saveTrial();track('opened')}
 updateTop();
 if(PLAYER||trialLeft()>0)intro();else registerScreen('wall');
 requestAnimationFrame(frame);
+})();
+</script>
+<script>
+(()=>{
+const topEl=document.querySelector('.top');if(topEl){const setTop=()=>document.documentElement.style.setProperty('--toph',topEl.offsetHeight+'px');setTop();if('ResizeObserver' in window)new ResizeObserver(setTop).observe(topEl);}
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));
+const btn=document.getElementById('installApp'),ios=document.getElementById('iosHint');let ev=null;
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+if(ios&&!standalone&&/iP(hone|ad|od)/.test(navigator.userAgent))ios.hidden=false;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;if(btn)btn.hidden=false;});
+if(btn)btn.addEventListener('click',async()=>{if(!ev)return;ev.prompt();try{await ev.userChoice}catch(_){}ev=null;btn.hidden=true;});
+addEventListener('appinstalled',()=>{if(btn)btn.hidden=true;});
 })();
 </script>
 </body>

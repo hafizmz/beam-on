@@ -1,0 +1,37 @@
+{
+  "id": "/beam-on/play/",
+  "name": "Beam On!",
+  "short_name": "Beam On!",
+  "description": "Run your own radiotherapy department and see how medical physicists keep every cancer patient safe.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EDF1F3",
+  "theme_color": "#1D2B35",
+  "categories": [
+    "education",
+    "games"
+  ],
+  "icons": [
+    {
+      "src": "../icons/play-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/play-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../icons/play-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

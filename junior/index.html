@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#E6F3EE">
+<link rel="icon" type="image/png" sizes="192x192" href="../icons/junior-192.png">
+<link rel="apple-touch-icon" href="../icons/junior-apple-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BeamOn Jr">
 <title>Beam On! Junior</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -307,7 +314,7 @@ table.recent td.n,table.recent th.n{text-align:right}
       <div class="footL">
         <p id="teach"></p>
         <p id="privacy"></p>
-        <p><a href="https://hafizmz.github.io/beam-on" target="_blank" rel="noopener" id="older"></a> · <a href="https://hafizmz.github.io/" target="_blank" rel="noopener" id="author"></a> · <button class="linkish" id="reset"></button></p>
+        <p><a href="https://hafizmz.github.io/beam-on" target="_blank" rel="noopener" id="older"></a> · <a href="https://hafizmz.github.io/" target="_blank" rel="noopener" id="author"></a> · <button class="linkish" id="reset"></button> <button class="linkish" id="installApp" hidden>· Install app / Pasang aplikasi</button><span id="iosHint" hidden> · iPhone/iPad: Share → Add to Home Screen</span></p>
       </div>
       <aside class="footR"><div id="credit" class="credit"></div></aside>
     </footer>
@@ -1328,6 +1335,17 @@ $('#scoreBtn').onclick=showScores;
 $('#sBack').onclick=showHub;
 renderHub();
 if(!me())playerPicker();
+})();
+</script>
+<script>
+(()=>{
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));
+const btn=document.getElementById('installApp'),ios=document.getElementById('iosHint');let ev=null;
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+if(ios&&!standalone&&/iP(hone|ad|od)/.test(navigator.userAgent))ios.hidden=false;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;if(btn)btn.hidden=false;});
+if(btn)btn.addEventListener('click',async()=>{if(!ev)return;ev.prompt();try{await ev.userChoice}catch(_){}ev=null;btn.hidden=true;});
+addEventListener('appinstalled',()=>{if(btn)btn.hidden=true;});
 })();
 </script>
 </body>
