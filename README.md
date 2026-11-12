@@ -10,7 +10,7 @@ A Theme Hospital-inspired browser game about running a radiotherapy department, 
 
 **Beam On! Junior**, mini-games about hospital machines for kindergarten and primary: https://hafizmz.github.io/beam-on/junior/
 
-**Mentari's Mission**, a picture book (draft) for ages 4+ about how the hospital crew finds and treats cancer, companion to Cancer Cure Quest Junior: https://hafizmz.github.io/beam-on/book/
+**Mentari's Mission**, a picture book (draft) for ages 4+ about how the hospital crew finds and treats cancer, companion to Cancer Cure Quest Junior: https://hafizmz.github.io/cancercurequest/book/ (kept in the `hafizmz.github.io` repository)
 
 **Beam On! Explorace**, a stereotactic radiotherapy race for science camp teams (English and BM): https://hafizmz.github.io/beam-on/race/ (demo: `race/demo/`)
 - **Beam On! Explorace Quick**, a shorter three-station version (introduction, CT sim, treatment), 15 minutes: https://hafizmz.github.io/beam-on/race/quick/ (demo: `race/quick/demo/`)
@@ -21,7 +21,7 @@ A Theme Hospital-inspired browser game about running a radiotherapy department, 
 - `play/index.html`: Beam On!
 - `first-light/`: Beam On: First Light
 - `junior/index.html`: Beam On! Junior
-- `book/index.html`: Mentari's Mission picture book (draft), a page-turning reader; uses `fonts/`
+- `book/index.html`: redirect to the Mentari's Mission picture book at https://hafizmz.github.io/cancercurequest/book/
 - `race/index.html`: Beam On! Explorace, run on one shared device per station. Teams and the leaderboard are kept in that device's browser; staff change the default PIN under Staff settings. `race/quick/` is the three-station quick race built from the same source.
 - `qr.svg`: QR code for the home page
 
